@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import axios from 'axios'
+import API_URL from '../../config'
 
 export default function CreerUtilisateur() {
   const { token } = useAuth()
@@ -23,7 +24,7 @@ export default function CreerUtilisateur() {
 
     try {
       const res = await axios.post(
-        'http://localhost:3001/api/users/create',
+        '${API_URL}/api/users/create',
         form,
         { headers: { Authorization: `Bearer ${token}` } }
       )

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import axios from 'axios'
+import API_URL from '../../config'
 
 export default function GestionUtilisateurs() {
   const { token } = useAuth()
@@ -11,7 +12,7 @@ export default function GestionUtilisateurs() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await axios.get('http://localhost:3001/api/users/all', {
+        const res = await axios.get('${API_URL}/api/users/all', {
           headers: { Authorization: `Bearer ${token}` }
         })
         setUsers(res.data)
