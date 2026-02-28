@@ -1,0 +1,4 @@
+PORT=3001
+JWT_SECRET=ton_secret_super_long_change_moi_obligatoirement
+SUPABASE_URL=https://zpcwsuxetbgpihuwfdkq.supabase.co
+SUPABASE_KEY=sb_secret_moxgvMt-r1aDJ42WhL4rMA_Ii46QdMr
