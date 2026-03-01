@@ -7,7 +7,12 @@ import usersRoutes from './routes/users.js'
 dotenv.config()
 const app = express()
 
-app.use(cors({ origin: 'http://localhost:5173' }))
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://genius-group.vercel.app'
+  ]
+}))
 app.use(express.json())
 
 app.use('/api/auth', authRoutes)
