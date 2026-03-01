@@ -20,11 +20,7 @@ import Rappels from './pages/planning/Rappels'
 import CalendrierRevisions from './pages/planning/CalendrierRevisions'
 import SessionsBlanc from './pages/planning/SessionsBlanc'
 import StatsTravail from './pages/planning/StatsTravail'
-<<<<<<< HEAD
-import PlanningPerso from './pages/planning/PlanningPerso' 
-=======
 import PlanningPerso from './pages/planning/PlanningPerso'
->>>>>>> ab6c6a260a0c009b633c6a9a0998a7390a05396b
 import Mathematiques from './pages/ressources/Mathematiques'
 import PhysiqueChimie from './pages/ressources/PhysiqueChimie'
 import Anglais from './pages/ressources/Anglais'
@@ -33,7 +29,7 @@ import CoursVideo from './pages/ressources/CoursVideo'
 import FichesRevision from './pages/ressources/FichesRevision'
 import ExercicesCorriges from './pages/ressources/ExercicesCorriges'
 import TuteurIA from './pages/ressources/TuteurIA'
-import FaqGenerale from './pages/aides/FaqGenerales'
+import FaqGenerale from './pages/aides/FaqGenerale'
 import FaqConcours from './pages/aides/FaqConcours'
 import Contacts from './pages/aides/Contacts'
 import Orientation from './pages/aides/Orientation'
@@ -102,13 +98,13 @@ export default function App() {
           <Route path="chatbot" element={<Chatbot />} />
         </Route>
 
-          <Route path="/admin" element={
-                <ProtectedRoute><Layout><Admin /></Layout></ProtectedRoute>
-              }>
-                <Route index element={<Navigate to="utilisateurs" />} />
-                <Route path="utilisateurs" element={<GestionUtilisateurs />} />
-                <Route path="creer" element={<CreerUtilisateur />} />
-          </Route>
+        <Route path="/admin" element={
+          <ProtectedRoute><Layout><Admin /></Layout></ProtectedRoute>
+        }>
+          <Route index element={<Navigate to="utilisateurs" />} />
+          <Route path="utilisateurs" element={<GestionUtilisateurs />} />
+          <Route path="creer" element={<CreerUtilisateur />} />
+        </Route>
 
       </Routes>
     </BrowserRouter>
