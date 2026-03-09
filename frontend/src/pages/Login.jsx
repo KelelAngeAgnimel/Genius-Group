@@ -16,12 +16,8 @@ export default function Login() {
     e.preventDefault()
     setLoading(true)
     setError('')
-
     try {
-      const res = await axios.post(`${API_URL}/api/auth/login`, {
-        username,
-        password
-      })
+      const res = await axios.post(`${API_URL}/api/auth/login`, { username, password })
       login(res.data.user, res.data.token)
       navigate('/accueil')
     } catch (err) {
@@ -32,48 +28,49 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden"
-      style={{ backgroundColor: '#0a1628' }}>
+    <div className="min-h-screen flex">
 
-      {/* Logo en fond flou */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-10">
-        <img
-          src="/logo.png"
-          alt="Genius Group"
-          className="w-2/3 max-w-lg"
+      {/* PARTIE GAUCHE — Logo et fond sombre */}
+      <div className="w-1/2 flex flex-col items-center justify-center relative overflow-hidden"
+        style={{ backgroundColor: '#0a1628' }}>
+
+        {/* Effet lumineux */}
+        <div className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(99,102,241,0.2) 0%, transparent 70%)'
+          }}
         />
-      </div>
 
-      {/* Effet de lumière */}
-      <div className="absolute inset-0"
-        style={{
-          background: 'radial-gradient(ellipse at center, rgba(99,102,241,0.15) 0%, transparent 70%)'
-        }}
-      />
-
-      {/* Carte de connexion */}
-      <div className="relative z-10 w-full max-w-md mx-4">
-        
-        {/* Logo en haut */}
-        <div className="flex flex-col items-center mb-8">
+        {/* Logo centré */}
+        <div className="relative z-10 flex flex-col items-center">
           <img
             src="/logo.png"
             alt="Genius Group"
-            className="w-32 h-32 object-contain mb-4 drop-shadow-2xl"
+            className="w-64 h-64 object-contain drop-shadow-2xl"
           />
-          <h1 className="text-3xl font-bold text-white tracking-widest">GENIUS</h1>
-          <p className="text-gray-400 tracking-[0.3em] text-sm">G R O U P</p>
+          <h1 className="text-4xl font-bold text-white tracking-widest mt-4">GENIUS</h1>
+          <p className="text-gray-400 tracking-[0.5em] text-sm mt-1">G R O U P</p>
+          <p className="text-gray-500 text-sm mt-6 text-center max-w-xs">
+            Votre portail de préparation aux concours des grandes écoles
+          </p>
         </div>
 
-        {/* Formulaire */}
-        <div className="bg-white bg-opacity-5 backdrop-blur-md border border-white border-opacity-10 rounded-2xl p-8 shadow-2xl">
-          <h2 className="text-white text-center text-lg font-semibold mb-6">
-            Connectez-vous à votre espace
-          </h2>
+        {/* Copyright */}
+        <p className="absolute bottom-6 text-gray-600 text-xs">
+          © 2026 Genius Group — Tous droits réservés
+        </p>
+      </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* PARTIE DROITE — Formulaire */}
+      <div className="w-1/2 flex flex-col items-center justify-center bg-white px-16">
+
+        <div className="w-full max-w-md">
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Connexion</h2>
+          <p className="text-gray-500 mb-8">Utiliser votre compte Genius Group</p>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Identifiant
               </label>
               <input
@@ -81,13 +78,13 @@ export default function Login() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="ex: jean.dupont"
-                className="w-full bg-white bg-opacity-10 border border-white border-opacity-20 text-white placeholder-gray-500 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 transition text-gray-800"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Mot de passe
               </label>
               <input
@@ -95,13 +92,13 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-white bg-opacity-10 border border-white border-opacity-20 text-white placeholder-gray-500 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 transition text-gray-800"
                 required
               />
             </div>
 
             {error && (
-              <p className="text-red-400 text-sm text-center bg-red-900 bg-opacity-30 py-2 rounded-lg">
+              <p className="text-red-500 text-sm text-center bg-red-50 py-2 rounded-lg">
                 {error}
               </p>
             )}
@@ -109,17 +106,14 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg py-3 transition-all duration-200 disabled:opacity-50 shadow-lg hover:shadow-indigo-500/25"
+              className="mt-2 bg-indigo-700 hover:bg-indigo-800 text-white font-semibold rounded-xl py-3 transition-all duration-200 disabled:opacity-50 text-lg"
             >
-              {loading ? 'Connexion...' : 'Se connecter'}
+              {loading ? 'Connexion...' : 'SE CONNECTER'}
             </button>
           </form>
         </div>
-
-        <p className="text-center text-gray-600 text-xs mt-6">
-          © 2026 Genius Group — Tous droits réservés
-        </p>
       </div>
+
     </div>
   )
 }
