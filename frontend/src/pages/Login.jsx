@@ -32,39 +32,61 @@ export default function Login() {
 
       {/* PARTIE GAUCHE */}
       <div className="w-1/2 flex flex-col items-center justify-center relative overflow-hidden"
-        style={{ backgroundColor: '#0a1628' }}>
+        style={{ background: 'linear-gradient(135deg, #0a1628 0%, #0d1f3c 50%, #0a1628 100%)' }}>
 
-        {/* Effet lumineux */}
-        <div className="absolute inset-0"
-          style={{
-            background: 'radial-gradient(ellipse at center, rgba(99,102,241,0.2) 0%, transparent 70%)'
-          }}
-        />
+        {/* Cercles décoratifs en arrière-plan */}
+        <div className="absolute top-20 left-10 w-32 h-32 rounded-full opacity-5"
+          style={{ background: '#C9A84C', filter: 'blur(40px)' }} />
+        <div className="absolute bottom-20 right-10 w-48 h-48 rounded-full opacity-5"
+          style={{ background: '#C9A84C', filter: 'blur(60px)' }} />
 
-        {/* Contenu gauche */}
-        <div className="relative z-10 flex flex-col items-center">
+        {/* Contenu principal */}
+        <div className="relative z-10 flex flex-col items-center text-center px-8">
 
-          {/* Image logo */}
-          <img
-            src="/logo.jpeg"
-            alt="Genius Group"
-            className="w-72 h-72 object-contain drop-shadow-2xl"
-          />
-
-          {/* Texte sous le logo */}
-          <div className="mt-6 text-center">
-            <p className="text-white font-bold tracking-[0.4em] text-xl uppercase">
-              La Méthode Genius
-            </p>
-            <div className="w-16 h-0.5 bg-indigo-500 mx-auto mt-3" />
-            <p className="text-gray-400 text-sm mt-3 max-w-xs">
-              Votre portail de préparation aux concours des grandes écoles
-            </p>
+          {/* Cerveau emoji stylisé */}
+          <div className="relative mb-6">
+            <div className="w-40 h-40 rounded-full flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05))',
+                border: '2px solid rgba(201,168,76,0.3)',
+                boxShadow: '0 0 60px rgba(201,168,76,0.15)'
+              }}>
+              <span style={{ fontSize: '80px' }}>🧠</span>
+            </div>
+            {/* Anneau doré autour */}
+            <div className="absolute inset-0 rounded-full"
+              style={{
+                border: '1px solid rgba(201,168,76,0.2)',
+                transform: 'scale(1.15)'
+              }} />
           </div>
+
+          {/* Nom */}
+          <h1 className="text-4xl font-bold tracking-widest mb-1"
+            style={{ color: '#C9A84C' }}>
+            GENIUS
+          </h1>
+          <p className="text-sm tracking-[0.5em] mb-6"
+            style={{ color: 'rgba(201,168,76,0.6)' }}>
+            G R O U P
+          </p>
+
+          {/* Séparateur doré */}
+          <div className="w-20 h-0.5 mb-6"
+            style={{ background: 'linear-gradient(90deg, transparent, #C9A84C, transparent)' }} />
+
+          {/* Slogan */}
+          <p className="text-sm tracking-[0.25em] font-semibold uppercase mb-3"
+            style={{ color: 'rgba(201,168,76,0.8)' }}>
+            La Méthode Genius
+          </p>
+          <p className="text-gray-500 text-sm max-w-xs leading-relaxed">
+            Votre portail de préparation aux concours des grandes écoles
+          </p>
         </div>
 
         {/* Copyright */}
-        <p className="absolute bottom-6 text-gray-600 text-xs">
+        <p className="absolute bottom-6 text-gray-700 text-xs">
           © 2026 Genius Group — Tous droits réservés
         </p>
       </div>
@@ -72,6 +94,16 @@ export default function Login() {
       {/* PARTIE DROITE — Formulaire */}
       <div className="w-1/2 flex flex-col items-center justify-center bg-white px-16">
         <div className="w-full max-w-md">
+
+          {/* Petit logo en haut du formulaire */}
+          <div className="flex items-center gap-3 mb-8">
+            <span className="text-3xl">🧠</span>
+            <div>
+              <p className="font-bold text-gray-900 tracking-widest text-sm">GENIUS GROUP</p>
+              <p className="text-xs text-gray-400 tracking-widest">PORTAIL ÉTUDIANT</p>
+            </div>
+          </div>
+
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Connexion</h2>
           <p className="text-gray-500 mb-8">Utiliser votre compte Genius Group</p>
 
@@ -85,7 +117,10 @@ export default function Login() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="ex: jean.dupont"
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 transition text-gray-800"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none transition text-gray-800"
+                style={{ outline: 'none' }}
+                onFocus={e => e.target.style.borderColor = '#C9A84C'}
+                onBlur={e => e.target.style.borderColor = '#e5e7eb'}
                 required
               />
             </div>
@@ -99,7 +134,9 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-indigo-500 transition text-gray-800"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none transition text-gray-800"
+                onFocus={e => e.target.style.borderColor = '#C9A84C'}
+                onBlur={e => e.target.style.borderColor = '#e5e7eb'}
                 required
               />
             </div>
@@ -113,7 +150,12 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 bg-indigo-700 hover:bg-indigo-800 text-white font-semibold rounded-xl py-3 transition-all duration-200 disabled:opacity-50 text-lg"
+              className="mt-2 text-white font-bold rounded-xl py-3 transition-all duration-200 disabled:opacity-50 text-lg tracking-widest"
+              style={{
+                background: 'linear-gradient(135deg, #0a1628, #1a3a6b)',
+                border: '1px solid rgba(201,168,76,0.4)',
+                boxShadow: '0 4px 20px rgba(201,168,76,0.15)'
+              }}
             >
               {loading ? 'Connexion...' : 'SE CONNECTER'}
             </button>
