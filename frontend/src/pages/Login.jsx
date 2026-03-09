@@ -30,7 +30,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex">
 
-      {/* PARTIE GAUCHE — Logo et fond sombre */}
+      {/* PARTIE GAUCHE */}
       <div className="w-1/2 flex flex-col items-center justify-center relative overflow-hidden"
         style={{ backgroundColor: '#0a1628' }}>
 
@@ -41,18 +41,26 @@ export default function Login() {
           }}
         />
 
-        {/* Logo centré */}
+        {/* Contenu gauche */}
         <div className="relative z-10 flex flex-col items-center">
+
+          {/* Image logo */}
           <img
-            src="/logo.png"
+            src="/logo.jpeg"
             alt="Genius Group"
-            className="w-64 h-64 object-contain drop-shadow-2xl"
+            className="w-72 h-72 object-contain drop-shadow-2xl"
           />
-          <h1 className="text-4xl font-bold text-white tracking-widest mt-4">GENIUS</h1>
-          <p className="text-gray-400 tracking-[0.5em] text-sm mt-1">G R O U P</p>
-          <p className="text-gray-500 text-sm mt-6 text-center max-w-xs">
-            Votre portail de préparation aux concours des grandes écoles
-          </p>
+
+          {/* Texte sous le logo */}
+          <div className="mt-6 text-center">
+            <p className="text-white font-bold tracking-[0.4em] text-xl uppercase">
+              La Méthode Genius
+            </p>
+            <div className="w-16 h-0.5 bg-indigo-500 mx-auto mt-3" />
+            <p className="text-gray-400 text-sm mt-3 max-w-xs">
+              Votre portail de préparation aux concours des grandes écoles
+            </p>
+          </div>
         </div>
 
         {/* Copyright */}
@@ -63,7 +71,6 @@ export default function Login() {
 
       {/* PARTIE DROITE — Formulaire */}
       <div className="w-1/2 flex flex-col items-center justify-center bg-white px-16">
-
         <div className="w-full max-w-md">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Connexion</h2>
           <p className="text-gray-500 mb-8">Utiliser votre compte Genius Group</p>
