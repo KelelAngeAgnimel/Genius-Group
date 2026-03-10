@@ -1,3 +1,4 @@
+import AccueilPublic from './pages/AccueilPublic'
 import Admin from './pages/admin/Admin'
 import GestionUtilisateurs from './pages/admin/GestionUtilisateurs'
 import CreerUtilisateur from './pages/admin/CreerUtilisateur'
@@ -43,6 +44,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+
+        <Route path="/public" element={<AccueilPublic />} />
         <Route path="/" element={<Login />} />
 
         <Route path="/accueil" element={
