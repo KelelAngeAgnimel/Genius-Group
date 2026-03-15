@@ -42,12 +42,10 @@ const menuItems = [
     label: 'Aides',
     path: '/aides',
     dropdown: [
-      { label: 'FAQ Generale', path: '/aides/faq-generale' },
-      { label: 'FAQ Concours', path: '/aides/faq-concours' },
+      { label: 'FAQ', path: '/aides/faq-generale' },
       { label: 'Contacts', path: '/aides/contacts' },
       { label: 'Orientation', path: '/aides/orientation' },
       { label: 'Preparation mentale', path: '/aides/preparation-mentale' },
-      { label: 'Forum', path: '/aides/forum' },
       { label: 'Chatbot', path: '/aides/chatbot' },
     ]
   },
@@ -102,7 +100,6 @@ export default function Navbar() {
     <nav ref={navRef} className="sticky top-0 z-50 shadow-lg"
       style={{ background: '#071020', borderBottom: '1px solid rgba(201,168,76,0.2)' }}>
 
-      {/* BARRE PRINCIPALE */}
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
 
         {/* Logo */}
