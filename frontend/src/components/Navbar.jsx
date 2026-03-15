@@ -18,10 +18,6 @@ const menuItems = [
     dropdown: [
       { label: 'Emploi du temps', path: '/planning/emploi-du-temps' },
       { label: 'Suivi progression', path: '/planning/suivi-progression' },
-      { label: 'Rappels', path: '/planning/rappels' },
-      { label: 'Calendrier revisions', path: '/planning/calendrier-revisions' },
-      { label: 'Sessions blanc', path: '/planning/sessions-blanc' },
-      { label: 'Stats travail', path: '/planning/stats-travail' },
       { label: 'Planning perso', path: '/planning/planning-perso' },
     ]
   },

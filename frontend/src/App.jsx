@@ -10,17 +10,9 @@ import Ressources from './pages/Ressources'
 import Aides from './pages/Aides'
 import Actualites from './pages/accueil/Actualites'
 import Fiches from './pages/accueil/Fiches'
-import Calendrier from './pages/accueil/Calendrier'
-import Ecoles from './pages/accueil/Ecoles'
-import Statistiques from './pages/accueil/Statistiques'
 import Guide from './pages/accueil/Guide'
-import Tendances from './pages/accueil/Tendances'
 import EmploiDuTemps from './pages/Planning/EmploiDuTemps'
 import SuiviProgression from './pages/Planning/SuiviProgression'
-import Rappels from './pages/Planning/Rappels'
-import CalendrierRevisions from './pages/Planning/CalendrierRevisions'
-import SessionsBlanc from './pages/Planning/SessionsBlanc'
-import StatsTravail from './pages/Planning/StatsTravail'
 import PlanningPerso from './pages/Planning/PlanningPerso'
 import FaqGenerale from './pages/aides/FaqGenerales'
 import FaqConcours from './pages/aides/FaqConcours'
@@ -55,10 +47,6 @@ export default function App() {
           <Route index element={<Navigate to="emploi-du-temps" />} />
           <Route path="emploi-du-temps" element={<EmploiDuTemps />} />
           <Route path="suivi-progression" element={<SuiviProgression />} />
-          <Route path="rappels" element={<Rappels />} />
-          <Route path="calendrier-revisions" element={<CalendrierRevisions />} />
-          <Route path="sessions-blanc" element={<SessionsBlanc />} />
-          <Route path="stats-travail" element={<StatsTravail />} />
           <Route path="planning-perso" element={<PlanningPerso />} />
         </Route>
 
