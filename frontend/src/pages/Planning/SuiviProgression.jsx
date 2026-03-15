@@ -8,11 +8,9 @@ const ecoles = [
     couleur: '#C9A84C',
     site: 'https://inphb.ci',
     matieres: [
-      { nom: 'Mathématiques', progression: 70, couleur: '#C9A84C' },
       { nom: 'Culture Scientifique', progression: 68, couleur: '#4CC9A8' },
       { nom: 'Culture Générale', progression: 75, couleur: '#7B4CC9' },
       { nom: 'Culture Littéraire', progression: 65, couleur: '#C97B4C' },
-      { nom: 'Physique', progression: 70, couleur: '#4C7BC9' },
     ],
   },
   {
@@ -26,14 +24,12 @@ const ecoles = [
       { nom: 'Physique', progression: 70, couleur: '#4CC9A8' },
       { nom: 'Anglais', progression: 75, couleur: '#C94C7B' },
       { nom: 'Français', progression: 60, couleur: '#4C7BC9' },
-      { nom: 'Culture Scientifique', progression: 68, couleur: '#7B4CC9' },
     ],
   },
 ]
 
 export default function SuiviProgression() {
   const [ecoleSelectionnee, setEcoleSelectionnee] = useState(null)
-
   const ecoleActive = ecoles.find(e => e.sigle === ecoleSelectionnee)
 
   return (
@@ -52,103 +48,66 @@ export default function SuiviProgression() {
         </p>
       </div>
 
-      {/* VUE CARTES — pas de sélection */}
+      {/* VUE CARTES */}
       {!ecoleSelectionnee && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {ecoles.map((ecole, i) => (
             <div
               key={i}
               onClick={() => setEcoleSelectionnee(ecole.sigle)}
-              className="bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-xl"
+              className="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-2xl hover:scale-105"
               style={{
-                border: '1px solid #f0ece0',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.05)'
+                background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+                border: `2px solid ${ecole.couleur}40`,
+                boxShadow: `0 4px 24px rgba(0,0,0,0.15)`
               }}>
 
               {/* Zone logo */}
-              <div className="flex items-center justify-center py-10 px-6"
-                style={{
-                  background: 'linear-gradient(135deg, #071020, #0d1f3c)',
-                  borderBottom: `3px solid ${ecole.couleur}`
-                }}>
+              <div className="flex items-center justify-center py-16 px-8">
                 <img
                   src={ecole.logo}
                   alt={ecole.sigle}
                   className="object-contain"
-                  style={{ maxHeight: '120px', maxWidth: '220px' }}
+                  style={{ maxHeight: '140px', maxWidth: '260px' }}
                   onError={(e) => {
                     e.target.style.display = 'none'
-                    e.target.parentNode.innerHTML = `<span style="font-size:48px;font-weight:bold;color:#C9A84C;letter-spacing:0.1em">${ecole.sigle}</span>`
+                    e.target.parentNode.innerHTML = `<span style="font-size:52px;font-weight:bold;color:#C9A84C;letter-spacing:0.1em">${ecole.sigle}</span>`
                   }}
                 />
               </div>
 
-              {/* Infos */}
-              <div className="p-5">
-                <h2 className="font-bold text-lg" style={{ color: '#071020' }}>{ecole.sigle}</h2>
-                <p className="text-xs text-gray-400 mt-0.5 mb-4">{ecole.nom}</p>
+              {/* Barre dorée en bas */}
+              <div className="h-1" style={{ background: `linear-gradient(90deg, transparent, ${ecole.couleur}, transparent)` }} />
 
-                {/* Apercu progression */}
-                <div className="flex flex-col gap-2 mb-5">
-                  {ecole.matieres.slice(0, 3).map((m, j) => (
-                    <div key={j}>
-                      <div className="flex justify-between mb-0.5">
-                        <span className="text-xs text-gray-600">{m.nom}</span>
-                        <span className="text-xs font-bold" style={{ color: m.couleur }}>{m.progression}%</span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-gray-100">
-                        <div
-                          className="h-1.5 rounded-full"
-                          style={{
-                            width: `${m.progression}%`,
-                            background: `linear-gradient(90deg, ${m.couleur}66, ${m.couleur})`
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                  {ecole.matieres.length > 3 && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      + {ecole.matieres.length - 3} autre{ecole.matieres.length - 3 > 1 ? 's' : ''} matière{ecole.matieres.length - 3 > 1 ? 's' : ''}...
-                    </p>
-                  )}
-                </div>
-
-                <button
-                  className="w-full py-2.5 rounded-xl text-xs font-bold tracking-widest transition"
-                  style={{
-                    background: 'linear-gradient(135deg, #071020, #0d1f3c)',
-                    color: ecole.couleur,
-                    border: `1px solid ${ecole.couleur}40`
-                  }}>
-                  VOIR MA PROGRESSION
-                </button>
+              {/* Nom en bas */}
+              <div className="px-6 py-4 text-center">
+                <p className="text-xs text-gray-400 tracking-widest">{ecole.nom}</p>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* VUE DETAIL — école sélectionnée */}
+      {/* VUE DETAIL */}
       {ecoleActive && (
         <div>
           {/* Bouton retour */}
           <button
             onClick={() => setEcoleSelectionnee(null)}
-            className="flex items-center gap-2 mb-6 text-xs font-semibold transition"
+            className="flex items-center gap-2 mb-6 text-xs font-semibold"
             style={{ color: '#C9A84C' }}>
             &lt; Retour aux concours
           </button>
 
           {/* Header école */}
-          <div className="bg-white rounded-2xl overflow-hidden mb-6"
+          <div className="rounded-2xl overflow-hidden mb-6"
             style={{ border: '1px solid #f0ece0' }}>
-            <div className="flex items-center gap-5 p-6"
+            <div className="flex flex-col sm:flex-row items-center gap-5 p-6"
               style={{
                 background: 'linear-gradient(135deg, #071020, #0d1f3c)',
                 borderBottom: `2px solid ${ecoleActive.couleur}`
               }}>
-              <div className="w-20 h-20 rounded-xl bg-white flex items-center justify-center p-2 flex-shrink-0">
+              <div className="w-24 h-24 rounded-xl bg-white flex items-center justify-center p-2 flex-shrink-0">
                 <img
                   src={ecoleActive.logo}
                   alt={ecoleActive.sigle}
@@ -159,7 +118,7 @@ export default function SuiviProgression() {
                   }}
                 />
               </div>
-              <div>
+              <div className="text-center sm:text-left">
                 <h2 className="text-xl font-bold text-white">{ecoleActive.sigle}</h2>
                 <p className="text-xs text-gray-400 mt-0.5">{ecoleActive.nom}</p>
                 <a href={ecoleActive.site} target="_blank" rel="noopener noreferrer"
@@ -168,9 +127,9 @@ export default function SuiviProgression() {
                   Visiter le site officiel
                 </a>
               </div>
-              <div className="ml-auto text-right">
+              <div className="sm:ml-auto text-center">
                 <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Progression globale</p>
-                <p className="text-4xl font-bold" style={{ color: ecoleActive.couleur }}>
+                <p className="text-5xl font-bold" style={{ color: ecoleActive.couleur }}>
                   {Math.round(ecoleActive.matieres.reduce((a, m) => a + m.progression, 0) / ecoleActive.matieres.length)}%
                 </p>
               </div>
