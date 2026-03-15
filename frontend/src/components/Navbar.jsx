@@ -133,16 +133,16 @@ export default function Navbar() {
             </div>
           ))}
 
-          {/* Lien Espace Prof */}
+          {/* Lien Professeur */}
           {isProfOrAdmin && (
             <Link to="/professeur"
               className="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
               style={{
-                color: location.pathname === '/professeur' ? '#4CC9A8' : '#4CC9A8',
+                color: '#4CC9A8',
                 background: location.pathname === '/professeur' ? 'rgba(76,201,168,0.1)' : 'transparent',
                 borderBottom: location.pathname === '/professeur' ? '2px solid #4CC9A8' : '2px solid transparent'
               }}>
-              Espace Prof
+              Professeur
             </Link>
           )}
 
@@ -151,7 +151,7 @@ export default function Navbar() {
             <Link to="/admin"
               className="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
               style={{
-                color: location.pathname.startsWith('/admin') ? '#C94C7B' : '#C94C7B',
+                color: '#C94C7B',
                 background: location.pathname.startsWith('/admin') ? 'rgba(201,76,123,0.1)' : 'transparent',
                 borderBottom: location.pathname.startsWith('/admin') ? '2px solid #C94C7B' : '2px solid transparent'
               }}>
@@ -229,13 +229,13 @@ export default function Navbar() {
             </div>
           ))}
 
-          {/* Espace Prof mobile */}
+          {/* Professeur mobile */}
           {isProfOrAdmin && (
             <Link to="/professeur"
               onClick={() => setMobileOpen(false)}
               className="block py-3 text-sm font-semibold"
               style={{ color: '#4CC9A8', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              Espace Prof
+              Professeur
             </Link>
           )}
 
