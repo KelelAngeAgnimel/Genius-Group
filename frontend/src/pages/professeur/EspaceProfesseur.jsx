@@ -2,6 +2,27 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import API_URL from '../../config'
 
+const matieresConcours = {
+  'INP-HB': ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire'],
+  'ESATIC': ['Mathématiques', 'Physique', 'Anglais', 'Français'],
+  'tous': ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire', 'Mathématiques', 'Physique', 'Anglais', 'Français']
+}
+
+const periodes = ['Oct 2025', 'Nov 2025', 'Dec 2025', 'Jan 2026', 'Fev 2026', 'Mar 2026']
+
+const typeColor = {
+  pdf: '#C9A84C',
+  video: '#4C7BC9',
+  lien: '#4CC9A8',
+  exercice: '#C94C7B'
+}
+
+const roleLabel = {
+  etudiant_inphb: 'INP-HB',
+  etudiant_esatic: 'ESATIC',
+  etudiant_both: 'INP-HB + ESATIC'
+}
+
 export default function EspaceProfesseur() {
   const { user, token } = useAuth()
   const [onglet, setOnglet] = useState('ressources')
@@ -22,6 +43,14 @@ export default function EspaceProfesseur() {
   // Message
   const [msgForm, setMsgForm] = useState({ a_id: '', sujet: '', contenu: '' })
 
+  // Notes
+  const [noteForm, setNoteForm] = useState({
+    etudiant_id: '', matiere: '', concours: 'INP-HB', note: '', periode: 'Mar 2026'
+  })
+  const [notesClasse, setNotesClasse] = useState([])
+  const [filtreNotesConcours, setFiltreNotesConcours] = useState('INP-HB')
+  const [filtreNotesPeriode, setFiltreNotesPeriode] = useState('Mar 2026')
+
   const headers = { Authorization: `Bearer ${token}` }
 
   useEffect(() => {
@@ -29,6 +58,10 @@ export default function EspaceProfesseur() {
     chargerEtudiants()
     chargerMessages()
   }, [])
+
+  useEffect(() => {
+    if (onglet === 'notes') chargerNotesClasse()
+  }, [onglet, filtreNotesConcours, filtreNotesPeriode])
 
   const chargerRessources = async () => {
     const res = await fetch(`${API_URL}/api/ressources/toutes`, { headers })
@@ -50,12 +83,27 @@ export default function EspaceProfesseur() {
     if (data.messages) setMessages(data.messages)
   }
 
+  const chargerNotesClasse = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(
+        `${API_URL}/api/notes/classe?concours=${filtreNotesConcours}&periode=${filtreNotesPeriode}`,
+        { headers }
+      )
+      const data = await res.json()
+      if (data.notes) setNotesClasse(data.notes)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleUpload = async (e) => {
     e.preventDefault()
     setLoading(true)
     setErreur('')
     setSucces('')
-
     try {
       const formData = new FormData()
       Object.entries(form).forEach(([k, v]) => formData.append(k, v))
@@ -101,6 +149,8 @@ export default function EspaceProfesseur() {
   const envoyerMessage = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setSucces('')
+    setErreur('')
     try {
       const res = await fetch(`${API_URL}/api/messages/envoyer`, {
         method: 'POST',
@@ -120,40 +170,71 @@ export default function EspaceProfesseur() {
     }
   }
 
-  const roleLabel = {
-    etudiant_inphb: 'INP-HB',
-    etudiant_esatic: 'ESATIC',
-    etudiant_both: 'INP-HB + ESATIC'
-  }
-
-  const typeColor = {
-    pdf: '#C9A84C',
-    video: '#4C7BC9',
-    lien: '#4CC9A8',
-    exercice: '#C94C7B'
+  const publierNote = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setSucces('')
+    setErreur('')
+    try {
+      const res = await fetch(`${API_URL}/api/notes/ajouter`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...noteForm,
+          note: parseFloat(noteForm.note)
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSucces('Note publiee avec succes !')
+        setNoteForm({ etudiant_id: '', matiere: '', concours: 'INP-HB', note: '', periode: 'Mar 2026' })
+        chargerNotesClasse()
+      } else {
+        setErreur(data.message || 'Erreur lors de la publication')
+      }
+    } catch {
+      setErreur('Erreur serveur')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const onglets = [
     { key: 'ressources', label: 'Mes ressources' },
     { key: 'upload', label: 'Publier une ressource' },
+    { key: 'notes', label: 'Publier des notes' },
     { key: 'etudiants', label: 'Mes etudiants' },
     { key: 'messages', label: 'Envoyer un message' },
   ]
+
+  // Etudiants filtrés selon le concours sélectionné pour les notes
+  const etudiantsPourNotes = etudiants.filter(e =>
+    noteForm.concours === 'tous' ||
+    e.role === `etudiant_${noteForm.concours.toLowerCase().replace('-', '')}` ||
+    e.role === 'etudiant_both'
+  )
+
+  // Organiser les notes par étudiant pour l'affichage
+  const notesParEtudiant = notesClasse.reduce((acc, note) => {
+    const id = note.etudiant?.id
+    if (!id) return acc
+    if (!acc[id]) acc[id] = { etudiant: note.etudiant, notes: [] }
+    acc[id].notes.push(note)
+    return acc
+  }, {})
 
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
 
       {/* EN-TETE */}
       <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#4CC9A8' }}>
           Espace professeur
         </p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
-          Bienvenue, {user?.prenom || user?.username}
+          Bonjour, {user?.prenom || user?.username}
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
-          Gérez vos ressources et suivez vos étudiants
-        </p>
+        <p className="text-gray-400 text-sm mt-1">Gérez vos ressources, notes et etudiants</p>
       </div>
 
       {/* STATS */}
@@ -212,10 +293,7 @@ export default function EspaceProfesseur() {
           )}
           {ressources.map((r, i) => (
             <div key={i} className="bg-white rounded-2xl p-4 flex items-center gap-4"
-              style={{
-                border: '1px solid #f0ece0',
-                opacity: r.visible ? 1 : 0.6
-              }}>
+              style={{ border: '1px solid #f0ece0', opacity: r.visible ? 1 : 0.6 }}>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-xs font-bold text-white"
                 style={{ background: typeColor[r.type] || '#9ca3af' }}>
                 {r.type?.toUpperCase().slice(0, 3)}
@@ -235,8 +313,7 @@ export default function EspaceProfesseur() {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <button
-                  onClick={() => toggleVisibilite(r.id, r.visible)}
+                <button onClick={() => toggleVisibilite(r.id, r.visible)}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold transition"
                   style={{
                     background: r.visible ? '#f0ece0' : 'rgba(76,201,168,0.1)',
@@ -244,8 +321,7 @@ export default function EspaceProfesseur() {
                   }}>
                   {r.visible ? 'Masquer' : 'Rendre visible'}
                 </button>
-                <button
-                  onClick={() => supprimerRessource(r.id)}
+                <button onClick={() => supprimerRessource(r.id)}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold"
                   style={{ background: 'rgba(201,76,123,0.1)', color: '#C94C7B' }}>
                   Supprimer
@@ -263,7 +339,6 @@ export default function EspaceProfesseur() {
             Publier une nouvelle ressource
           </h2>
           <form onSubmit={handleUpload} className="flex flex-col gap-4">
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Titre</label>
@@ -277,7 +352,6 @@ export default function EspaceProfesseur() {
                   onBlur={e => e.target.style.borderColor = '#f0ece0'}
                 />
               </div>
-
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Matiere</label>
                 <input type="text" required
@@ -308,10 +382,9 @@ export default function EspaceProfesseur() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Type</label>
-                <select
-                  value={form.type}
+                <select value={form.type}
                   onChange={e => setForm({ ...form, type: e.target.value })}
-                  className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none"
+                  className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
                   style={{ borderColor: '#f0ece0' }}>
                   <option value="pdf">PDF</option>
                   <option value="video">Video</option>
@@ -319,20 +392,17 @@ export default function EspaceProfesseur() {
                   <option value="exercice">Exercice</option>
                 </select>
               </div>
-
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Concours cible</label>
-                <select
-                  value={form.concours}
+                <select value={form.concours}
                   onChange={e => setForm({ ...form, concours: e.target.value })}
-                  className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none"
+                  className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
                   style={{ borderColor: '#f0ece0' }}>
                   <option value="INP-HB">INP-HB uniquement</option>
                   <option value="ESATIC">ESATIC uniquement</option>
                   <option value="tous">Tous les etudiants</option>
                 </select>
               </div>
-
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">
                   {form.type === 'lien' ? 'Lien URL' : 'Fichier (PDF/Video)'}
@@ -371,6 +441,190 @@ export default function EspaceProfesseur() {
         </div>
       )}
 
+      {/* ONGLET NOTES */}
+      {onglet === 'notes' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* Formulaire saisie note */}
+          <div className="bg-white rounded-2xl p-6" style={{ border: '1px solid #f0ece0' }}>
+            <h2 className="font-bold text-base mb-5" style={{ color: '#071020' }}>
+              Publier une note
+            </h2>
+            <form onSubmit={publierNote} className="flex flex-col gap-4">
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Concours</label>
+                <select required
+                  value={noteForm.concours}
+                  onChange={e => setNoteForm({ ...noteForm, concours: e.target.value, matiere: '' })}
+                  className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
+                  style={{ borderColor: '#f0ece0' }}>
+                  <option value="INP-HB">INP-HB</option>
+                  <option value="ESATIC">ESATIC</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Etudiant</label>
+                <select required
+                  value={noteForm.etudiant_id}
+                  onChange={e => setNoteForm({ ...noteForm, etudiant_id: e.target.value })}
+                  className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
+                  style={{ borderColor: '#f0ece0' }}>
+                  <option value="">Choisir un etudiant</option>
+                  {etudiants
+                    .filter(e =>
+                      e.role === `etudiant_${noteForm.concours.toLowerCase().replace('-', '')}` ||
+                      e.role === 'etudiant_both'
+                    )
+                    .map((e, i) => (
+                      <option key={i} value={e.id}>
+                        {e.prenom || ''} {e.nom || e.username} — {e.matricule}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Matiere</label>
+                <select required
+                  value={noteForm.matiere}
+                  onChange={e => setNoteForm({ ...noteForm, matiere: e.target.value })}
+                  className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
+                  style={{ borderColor: '#f0ece0' }}>
+                  <option value="">Choisir une matiere</option>
+                  {(matieresConcours[noteForm.concours] || []).map((m, i) => (
+                    <option key={i} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">
+                    Note (sur 20)
+                  </label>
+                  <input type="number" required
+                    min="0" max="20" step="0.5"
+                    value={noteForm.note}
+                    onChange={e => setNoteForm({ ...noteForm, note: e.target.value })}
+                    placeholder="Ex: 14.5"
+                    className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none"
+                    style={{ borderColor: '#f0ece0' }}
+                    onFocus={e => e.target.style.borderColor = '#C9A84C'}
+                    onBlur={e => e.target.style.borderColor = '#f0ece0'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Période</label>
+                  <select required
+                    value={noteForm.periode}
+                    onChange={e => setNoteForm({ ...noteForm, periode: e.target.value })}
+                    className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
+                    style={{ borderColor: '#f0ece0' }}>
+                    {periodes.map((p, i) => (
+                      <option key={i} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <button type="submit" disabled={loading}
+                className="py-3 rounded-xl text-sm font-bold tracking-widest transition disabled:opacity-50"
+                style={{
+                  background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+                  color: '#C9A84C',
+                  border: '1px solid rgba(201,168,76,0.4)'
+                }}>
+                {loading ? 'Publication...' : 'Publier la note'}
+              </button>
+            </form>
+          </div>
+
+          {/* Tableau des notes de la classe */}
+          <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
+            <h2 className="font-bold text-base mb-4" style={{ color: '#071020' }}>
+              Notes de la classe
+            </h2>
+
+            {/* Filtres */}
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {['INP-HB', 'ESATIC'].map((c, i) => (
+                <button key={i}
+                  onClick={() => setFiltreNotesConcours(c)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+                  style={{
+                    background: filtreNotesConcours === c ? '#071020' : '#f8f7f4',
+                    color: filtreNotesConcours === c ? '#C9A84C' : '#6b7280',
+                    border: `1px solid ${filtreNotesConcours === c ? 'rgba(201,168,76,0.4)' : '#f0ece0'}`
+                  }}>
+                  {c}
+                </button>
+              ))}
+              <select
+                value={filtreNotesPeriode}
+                onChange={e => setFiltreNotesPeriode(e.target.value)}
+                className="ml-auto border rounded-lg px-3 py-1.5 text-xs text-gray-700"
+                style={{ borderColor: '#f0ece0' }}>
+                {periodes.map((p, i) => (
+                  <option key={i} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+
+            {loading && (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
+                  style={{ borderColor: '#C9A84C', borderTopColor: 'transparent' }} />
+              </div>
+            )}
+
+            {!loading && Object.keys(notesParEtudiant).length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-xs text-gray-400">Aucune note pour cette periode</p>
+              </div>
+            )}
+
+            {!loading && (
+              <div className="flex flex-col gap-3 overflow-y-auto" style={{ maxHeight: '400px' }}>
+                {Object.values(notesParEtudiant).map((item, i) => (
+                  <div key={i} className="p-3 rounded-xl"
+                    style={{ background: '#f8f7f4', border: '1px solid #f0ece0' }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                        style={{ background: '#071020' }}>
+                        {item.etudiant?.username?.[0]?.toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-800">
+                          {item.etudiant?.prenom || ''} {item.etudiant?.nom || item.etudiant?.username}
+                        </p>
+                        <p className="text-xs text-gray-400">{item.etudiant?.matricule}</p>
+                      </div>
+                      <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
+                        Moy: {(item.notes.reduce((a, n) => a + n.note, 0) / item.notes.length).toFixed(1)}/20
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {item.notes.map((n, j) => (
+                        <div key={j} className="flex items-center gap-1 px-2 py-1 rounded-lg"
+                          style={{ background: 'white', border: '1px solid #f0ece0' }}>
+                          <span className="text-xs text-gray-500">{n.matiere}</span>
+                          <span className="text-xs font-bold" style={{ color: n.note >= 10 ? '#4CC9A8' : '#C94C7B' }}>
+                            {n.note}/20
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ONGLET ETUDIANTS */}
       {onglet === 'etudiants' && (
         <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
@@ -382,7 +636,7 @@ export default function EspaceProfesseur() {
               <div key={i}
                 className="flex items-center gap-3 p-3 rounded-xl"
                 style={{ background: '#f8f7f4', border: '1px solid #f0ece0' }}>
-                <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white"
                   style={{ background: '#071020' }}>
                   {etudiant.username?.[0]?.toUpperCase()}
                 </div>
@@ -402,11 +656,8 @@ export default function EspaceProfesseur() {
                     setOnglet('messages')
                   }}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0 transition"
-                  style={{
-                    background: 'rgba(76,123,201,0.1)',
-                    color: '#4C7BC9'
-                  }}>
-                  Envoyer message
+                  style={{ background: 'rgba(76,123,201,0.1)', color: '#4C7BC9' }}>
+                  Message
                 </button>
               </div>
             ))}
@@ -417,8 +668,6 @@ export default function EspaceProfesseur() {
       {/* ONGLET MESSAGES */}
       {onglet === 'messages' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-          {/* Formulaire */}
           <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
             <h2 className="font-bold text-base mb-5" style={{ color: '#071020' }}>
               Envoyer un message
@@ -429,7 +678,7 @@ export default function EspaceProfesseur() {
                 <select required
                   value={msgForm.a_id}
                   onChange={e => setMsgForm({ ...msgForm, a_id: e.target.value })}
-                  className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none"
+                  className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
                   style={{ borderColor: '#f0ece0' }}>
                   <option value="">Choisir un etudiant</option>
                   {etudiants.map((e, i) => (
@@ -439,7 +688,6 @@ export default function EspaceProfesseur() {
                   ))}
                 </select>
               </div>
-
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Sujet</label>
                 <input type="text" required
@@ -452,7 +700,6 @@ export default function EspaceProfesseur() {
                   onBlur={e => e.target.style.borderColor = '#f0ece0'}
                 />
               </div>
-
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Message</label>
                 <textarea rows={5} required
@@ -465,7 +712,6 @@ export default function EspaceProfesseur() {
                   onBlur={e => e.target.style.borderColor = '#f0ece0'}
                 />
               </div>
-
               <button type="submit" disabled={loading}
                 className="py-3 rounded-xl text-sm font-bold tracking-widest transition disabled:opacity-50"
                 style={{
@@ -478,16 +724,13 @@ export default function EspaceProfesseur() {
             </form>
           </div>
 
-          {/* Messages envoyés */}
           <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
             <h2 className="font-bold text-base mb-5" style={{ color: '#071020' }}>
               Messages envoyes ({messages.length})
             </h2>
             <div className="flex flex-col gap-3 overflow-y-auto" style={{ maxHeight: '400px' }}>
               {messages.length === 0 && (
-                <p className="text-xs text-gray-400 text-center py-8">
-                  Aucun message envoye
-                </p>
+                <p className="text-xs text-gray-400 text-center py-8">Aucun message envoye</p>
               )}
               {messages.map((msg, i) => (
                 <div key={i} className="p-3 rounded-xl"
@@ -508,7 +751,6 @@ export default function EspaceProfesseur() {
           </div>
         </div>
       )}
-
     </div>
   )
 }
