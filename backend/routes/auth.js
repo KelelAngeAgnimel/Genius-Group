@@ -10,7 +10,6 @@ router.post('/login', async (req, res) => {
   const { username, password } = req.body
 
   try {
-    // Cherche l'utilisateur dans la base
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
@@ -21,15 +20,20 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Identifiant incorrect' })
     }
 
-    // Vérifie le mot de passe
     const validPassword = await bcrypt.compare(password, user.password)
     if (!validPassword) {
       return res.status(401).json({ message: 'Mot de passe incorrect' })
     }
 
-    // Génère le token JWT
+    // Token avec role et concours
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role, matricule: user.matricule },
+      {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        matricule: user.matricule,
+        concours: user.concours
+      },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     )
@@ -42,7 +46,8 @@ router.post('/login', async (req, res) => {
         username: user.username,
         nom: user.nom,
         prenom: user.prenom,
-        role: user.role
+        role: user.role,
+        concours: user.concours
       }
     })
 

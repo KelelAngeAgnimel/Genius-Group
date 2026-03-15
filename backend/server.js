@@ -3,6 +3,8 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import authRoutes from './routes/auth.js'
 import usersRoutes from './routes/users.js'
+import ressourcesRoutes from './routes/ressources.js'
+import messagesRoutes from './routes/messages.js'
 
 dotenv.config()
 const app = express()
@@ -17,6 +19,8 @@ app.use(express.json())
 
 app.use('/api/auth', authRoutes)
 app.use('/api/users', usersRoutes)
+app.use('/api/ressources', ressourcesRoutes)
+app.use('/api/messages', messagesRoutes)
 
 app.get('/', (req, res) => res.send('API Portail Bacheliers 🚀'))
 
