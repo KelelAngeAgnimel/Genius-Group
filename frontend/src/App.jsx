@@ -22,14 +22,6 @@ import CalendrierRevisions from './pages/Planning/CalendrierRevisions'
 import SessionsBlanc from './pages/Planning/SessionsBlanc'
 import StatsTravail from './pages/Planning/StatsTravail'
 import PlanningPerso from './pages/Planning/PlanningPerso'
-import Mathematiques from './pages/ressources/Mathematiques'
-import PhysiqueChimie from './pages/ressources/PhysiqueChimie'
-import Anglais from './pages/ressources/Anglais'
-import Francais from './pages/ressources/Francais'
-import CoursVideo from './pages/ressources/CoursVideo'
-import FichesRevision from './pages/ressources/FichesRevision'
-import ExercicesCorriges from './pages/ressources/ExercicesCorriges'
-import TuteurIA from './pages/ressources/TuteurIA'
 import FaqGenerale from './pages/aides/FaqGenerales'
 import FaqConcours from './pages/aides/FaqConcours'
 import Contacts from './pages/aides/Contacts'
@@ -76,17 +68,7 @@ export default function App() {
 
         <Route path="/ressources" element={
           <ProtectedRoute><Layout><Ressources /></Layout></ProtectedRoute>
-        }>
-          <Route index element={<Navigate to="mathematiques" />} />
-          <Route path="mathematiques" element={<Mathematiques />} />
-          <Route path="physique-chimie" element={<PhysiqueChimie />} />
-          <Route path="anglais" element={<Anglais />} />
-          <Route path="francais" element={<Francais />} />
-          <Route path="cours-video" element={<CoursVideo />} />
-          <Route path="fiches-revision" element={<FichesRevision />} />
-          <Route path="exercices-corriges" element={<ExercicesCorriges />} />
-          <Route path="tuteur-ia" element={<TuteurIA />} />
-        </Route>
+        } />
 
         <Route path="/aides" element={
           <ProtectedRoute><Layout><Aides /></Layout></ProtectedRoute>
