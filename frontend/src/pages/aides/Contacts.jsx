@@ -6,7 +6,7 @@ export default function Contacts() {
       poste: 'Responsable Pédagogique',
       description: 'Supervision de l\'ensemble du programme pédagogique et de la qualité des formations.',
       email: 'j.amon@geniusgroup.ci',
-      telephone: '+225 07 00 00 00 01',
+      telephone: '+225 05 64 77 33 70',
       couleur: '#C9A84C',
       // REMPLACE LA LIGNE CI-DESSOUS PAR LE CHEMIN DE LA PHOTO DE JEAN-LOIC AMON
       // Exemple : photo: '/photos/jean-loic-amon.jpg'
@@ -17,22 +17,22 @@ export default function Contacts() {
       poste: 'Coordinateur Concours',
       description: 'Coordination et organisation de tous les concours blancs et examens de préparation.',
       email: 'jm.zago@geniusgroup.ci',
-      telephone: '+225 07 00 00 00 02',
+      telephone: '+212 648-109513',
       couleur: '#4C7BC9',
       // REMPLACE LA LIGNE CI-DESSOUS PAR LE CHEMIN DE LA PHOTO DE JEAN-MARIE MICHEL ZAGO
       // Exemple : photo: '/photos/jean-marie-zago.jpg'
-      photo: null,
+      photo:  '/photo/michel.jpeg',
     },
     {
       nom: 'KELEL ANGE AGNIMEL',
       poste: 'Support Technique',
       description: 'Gestion de la plateforme numérique et assistance technique aux étudiants et professeurs.',
       email: 'ka.agnimel@geniusgroup.ci',
-      telephone: '+225 07 00 00 00 03',
+      telephone: '+33 07 59 19 05 20',
       couleur: '#4CC9A8',
       // REMPLACE LA LIGNE CI-DESSOUS PAR LE CHEMIN DE LA PHOTO DE KELEL ANGE AGNIMEL
       // Exemple : photo: '/photos/kelel-ange-agnimel.jpg'
-      photo: null,
+      photo: '/photo/kelel.png',
     },
   ]
 
