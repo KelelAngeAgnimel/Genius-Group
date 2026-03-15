@@ -2,6 +2,7 @@ import AccueilPublic from './pages/AccueilPublic'
 import Admin from './pages/admin/Admin'
 import GestionUtilisateurs from './pages/admin/GestionUtilisateurs'
 import CreerUtilisateur from './pages/admin/CreerUtilisateur'
+import EspaceProfesseur from './pages/professeur/EspaceProfesseur'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
 import Accueil from './pages/Accueil'
@@ -11,6 +12,10 @@ import Aides from './pages/Aides'
 import Actualites from './pages/accueil/Actualites'
 import Fiches from './pages/accueil/Fiches'
 import Guide from './pages/accueil/Guide'
+import Statistiques from './pages/accueil/Statistiques'
+import Calendrier from './pages/accueil/Calendrier'
+import Ecoles from './pages/accueil/Ecoles'
+import Tendances from './pages/accueil/Tendances'
 import EmploiDuTemps from './pages/Planning/EmploiDuTemps'
 import SuiviProgression from './pages/Planning/SuiviProgression'
 import PlanningPerso from './pages/Planning/PlanningPerso'
@@ -33,13 +38,17 @@ export default function App() {
         <Route path="/" element={<Login />} />
 
         <Route path="/accueil" element={
-  <ProtectedRoute><Layout><Accueil /></Layout></ProtectedRoute>
-}>
-  <Route index element={<Navigate to="actualites" />} />
-  <Route path="actualites" element={<Actualites />} />
-  <Route path="fiches" element={<Fiches />} />
-  <Route path="guide" element={<Guide />} />
-</Route>
+          <ProtectedRoute><Layout><Accueil /></Layout></ProtectedRoute>
+        }>
+          <Route index element={<Navigate to="actualites" />} />
+          <Route path="actualites" element={<Actualites />} />
+          <Route path="fiches" element={<Fiches />} />
+          <Route path="guide" element={<Guide />} />
+          <Route path="statistiques" element={<Statistiques />} />
+          <Route path="calendrier" element={<Calendrier />} />
+          <Route path="ecoles" element={<Ecoles />} />
+          <Route path="tendances" element={<Tendances />} />
+        </Route>
 
         <Route path="/planning" element={
           <ProtectedRoute><Layout><Planning /></Layout></ProtectedRoute>
@@ -67,8 +76,16 @@ export default function App() {
           <Route path="chatbot" element={<Chatbot />} />
         </Route>
 
+        <Route path="/professeur" element={
+          <ProtectedRoute roles={['professeur', 'admin']}>
+            <Layout><EspaceProfesseur /></Layout>
+          </ProtectedRoute>
+        } />
+
         <Route path="/admin" element={
-          <ProtectedRoute><Layout><Admin /></Layout></ProtectedRoute>
+          <ProtectedRoute roles={['admin']}>
+            <Layout><Admin /></Layout>
+          </ProtectedRoute>
         }>
           <Route index element={<Navigate to="utilisateurs" />} />
           <Route path="utilisateurs" element={<GestionUtilisateurs />} />

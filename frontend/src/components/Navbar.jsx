@@ -6,11 +6,12 @@ const menuItems = [
   {
     label: 'Accueil',
     path: '/accueil',
-       dropdown: [
-    { label: 'Tableau de bord', path: '/accueil/actualites' },
-    { label: 'Actualites', path: '/accueil/fiches' },
-    { label: 'Guide', path: '/accueil/guide' },
-  ]
+    dropdown: [
+      { label: 'Tableau de bord', path: '/accueil/actualites' },
+      { label: 'Actualites', path: '/accueil/fiches' },
+      { label: 'Guide', path: '/accueil/guide' },
+      { label: 'Statistiques', path: '/accueil/statistiques' },
+    ]
   },
   {
     label: 'Planning',
@@ -88,6 +89,9 @@ export default function Navbar() {
     navigate('/')
   }
 
+  const isProfOrAdmin = ['professeur', 'admin'].includes(user?.role)
+  const isAdmin = user?.role === 'admin'
+
   return (
     <nav ref={navRef} className="sticky top-0 z-50 shadow-lg"
       style={{ background: '#071020', borderBottom: '1px solid rgba(201,168,76,0.2)' }}>
@@ -129,10 +133,28 @@ export default function Navbar() {
             </div>
           ))}
 
-          {user?.role === 'admin' && (
+          {/* Lien Espace Prof */}
+          {isProfOrAdmin && (
+            <Link to="/professeur"
+              className="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
+              style={{
+                color: location.pathname === '/professeur' ? '#4CC9A8' : '#4CC9A8',
+                background: location.pathname === '/professeur' ? 'rgba(76,201,168,0.1)' : 'transparent',
+                borderBottom: location.pathname === '/professeur' ? '2px solid #4CC9A8' : '2px solid transparent'
+              }}>
+              Espace Prof
+            </Link>
+          )}
+
+          {/* Lien Admin */}
+          {isAdmin && (
             <Link to="/admin"
-              className="px-3 py-2 rounded-lg text-sm transition-all"
-              style={{ color: '#C94C7B' }}>
+              className="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
+              style={{
+                color: location.pathname.startsWith('/admin') ? '#C94C7B' : '#C94C7B',
+                background: location.pathname.startsWith('/admin') ? 'rgba(201,76,123,0.1)' : 'transparent',
+                borderBottom: location.pathname.startsWith('/admin') ? '2px solid #C94C7B' : '2px solid transparent'
+              }}>
               Admin
             </Link>
           )}
@@ -140,6 +162,16 @@ export default function Navbar() {
 
         {/* Profil + deconnexion */}
         <div className="hidden md:flex items-center gap-3">
+
+          {/* Badge role */}
+          <span className="text-xs px-2 py-1 rounded-lg font-semibold"
+            style={{
+              background: isAdmin ? 'rgba(201,76,123,0.1)' : isProfOrAdmin ? 'rgba(76,201,168,0.1)' : 'rgba(201,168,76,0.1)',
+              color: isAdmin ? '#C94C7B' : isProfOrAdmin ? '#4CC9A8' : '#C9A84C'
+            }}>
+            {isAdmin ? 'Admin' : user?.role === 'professeur' ? 'Professeur' : user?.role === 'etudiant_inphb' ? 'INP-HB' : user?.role === 'etudiant_esatic' ? 'ESATIC' : user?.role === 'etudiant_both' ? 'INP-HB + ESATIC' : user?.role}
+          </span>
+
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
               style={{ background: 'rgba(201,168,76,0.2)', color: '#C9A84C' }}>
@@ -147,6 +179,7 @@ export default function Navbar() {
             </div>
             <span className="text-xs text-gray-400">{user?.username}</span>
           </div>
+
           <button
             onClick={handleLogout}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold transition"
@@ -196,7 +229,18 @@ export default function Navbar() {
             </div>
           ))}
 
-          {user?.role === 'admin' && (
+          {/* Espace Prof mobile */}
+          {isProfOrAdmin && (
+            <Link to="/professeur"
+              onClick={() => setMobileOpen(false)}
+              className="block py-3 text-sm font-semibold"
+              style={{ color: '#4CC9A8', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              Espace Prof
+            </Link>
+          )}
+
+          {/* Admin mobile */}
+          {isAdmin && (
             <Link to="/admin"
               onClick={() => setMobileOpen(false)}
               className="block py-3 text-sm font-semibold"
@@ -206,7 +250,16 @@ export default function Navbar() {
           )}
 
           <div className="pt-3 flex items-center justify-between">
-            <span className="text-xs text-gray-500">{user?.username}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">{user?.username}</span>
+              <span className="text-xs px-2 py-0.5 rounded-full"
+                style={{
+                  background: isAdmin ? 'rgba(201,76,123,0.1)' : 'rgba(201,168,76,0.1)',
+                  color: isAdmin ? '#C94C7B' : '#C9A84C'
+                }}>
+                {isAdmin ? 'Admin' : user?.role === 'professeur' ? 'Prof' : 'Etudiant'}
+              </span>
+            </div>
             <button
               onClick={handleLogout}
               className="text-xs px-3 py-1.5 rounded-lg"
