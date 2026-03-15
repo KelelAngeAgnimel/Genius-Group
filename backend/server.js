@@ -5,6 +5,9 @@ import authRoutes from './routes/auth.js'
 import usersRoutes from './routes/users.js'
 import ressourcesRoutes from './routes/ressources.js'
 import messagesRoutes from './routes/messages.js'
+import notesRoutes from './routes/notes.js'
+
+
 
 dotenv.config()
 const app = express()
@@ -21,6 +24,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/users', usersRoutes)
 app.use('/api/ressources', ressourcesRoutes)
 app.use('/api/messages', messagesRoutes)
+app.use('/api/notes', notesRoutes)
 
 app.get('/', (req, res) => res.send('API Portail Bacheliers 🚀'))
 
