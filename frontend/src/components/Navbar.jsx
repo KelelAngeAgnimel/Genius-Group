@@ -6,15 +6,11 @@ const menuItems = [
   {
     label: 'Accueil',
     path: '/accueil',
-    dropdown: [
-      { label: 'Tableau de bord', path: '/accueil/actualites' },
-      { label: 'Statistiques', path: '/accueil/statistiques' },
-      { label: 'Calendrier', path: '/accueil/calendrier' },
-      { label: 'Ecoles', path: '/accueil/ecoles' },
-      { label: 'Actualites', path: '/accueil/fiches' },
-      { label: 'Tendances', path: '/accueil/tendances' },
-      { label: 'Guide', path: '/accueil/guide' },
-    ]
+       dropdown: [
+    { label: 'Tableau de bord', path: '/accueil/actualites' },
+    { label: 'Actualites', path: '/accueil/fiches' },
+    { label: 'Guide', path: '/accueil/guide' },
+  ]
   },
   {
     label: 'Planning',

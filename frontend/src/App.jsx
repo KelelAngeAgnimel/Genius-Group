@@ -41,17 +41,13 @@ export default function App() {
         <Route path="/" element={<Login />} />
 
         <Route path="/accueil" element={
-          <ProtectedRoute><Layout><Accueil /></Layout></ProtectedRoute>
-        }>
-          <Route index element={<Navigate to="actualites" />} />
-          <Route path="actualites" element={<Actualites />} />
-          <Route path="fiches" element={<Fiches />} />
-          <Route path="calendrier" element={<Calendrier />} />
-          <Route path="ecoles" element={<Ecoles />} />
-          <Route path="statistiques" element={<Statistiques />} />
-          <Route path="guide" element={<Guide />} />
-          <Route path="tendances" element={<Tendances />} />
-        </Route>
+  <ProtectedRoute><Layout><Accueil /></Layout></ProtectedRoute>
+}>
+  <Route index element={<Navigate to="actualites" />} />
+  <Route path="actualites" element={<Actualites />} />
+  <Route path="fiches" element={<Fiches />} />
+  <Route path="guide" element={<Guide />} />
+</Route>
 
         <Route path="/planning" element={
           <ProtectedRoute><Layout><Planning /></Layout></ProtectedRoute>
