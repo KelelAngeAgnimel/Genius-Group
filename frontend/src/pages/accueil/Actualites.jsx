@@ -3,6 +3,301 @@ import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import API_URL from '../../config'
 
+// =====================
+// TABLEAU DE BORD ADMIN
+// =====================
+function DashboardAdmin({ user, token, navigate }) {
+  const [stats, setStats] = useState({ total: 0, etudiants: 0, professeurs: 0, admins: 0 })
+  const [messages, setMessages] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const charger = async () => {
+      try {
+        const [usersRes, msgRes] = await Promise.all([
+          fetch(`${API_URL}/api/users/all`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_URL}/api/messages/recus`, { headers: { Authorization: `Bearer ${token}` } })
+        ])
+        const usersData = await usersRes.json()
+        const msgData = await msgRes.json()
+
+        if (usersData.users) {
+          const users = usersData.users
+          setStats({
+            total: users.length,
+            etudiants: users.filter(u => u.role.startsWith('etudiant')).length,
+            professeurs: users.filter(u => u.role === 'professeur').length,
+            admins: users.filter(u => u.role === 'admin').length,
+          })
+        }
+        if (msgData.messages) setMessages(msgData.messages)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    charger()
+  }, [])
+
+  return (
+    <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
+      <div className="mb-6 md:mb-8">
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C94C7B' }}>
+          Tableau de bord
+        </p>
+        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
+          Bonjour, {user?.prenom || user?.username}
+        </h1>
+        <p className="text-gray-400 text-sm mt-1">Vue administrateur — Genius Group</p>
+      </div>
+
+      {/* STATS UTILISATEURS */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {[
+          { label: 'Total utilisateurs', valeur: stats.total, couleur: '#C9A84C' },
+          { label: 'Etudiants', valeur: stats.etudiants, couleur: '#4C7BC9' },
+          { label: 'Professeurs', valeur: stats.professeurs, couleur: '#4CC9A8' },
+          { label: 'Admins', valeur: stats.admins, couleur: '#C94C7B' },
+        ].map((s, i) => (
+          <div key={i} className="bg-white rounded-2xl p-4 md:p-5"
+            style={{ border: `1px solid ${s.couleur}20` }}>
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>
+            <p className="text-3xl md:text-4xl font-bold" style={{ color: s.couleur }}>
+              {loading ? '...' : s.valeur}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* ACTIONS RAPIDES */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="rounded-2xl p-5 cursor-pointer transition hover:shadow-lg"
+          onClick={() => navigate('/admin/creer')}
+          style={{
+            background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+            border: '1px solid rgba(201,168,76,0.3)'
+          }}>
+          <p className="font-bold text-white mb-1">Creer un compte</p>
+          <p className="text-xs text-gray-400">Ajouter un etudiant, professeur ou admin</p>
+          <p className="text-xs mt-3 font-semibold" style={{ color: '#C9A84C' }}>Acceder →</p>
+        </div>
+        <div className="rounded-2xl p-5 cursor-pointer transition hover:shadow-lg"
+          onClick={() => navigate('/admin/utilisateurs')}
+          style={{
+            background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+            border: '1px solid rgba(76,123,201,0.3)'
+          }}>
+          <p className="font-bold text-white mb-1">Gerer les comptes</p>
+          <p className="text-xs text-gray-400">Voir et supprimer les utilisateurs</p>
+          <p className="text-xs mt-3 font-semibold" style={{ color: '#4C7BC9' }}>Acceder →</p>
+        </div>
+        <div className="rounded-2xl p-5 cursor-pointer transition hover:shadow-lg"
+          onClick={() => navigate('/professeur')}
+          style={{
+            background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+            border: '1px solid rgba(76,201,168,0.3)'
+          }}>
+          <p className="font-bold text-white mb-1">Espace professeur</p>
+          <p className="text-xs text-gray-400">Publier des ressources et envoyer des messages</p>
+          <p className="text-xs mt-3 font-semibold" style={{ color: '#4CC9A8' }}>Acceder →</p>
+        </div>
+      </div>
+
+      {/* MESSAGES RECUS */}
+      <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
+        <h2 className="font-bold text-base mb-4" style={{ color: '#071020' }}>
+          Messages recus ({messages.length})
+        </h2>
+        {messages.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-6">Aucun message</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {messages.slice(0, 5).map((msg, i) => (
+              <div key={i} className="flex items-start gap-3 p-3 rounded-xl"
+                style={{ background: '#f8f7f4', border: '1px solid #f0ece0' }}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                  style={{ background: '#071020' }}>
+                  {msg.expediteur?.username?.[0]?.toUpperCase() || '?'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-gray-800">{msg.expediteur?.username}</p>
+                    <p className="text-xs text-gray-400">{new Date(msg.created_at).toLocaleDateString('fr-FR')}</p>
+                  </div>
+                  <p className="text-xs text-gray-500 truncate mt-0.5">{msg.sujet}</p>
+                </div>
+                {!msg.lu && (
+                  <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{ background: '#C9A84C' }} />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// =========================
+// TABLEAU DE BORD PROFESSEUR
+// =========================
+function DashboardProfesseur({ user, token, navigate }) {
+  const [ressources, setRessources] = useState([])
+  const [etudiants, setEtudiants] = useState([])
+  const [messages, setMessages] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const charger = async () => {
+      try {
+        const [resRes, usersRes, msgRes] = await Promise.all([
+          fetch(`${API_URL}/api/ressources/toutes`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_URL}/api/users/all`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_URL}/api/messages/envoyes`, { headers: { Authorization: `Bearer ${token}` } })
+        ])
+        const resData = await resRes.json()
+        const usersData = await usersRes.json()
+        const msgData = await msgRes.json()
+
+        if (resData.ressources) setRessources(resData.ressources)
+        if (usersData.users) setEtudiants(usersData.users.filter(u => u.role.startsWith('etudiant')))
+        if (msgData.messages) setMessages(msgData.messages)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    charger()
+  }, [])
+
+  return (
+    <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
+      <div className="mb-6 md:mb-8">
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#4CC9A8' }}>
+          Tableau de bord
+        </p>
+        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
+          Bonjour, {user?.prenom || user?.username}
+        </h1>
+        <p className="text-gray-400 text-sm mt-1">Espace enseignant — Genius Group</p>
+      </div>
+
+      {/* STATS */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {[
+          { label: 'Ressources publiees', valeur: ressources.filter(r => r.visible).length, couleur: '#C9A84C' },
+          { label: 'Ressources masquees', valeur: ressources.filter(r => !r.visible).length, couleur: '#9ca3af' },
+          { label: 'Etudiants', valeur: etudiants.length, couleur: '#4C7BC9' },
+          { label: 'Messages envoyes', valeur: messages.length, couleur: '#4CC9A8' },
+        ].map((s, i) => (
+          <div key={i} className="bg-white rounded-2xl p-4 md:p-5"
+            style={{ border: `1px solid ${s.couleur}20` }}>
+            <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>
+            <p className="text-3xl md:text-4xl font-bold" style={{ color: s.couleur }}>
+              {loading ? '...' : s.valeur}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* ACTIONS RAPIDES */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="rounded-2xl p-5 cursor-pointer transition hover:shadow-lg"
+          onClick={() => navigate('/professeur')}
+          style={{
+            background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+            border: '1px solid rgba(76,201,168,0.3)'
+          }}>
+          <p className="font-bold text-white mb-1">Publier une ressource</p>
+          <p className="text-xs text-gray-400">Ajouter un PDF, une video ou un exercice</p>
+          <p className="text-xs mt-3 font-semibold" style={{ color: '#4CC9A8' }}>Acceder →</p>
+        </div>
+        <div className="rounded-2xl p-5 cursor-pointer transition hover:shadow-lg"
+          onClick={() => navigate('/professeur')}
+          style={{
+            background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+            border: '1px solid rgba(201,168,76,0.3)'
+          }}>
+          <p className="font-bold text-white mb-1">Envoyer un message</p>
+          <p className="text-xs text-gray-400">Contacter un etudiant directement</p>
+          <p className="text-xs mt-3 font-semibold" style={{ color: '#C9A84C' }}>Acceder →</p>
+        </div>
+      </div>
+
+      {/* DERNIÈRES RESSOURCES */}
+      <div className="bg-white rounded-2xl p-5 mb-6" style={{ border: '1px solid #f0ece0' }}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-base" style={{ color: '#071020' }}>
+            Mes dernières ressources
+          </h2>
+          <button onClick={() => navigate('/professeur')}
+            className="text-xs font-semibold" style={{ color: '#C9A84C' }}>
+            Voir tout →
+          </button>
+        </div>
+        {loading ? (
+          <p className="text-xs text-gray-400 text-center py-4">Chargement...</p>
+        ) : ressources.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-4">Aucune ressource publiee</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {ressources.slice(0, 4).map((r, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl"
+                style={{ background: '#f8f7f4', border: '1px solid #f0ece0', opacity: r.visible ? 1 : 0.6 }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                  style={{ background: r.type === 'pdf' ? '#C9A84C' : r.type === 'video' ? '#4C7BC9' : '#4CC9A8' }}>
+                  {r.type?.slice(0, 3).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-gray-800 truncate">{r.titre}</p>
+                  <p className="text-xs text-gray-400">{r.matiere} — {r.concours}</p>
+                </div>
+                <span className="text-xs font-semibold flex-shrink-0"
+                  style={{ color: r.visible ? '#4CC9A8' : '#9ca3af' }}>
+                  {r.visible ? 'Visible' : 'Masquee'}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* LISTE ETUDIANTS */}
+      <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
+        <h2 className="font-bold text-base mb-4" style={{ color: '#071020' }}>
+          Mes etudiants ({etudiants.length})
+        </h2>
+        {loading ? (
+          <p className="text-xs text-gray-400 text-center py-4">Chargement...</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {etudiants.slice(0, 6).map((e, i) => (
+              <div key={i} className="flex items-center gap-2 p-2 rounded-lg"
+                style={{ background: '#f8f7f4' }}>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                  style={{ background: '#071020' }}>
+                  {e.username?.[0]?.toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-gray-800 truncate">
+                    {e.prenom || ''} {e.nom || e.username}
+                  </p>
+                  <p className="text-xs text-gray-400">{e.matricule}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ========================
+// TABLEAU DE BORD ETUDIANT
+// ========================
 const ecoles = [
   {
     sigle: 'INP-HB',
@@ -41,9 +336,7 @@ const evenements = [
   { date: 'Jeu 19 Mar', heure: '09h00', titre: 'Réunion parents', couleur: '#4CC9A8' },
 ]
 
-export default function Actualites() {
-  const { user, token } = useAuth()
-  const navigate = useNavigate()
+function DashboardEtudiant({ user, token, navigate }) {
   const [messages, setMessages] = useState([])
   const [loadingMsg, setLoadingMsg] = useState(true)
   const [messageOuvert, setMessageOuvert] = useState(null)
@@ -60,7 +353,7 @@ export default function Actualites() {
       const data = await res.json()
       if (data.messages) setMessages(data.messages)
     } catch (err) {
-      console.error('Erreur messages:', err)
+      console.error(err)
     } finally {
       setLoadingMsg(false)
     }
@@ -74,7 +367,7 @@ export default function Actualites() {
       })
       setMessages(prev => prev.map(m => m.id === id ? { ...m, lu: true } : m))
     } catch (err) {
-      console.error('Erreur marquer lu:', err)
+      console.error(err)
     }
   }
 
@@ -83,17 +376,12 @@ export default function Actualites() {
     if (!msg.lu) marquerLu(msg.id)
   }
 
-  const ecolesVisibles = ecoles.filter(e =>
-    e.roles.includes(user?.role) ||
-    ['professeur', 'admin'].includes(user?.role)
-  )
-
+  const ecolesVisibles = ecoles.filter(e => e.roles.includes(user?.role))
   const messagesNonLus = messages.filter(m => !m.lu).length
 
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
 
-      {/* EN-TETE */}
       <div className="mb-6 md:mb-8">
         <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>
           Tableau de bord
@@ -105,7 +393,7 @@ export default function Actualites() {
       </div>
 
       {/* CARTES RÉSUMÉ */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6">
         <div className="rounded-2xl p-4 md:p-5"
           style={{
             background: 'linear-gradient(135deg, #071020, #0d1f3c)',
@@ -119,13 +407,11 @@ export default function Actualites() {
           </p>
           <p className="text-gray-400 text-xs mt-1">nouveaux messages</p>
         </div>
-
         <div className="rounded-2xl p-4 md:p-5 bg-white" style={{ border: '1px solid #f0ece0' }}>
           <p className="text-xs text-gray-400 uppercase tracking-widest mb-2">Prochain cours</p>
           <p className="text-sm font-bold" style={{ color: '#071020' }}>Mathématiques</p>
           <p className="text-gray-400 text-xs mt-1">Lun 16 Mar — 08h00</p>
         </div>
-
         <div className="rounded-2xl p-4 md:p-5 bg-white col-span-2 md:col-span-1"
           style={{ border: '1px solid #f0ece0' }}>
           <p className="text-xs text-gray-400 uppercase tracking-widest mb-2">Prochain concours</p>
@@ -141,20 +427,15 @@ export default function Actualites() {
             <h2 className="font-bold text-base md:text-lg" style={{ color: '#071020' }}>
               Vos espaces de préparation
             </h2>
-            <button
-              onClick={() => navigate('/accueil/statistiques')}
-              className="text-xs font-semibold"
-              style={{ color: '#C9A84C' }}>
+            <button onClick={() => navigate('/accueil/statistiques')}
+              className="text-xs font-semibold" style={{ color: '#C9A84C' }}>
               Voir statistiques →
             </button>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {ecolesVisibles.map((ecole, i) => (
-              <div key={i}
-                className="bg-white rounded-2xl overflow-hidden"
+              <div key={i} className="bg-white rounded-2xl overflow-hidden"
                 style={{ border: '1px solid #f0ece0', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
-
                 <div className="p-5 flex items-center gap-4"
                   style={{
                     background: 'linear-gradient(135deg, #071020, #0d1f3c)',
@@ -180,7 +461,6 @@ export default function Actualites() {
                     </a>
                   </div>
                 </div>
-
                 <div className="p-5">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
                     Progression par matière
@@ -209,17 +489,14 @@ export default function Actualites() {
         </div>
       )}
 
-      {/* GRILLE PLANNING + MESSAGES */}
+      {/* PLANNING + MESSAGES */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
 
-        {/* PLANNING */}
         <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-base" style={{ color: '#071020' }}>Planning de la semaine</h2>
-            <button
-              onClick={() => navigate('/planning/emploi-du-temps')}
-              className="text-xs font-semibold"
-              style={{ color: '#C9A84C' }}>
+            <button onClick={() => navigate('/planning/emploi-du-temps')}
+              className="text-xs font-semibold" style={{ color: '#C9A84C' }}>
               Voir tout →
             </button>
           </div>
@@ -237,7 +514,6 @@ export default function Actualites() {
           </div>
         </div>
 
-        {/* BOITE DE RÉCEPTION */}
         <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-base" style={{ color: '#071020' }}>Boite de réception</h2>
@@ -267,8 +543,7 @@ export default function Actualites() {
             <div className="flex flex-col gap-3 overflow-y-auto" style={{ maxHeight: '400px' }}>
               {messages.map((msg, i) => (
                 <div key={i}>
-                  <div
-                    className="flex items-start gap-3 p-3 rounded-xl cursor-pointer transition"
+                  <div className="flex items-start gap-3 p-3 rounded-xl cursor-pointer transition"
                     onClick={() => ouvrirMessage(msg)}
                     style={{
                       background: msg.lu ? '#fafafa' : 'rgba(201,168,76,0.04)',
@@ -295,20 +570,14 @@ export default function Actualites() {
                         style={{ background: '#C9A84C' }} />
                     )}
                   </div>
-
-                  {/* Message ouvert */}
                   {messageOuvert?.id === msg.id && (
                     <div className="mx-1 p-4 rounded-xl mt-1"
                       style={{
                         background: 'rgba(201,168,76,0.04)',
                         border: '1px solid rgba(201,168,76,0.15)'
                       }}>
-                      <p className="text-xs font-bold mb-1" style={{ color: '#C9A84C' }}>
-                        {msg.sujet}
-                      </p>
-                      <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">
-                        {msg.contenu}
-                      </p>
+                      <p className="text-xs font-bold mb-1" style={{ color: '#C9A84C' }}>{msg.sujet}</p>
+                      <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{msg.contenu}</p>
                       <p className="text-xs text-gray-400 mt-2">
                         De : {msg.expediteur?.prenom || ''} {msg.expediteur?.nom || msg.expediteur?.username} —
                         Le {new Date(msg.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -321,7 +590,24 @@ export default function Actualites() {
           )}
         </div>
       </div>
-
     </div>
   )
+}
+
+// ========================
+// COMPOSANT PRINCIPAL
+// ========================
+export default function Actualites() {
+  const { user, token } = useAuth()
+  const navigate = useNavigate()
+
+  if (user?.role === 'admin') {
+    return <DashboardAdmin user={user} token={token} navigate={navigate} />
+  }
+
+  if (user?.role === 'professeur') {
+    return <DashboardProfesseur user={user} token={token} navigate={navigate} />
+  }
+
+  return <DashboardEtudiant user={user} token={token} navigate={navigate} />
 }
