@@ -5,7 +5,7 @@ const ecoles = [
   {
     sigle: 'INP-HB',
     nom: 'Institut National Polytechnique Houphouët-Boigny',
-    logo: 'https://inphb.ci/wp-content/uploads/2021/03/logo-inphb.png',
+    logo: 'https://inphb.edu.ci/wp-content/uploads/2020/03/INPHB.png',
     description: 'Grande école d\'ingénieurs et de management de Côte d\'Ivoire',
     moyenne: 14.0,
     matieres: [
@@ -56,12 +56,12 @@ export default function Actualites() {
       {/* EN-TÊTE */}
       <div className="mb-6 md:mb-8">
         <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>
-          Tableau de bord
+        Tableau de bord
         </p>
-        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
-          Bonjour, {user?.prenom || user?.username}
-        </h1>
-        <p className="text-gray-400 text-sm mt-1">Mars 2026 — Voici votre résumé du jour</p>
+      <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
+        Bonjour, {user?.prenom || user?.username}
+      </h1>
+      <p className="text-gray-400 text-sm mt-1">Bienvenue sur Genius — Mars 2026</p>
       </div>
 
       {/* CARTES RÉSUMÉ */}
@@ -139,8 +139,11 @@ export default function Actualites() {
                   <p className="text-xs mt-1" style={{ color: ecole.couleur }}>{ecole.description}</p>
                 </div>
                 <div className="ml-auto text-right">
-                  <p className="text-3xl font-bold" style={{ color: ecole.couleur }}>{ecole.moyenne}</p>
-                  <p className="text-xs text-gray-400">/20 moy.</p>
+                  <a href={ecole.site} target="_blank" rel="noopener noreferrer"
+                    className="text-xs font-semibold px-3 py-1 rounded-lg"
+                    style={{ border: `1px solid ${ecole.couleur}40`, color: ecole.couleur }}>
+                    Site officiel
+                  </a>
                 </div>
               </div>
 
