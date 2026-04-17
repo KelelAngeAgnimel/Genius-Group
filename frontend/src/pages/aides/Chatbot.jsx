@@ -1,19 +1,37 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+
+const SESSION_ID = crypto.randomUUID()
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([
     { role: 'bot', texte: 'Bonjour ! Je suis le chatbot d\'aide. Comment puis-je t\'aider ?' }
   ])
   const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)        // ✅ AJOUT
 
-  const envoyer = () => {
-    if (!input.trim()) return
-    setMessages([
-      ...messages,
-      { role: 'user', texte: input },
-      { role: 'bot', texte: '🤖 Je traite ta demande... (fonctionnalité complète disponible à l\'étape 9)' }
-    ])
+  const envoyer = async () => {                        // ✅ MODIFIÉ
+    if (!input.trim() || loading) return
+
+    const userMessage = input
+    setMessages(prev => [...prev, { role: 'user', texte: userMessage }])
     setInput('')
+    setLoading(true)
+
+    try {
+      const res = await fetch(`${API_URL}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage, sessionId: SESSION_ID })
+      })
+
+      const data = await res.json()
+      setMessages(prev => [...prev, { role: 'bot', texte: data.reply }])
+    } catch (error) {
+      setMessages(prev => [...prev, { role: 'bot', texte: '❌ Erreur de connexion. Réessaie.' }])
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -33,6 +51,13 @@ export default function Chatbot() {
             </div>
           </div>
         ))}
+        {loading && (                                   /* ✅ AJOUT indicateur de chargement */
+          <div className="flex justify-start">
+            <div className="px-4 py-2 rounded-xl text-sm bg-white border border-gray-200 text-gray-400 italic">
+              🤖 En train de répondre...
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2">
@@ -46,7 +71,8 @@ export default function Chatbot() {
         />
         <button
           onClick={envoyer}
-          className="bg-purple-700 text-white px-5 py-2 rounded-xl hover:bg-purple-800 font-semibold"
+          disabled={loading}
+          className="bg-purple-700 text-white px-5 py-2 rounded-xl hover:bg-purple-800 font-semibold disabled:opacity-50"
         >
           Envoyer
         </button>
