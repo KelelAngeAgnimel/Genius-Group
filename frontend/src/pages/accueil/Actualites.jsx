@@ -489,6 +489,189 @@ function DashboardEtudiant({ user, token, navigate }) {
         </div>
       )}
 
+      {/* ============================================ */}
+      {/* SECTION ACTUALITÉS & REDIRECTIONS OFFICIELLES */}
+      {/* ============================================ */}
+      <div className="mb-6">
+        {/* En-tête de section */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, rgba(201,168,76,0.4), transparent)' }} />
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#C9A84C' }} />
+            <h2 className="font-bold text-base md:text-lg tracking-wide" style={{ color: '#071020' }}>
+              Actualités & Sites officiels
+            </h2>
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#C9A84C' }} />
+          </div>
+          <div className="flex-1 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.4))' }} />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          {/* ---- CARTE INP-HB ---- */}
+          <a
+            href="https://inphb.ci"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
+            style={{
+              background: 'linear-gradient(145deg, #071020 0%, #0d1f3c 60%, #102040 100%)',
+              border: '1px solid rgba(201,168,76,0.25)',
+              textDecoration: 'none',
+              display: 'block',
+            }}
+          >
+            {/* Bande dorée en haut */}
+            <div style={{
+              height: '3px',
+              background: 'linear-gradient(90deg, rgba(201,168,76,0.2), #C9A84C, #e8c76a, #C9A84C, rgba(201,168,76,0.2))'
+            }} />
+
+            <div className="p-5">
+              {/* Header carte */}
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-xl overflow-hidden bg-white flex items-center justify-center flex-shrink-0 p-1.5"
+                  style={{ boxShadow: '0 0 0 2px rgba(201,168,76,0.4)' }}>
+                  <img
+                    src="https://inphb.edu.ci/wp-content/uploads/2020/03/INPHB.png"
+                    alt="INP-HB"
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      e.target.style.display = 'none'
+                      e.target.parentNode.innerHTML = `<span style="font-weight:bold;color:#C9A84C;font-size:12px;text-align:center">INP-HB</span>`
+                    }}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-white text-lg leading-tight">INP-HB</p>
+                  <p className="text-xs leading-relaxed mt-0.5" style={{ color: 'rgba(201,168,76,0.75)' }}>
+                    Institut National Polytechnique<br />Félix Houphouët-Boigny
+                  </p>
+                </div>
+                {/* Icône flèche animée */}
+                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110"
+                  style={{
+                    background: 'rgba(201,168,76,0.12)',
+                    border: '1px solid rgba(201,168,76,0.35)'
+                  }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 13L13 3M13 3H7M13 3V9" stroke="#C9A84C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Séparateur */}
+              <div className="h-px mb-4" style={{ background: 'rgba(201,168,76,0.15)' }} />
+
+              {/* Tags info */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {['Concours CPGE', 'Résultats', 'Admissions', 'Actualités'].map((tag, i) => (
+                  <span key={i} className="text-xs px-2.5 py-1 rounded-lg font-medium"
+                    style={{
+                      background: 'rgba(201,168,76,0.1)',
+                      border: '1px solid rgba(201,168,76,0.2)',
+                      color: 'rgba(201,168,76,0.9)'
+                    }}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500">Retrouvez toutes les actualités officielles</p>
+                <span className="text-xs font-bold transition-all duration-200 group-hover:tracking-wider"
+                  style={{ color: '#C9A84C' }}>
+                  Visiter →
+                </span>
+              </div>
+            </div>
+          </a>
+
+          {/* ---- CARTE ESATIC ---- */}
+          <a
+            href="https://esatic.ci"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
+            style={{
+              background: 'linear-gradient(145deg, #071020 0%, #0a1830 60%, #0d2040 100%)',
+              border: '1px solid rgba(76,123,201,0.25)',
+              textDecoration: 'none',
+              display: 'block',
+            }}
+          >
+            {/* Bande bleue en haut */}
+            <div style={{
+              height: '3px',
+              background: 'linear-gradient(90deg, rgba(76,123,201,0.2), #4C7BC9, #6b9de0, #4C7BC9, rgba(76,123,201,0.2))'
+            }} />
+
+            <div className="p-5">
+              {/* Header carte */}
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-xl overflow-hidden bg-white flex items-center justify-center flex-shrink-0 p-1.5"
+                  style={{ boxShadow: '0 0 0 2px rgba(76,123,201,0.4)' }}>
+                  <img
+                    src="https://esatic.ci/wp-content/uploads/2024/07/esatic_logo.jpg"
+                    alt="ESATIC"
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      e.target.style.display = 'none'
+                      e.target.parentNode.innerHTML = `<span style="font-weight:bold;color:#4C7BC9;font-size:12px;text-align:center">ESATIC</span>`
+                    }}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-white text-lg leading-tight">ESATIC</p>
+                  <p className="text-xs leading-relaxed mt-0.5" style={{ color: 'rgba(76,123,201,0.85)' }}>
+                    Ecole Supérieure Africaine<br />des Technologies de l'Info. et de la Com.
+                  </p>
+                </div>
+                {/* Icône flèche animée */}
+                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110"
+                  style={{
+                    background: 'rgba(76,123,201,0.12)',
+                    border: '1px solid rgba(76,123,201,0.35)'
+                  }}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 13L13 3M13 3H7M13 3V9" stroke="#4C7BC9" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Séparateur */}
+              <div className="h-px mb-4" style={{ background: 'rgba(76,123,201,0.15)' }} />
+
+              {/* Tags info */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {['Concours', 'Résultats', 'Inscriptions', 'Actualités'].map((tag, i) => (
+                  <span key={i} className="text-xs px-2.5 py-1 rounded-lg font-medium"
+                    style={{
+                      background: 'rgba(76,123,201,0.1)',
+                      border: '1px solid rgba(76,123,201,0.2)',
+                      color: 'rgba(76,123,201,0.95)'
+                    }}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500">Retrouvez toutes les actualités officielles</p>
+                <span className="text-xs font-bold transition-all duration-200 group-hover:tracking-wider"
+                  style={{ color: '#4C7BC9' }}>
+                  Visiter →
+                </span>
+              </div>
+            </div>
+          </a>
+
+        </div>
+      </div>
+      {/* ============================================ */}
+
       {/* PLANNING + MESSAGES */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
 
