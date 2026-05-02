@@ -13,7 +13,7 @@ const cartes = [
   },
   {
     sigle: 'ESATIC',
-    nom: 'Ecole Supérieure Africaine des Technologies de l\'Info. et de la Com.',
+    nom: "Ecole Supérieure Africaine des Technologies de l'Info. et de la Com.",
     logo: 'https://esatic.ci/wp-content/uploads/2024/07/esatic_logo.jpg',
     site: 'https://esatic.ci',
     couleur: '#4C7BC9',
@@ -60,7 +60,7 @@ export default function Actualites() {
       {/* Cartes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {cartesVisibles.map((carte, i) => (
-          
+          <a
             key={i}
             href={carte.site}
             target="_blank"
