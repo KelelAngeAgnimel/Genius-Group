@@ -85,23 +85,6 @@ export default function Statistiques() {
         <p className="text-gray-400 text-sm mt-1">Méthode Genius — {user?.prenom} {user?.nom}</p>
       </div>
 
-      {/* STATS RAPIDES */}
-      <div className="grid grid-cols-3 gap-3 mb-8">
-        {[
-          { label: 'Exercices faits', valeur: 24, suffix: '', couleur: '#C9A84C' },
-          { label: 'Score moyen', valeur: 72, suffix: '%', couleur: '#4C7BC9' },
-          { label: 'Sessions blanches', valeur: 3, suffix: '', couleur: '#4CC9A8' },
-        ].map((s, i) => (
-          <div key={i} className="rounded-2xl p-4 text-center"
-            style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', border: `1px solid ${s.couleur}40` }}>
-            <p className="text-3xl font-bold" style={{ color: s.couleur }}>
-              <CountUp target={s.valeur} suffix={s.suffix} />
-            </p>
-            <p className="text-xs text-gray-400 mt-1">{s.label}</p>
-          </div>
-        ))}
-      </div>
-
       {/* RÉSULTATS D'ADMISSIBILITÉ */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-5">
