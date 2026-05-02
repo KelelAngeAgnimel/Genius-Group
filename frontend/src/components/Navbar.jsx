@@ -7,8 +7,8 @@ const menuItems = [
     label: 'Accueil',
     path: '/accueil',
     dropdown: [
-      { label: 'Tableau de bord', path: '/accueil/actualites' },
-      { label: 'Actualites', path: '/accueil/fiches' },
+      { label: 'Tableau de bord', path: '/accueil/tableau-de-bord' },
+      { label: 'Actualites', path: '/accueil/actualites' },
       { label: 'Guide', path: '/accueil/guide' },
       { label: 'Statistiques', path: '/accueil/statistiques' },
     ]
@@ -98,7 +98,6 @@ export default function Navbar() {
 
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
 
-        {/* Logo */}
         <Link to="/accueil" className="flex items-center gap-2 flex-shrink-0">
           <span className="text-xl">🧠</span>
           <div className="hidden sm:block">
@@ -111,7 +110,6 @@ export default function Navbar() {
           </div>
         </Link>
 
-        {/* Menu desktop */}
         <div className="hidden md:flex items-center gap-1">
           {menuItems.map((item) => (
             <div key={item.label} className="relative">
@@ -126,14 +124,12 @@ export default function Navbar() {
                 {item.label}
                 <span className="text-xs opacity-60">{openMenu === item.label ? '▲' : '▼'}</span>
               </button>
-
               {openMenu === item.label && (
                 <DropdownMenu items={item.dropdown} onClose={() => setOpenMenu(null)} />
               )}
             </div>
           ))}
 
-          {/* Lien Professeur */}
           {isProfOrAdmin && (
             <Link to="/professeur"
               className="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
@@ -146,7 +142,6 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* Lien Admin */}
           {isAdmin && (
             <Link to="/admin"
               className="px-3 py-2 rounded-lg text-sm font-semibold transition-all"
@@ -160,10 +155,7 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Profil + deconnexion */}
         <div className="hidden md:flex items-center gap-3">
-
-          {/* Badge role */}
           <span className="text-xs px-2 py-1 rounded-lg font-semibold"
             style={{
               background: isAdmin ? 'rgba(201,76,123,0.1)' : isProfOrAdmin ? 'rgba(76,201,168,0.1)' : 'rgba(201,168,76,0.1)',
@@ -180,27 +172,18 @@ export default function Navbar() {
             <span className="text-xs text-gray-400">{user?.username}</span>
           </div>
 
-          <button
-            onClick={handleLogout}
+          <button onClick={handleLogout}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold transition"
-            style={{
-              background: 'rgba(201,168,76,0.1)',
-              color: '#C9A84C',
-              border: '1px solid rgba(201,168,76,0.3)'
-            }}>
+            style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)' }}>
             Deconnexion
           </button>
         </div>
 
-        {/* Burger mobile */}
-        <button
-          className="md:hidden text-white text-xl p-2"
-          onClick={() => setMobileOpen(!mobileOpen)}>
+        <button className="md:hidden text-white text-xl p-2" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? 'X' : '='}
         </button>
       </div>
 
-      {/* MENU MOBILE */}
       {mobileOpen && (
         <div className="md:hidden px-4 pb-4 overflow-y-auto max-h-96"
           style={{ background: '#071020', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
@@ -216,9 +199,7 @@ export default function Navbar() {
               {mobileExpanded === item.label && (
                 <div className="pl-3 pb-2">
                   {item.dropdown.map((sub, i) => (
-                    <Link
-                      key={i}
-                      to={sub.path}
+                    <Link key={i} to={sub.path}
                       onClick={() => { setMobileOpen(false); setMobileExpanded(null) }}
                       className="block py-2 text-xs text-gray-400">
                       {sub.label}
@@ -229,20 +210,16 @@ export default function Navbar() {
             </div>
           ))}
 
-          {/* Professeur mobile */}
           {isProfOrAdmin && (
-            <Link to="/professeur"
-              onClick={() => setMobileOpen(false)}
+            <Link to="/professeur" onClick={() => setMobileOpen(false)}
               className="block py-3 text-sm font-semibold"
               style={{ color: '#4CC9A8', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               Professeur
             </Link>
           )}
 
-          {/* Admin mobile */}
           {isAdmin && (
-            <Link to="/admin"
-              onClick={() => setMobileOpen(false)}
+            <Link to="/admin" onClick={() => setMobileOpen(false)}
               className="block py-3 text-sm font-semibold"
               style={{ color: '#C94C7B', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               Admin
@@ -253,15 +230,11 @@ export default function Navbar() {
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500">{user?.username}</span>
               <span className="text-xs px-2 py-0.5 rounded-full"
-                style={{
-                  background: isAdmin ? 'rgba(201,76,123,0.1)' : 'rgba(201,168,76,0.1)',
-                  color: isAdmin ? '#C94C7B' : '#C9A84C'
-                }}>
+                style={{ background: isAdmin ? 'rgba(201,76,123,0.1)' : 'rgba(201,168,76,0.1)', color: isAdmin ? '#C94C7B' : '#C9A84C' }}>
                 {isAdmin ? 'Admin' : user?.role === 'professeur' ? 'Prof' : 'Etudiant'}
               </span>
             </div>
-            <button
-              onClick={handleLogout}
+            <button onClick={handleLogout}
               className="text-xs px-3 py-1.5 rounded-lg"
               style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
               Deconnexion

@@ -9,6 +9,7 @@ import Accueil from './pages/Accueil'
 import Planning from './pages/Planning'
 import Ressources from './pages/Ressources'
 import Aides from './pages/Aides'
+import TableauDeBord from './pages/accueil/TableauDeBord'
 import Actualites from './pages/accueil/Actualites'
 import Fiches from './pages/accueil/Fiches'
 import Guide from './pages/accueil/Guide'
@@ -40,7 +41,8 @@ export default function App() {
         <Route path="/accueil" element={
           <ProtectedRoute><Layout><Accueil /></Layout></ProtectedRoute>
         }>
-          <Route index element={<Navigate to="actualites" />} />
+          <Route index element={<Navigate to="tableau-de-bord" />} />
+          <Route path="tableau-de-bord" element={<TableauDeBord />} />
           <Route path="actualites" element={<Actualites />} />
           <Route path="fiches" element={<Fiches />} />
           <Route path="guide" element={<Guide />} />
