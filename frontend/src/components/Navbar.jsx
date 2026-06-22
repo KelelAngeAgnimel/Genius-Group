@@ -32,6 +32,15 @@ const menuItems = [
     ]
   },
   {
+    label: 'Outils',
+    path: '/outils',
+    dropdown: [
+      { label: 'Teams', path: '/outils/teams' },
+      { label: 'Notes', path: '/outils/notes' },
+      { label: 'Genius Eval', path: '/outils/genius-eval' },
+    ]
+  },
+  {
     label: 'Aides',
     path: '/aides',
     dropdown: [

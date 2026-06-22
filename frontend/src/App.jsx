@@ -9,6 +9,7 @@ import Accueil from './pages/Accueil'
 import Planning from './pages/Planning'
 import Ressources from './pages/Ressources'
 import Aides from './pages/Aides'
+import Outils from './pages/Outils'
 import TableauDeBord from './pages/accueil/TableauDeBord'
 import Actualites from './pages/accueil/Actualites'
 import Fiches from './pages/accueil/Fiches'
@@ -20,6 +21,9 @@ import Tendances from './pages/accueil/Tendances'
 import EmploiDuTemps from './pages/Planning/EmploiDuTemps'
 import SuiviProgression from './pages/Planning/SuiviProgression'
 import PlanningPerso from './pages/Planning/PlanningPerso'
+import Meetings from './pages/meetings/Meetings'
+import MesNotes from './pages/notes/MesNotes'
+import GeniusEval from './pages/eval/GeniusEval'
 import FaqGenerale from './pages/aides/FaqGenerales'
 import FaqConcours from './pages/aides/FaqConcours'
 import Contacts from './pages/aides/Contacts'
@@ -64,6 +68,15 @@ export default function App() {
         <Route path="/ressources" element={
           <ProtectedRoute><Layout><Ressources /></Layout></ProtectedRoute>
         } />
+
+        <Route path="/outils" element={
+          <ProtectedRoute><Layout><Outils /></Layout></ProtectedRoute>
+        }>
+          <Route index element={<Navigate to="teams" />} />
+          <Route path="teams" element={<Meetings />} />
+          <Route path="notes" element={<MesNotes />} />
+          <Route path="genius-eval" element={<GeniusEval />} />
+        </Route>
 
         <Route path="/aides" element={
           <ProtectedRoute><Layout><Aides /></Layout></ProtectedRoute>
