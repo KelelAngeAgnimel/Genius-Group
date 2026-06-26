@@ -1,77 +1,73 @@
 import express from 'express'
-import pkg from 'pg'
-const { Pool } = pkg
+import { createClient } from '@supabase/supabase-js'
 import Groq from 'groq-sdk'
 import { verifyToken } from './auth.js'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 const router = express.Router()
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-
-// ── Création des tables ──────────────────────────────────────────
-pool.query(`
-  CREATE TABLE IF NOT EXISTS quizzes (
-    id SERIAL PRIMARY KEY,
-    titre VARCHAR(255) NOT NULL,
-    matiere VARCHAR(100) NOT NULL,
-    niveau VARCHAR(50),
-    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    ai_genere BOOLEAN DEFAULT false,
-    publie BOOLEAN DEFAULT true,
-    created_at TIMESTAMP DEFAULT NOW()
-  )
-`).catch(err => console.error('Erreur création table quizzes:', err))
-
-pool.query(`
-  CREATE TABLE IF NOT EXISTS quiz_questions (
-    id SERIAL PRIMARY KEY,
-    quiz_id INTEGER REFERENCES quizzes(id) ON DELETE CASCADE,
-    question TEXT NOT NULL,
-    options JSONB NOT NULL,
-    bonne_reponse INTEGER NOT NULL
-  )
-`).catch(err => console.error('Erreur création table quiz_questions:', err))
-
-pool.query(`
-  CREATE TABLE IF NOT EXISTS quiz_resultats (
-    id SERIAL PRIMARY KEY,
-    quiz_id INTEGER REFERENCES quizzes(id) ON DELETE CASCADE,
-    etudiant_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    score INTEGER NOT NULL,
-    total INTEGER NOT NULL,
-    reponses JSONB,
-    created_at TIMESTAMP DEFAULT NOW()
-  )
-`).catch(err => console.error('Erreur création table quiz_resultats:', err))
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
+// On instancie Groq seulement si la clé existe, pour ne jamais faire planter le serveur au démarrage
+const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null
 
 // ── GET /api/quiz — liste des quiz (adaptée au rôle) ─────────────
 router.get('/', verifyToken, async (req, res) => {
   try {
     if (['professeur', 'admin'].includes(req.user.role)) {
-      const where = req.user.role === 'admin' ? '' : 'WHERE q.created_by = $1'
-      const params = req.user.role === 'admin' ? [] : [req.user.id]
-      const result = await pool.query(
-        `SELECT q.*,
-          (SELECT COUNT(*) FROM quiz_questions WHERE quiz_id = q.id) as nb_questions,
-          (SELECT COUNT(*) FROM quiz_resultats WHERE quiz_id = q.id) as nb_tentatives,
-          (SELECT ROUND(AVG(score::numeric / total * 100), 1) FROM quiz_resultats WHERE quiz_id = q.id) as moyenne_pct
-        FROM quizzes q ${where} ORDER BY q.created_at DESC`,
-        params
-      )
-      res.json({ quizzes: result.rows })
+      let query = supabase.from('quizzes').select('*').order('created_at', { ascending: false })
+      if (req.user.role !== 'admin') {
+        query = query.eq('created_by', req.user.id)
+      }
+      const { data: quizzes, error } = await query
+      if (error) return res.status(500).json({ error: error.message })
+
+      const quizIds = quizzes.map(q => q.id)
+
+      const { data: questions } = quizIds.length
+        ? await supabase.from('quiz_questions').select('id, quiz_id').in('quiz_id', quizIds)
+        : { data: [] }
+
+      const { data: resultats } = quizIds.length
+        ? await supabase.from('quiz_resultats').select('quiz_id, score, total').in('quiz_id', quizIds)
+        : { data: [] }
+
+      const enriched = quizzes.map(q => {
+        const nb_questions = (questions || []).filter(qu => qu.quiz_id === q.id).length
+        const tentatives = (resultats || []).filter(r => r.quiz_id === q.id)
+        const nb_tentatives = tentatives.length
+        const moyenne_pct = nb_tentatives > 0
+          ? Math.round((tentatives.reduce((acc, r) => acc + (r.score / r.total) * 100, 0) / nb_tentatives) * 10) / 10
+          : null
+        return { ...q, nb_questions, nb_tentatives, moyenne_pct }
+      })
+
+      res.json({ quizzes: enriched })
     } else {
-      const quizzesRes = await pool.query(
-        `SELECT q.*, (SELECT COUNT(*) FROM quiz_questions WHERE quiz_id = q.id) as nb_questions
-         FROM quizzes q WHERE q.publie = true ORDER BY q.created_at DESC`
-      )
-      const resultatsRes = await pool.query(
-        `SELECT quiz_id, score, total FROM quiz_resultats WHERE etudiant_id = $1`,
-        [req.user.id]
-      )
+      const { data: quizzesData, error: quizzesErr } = await supabase
+        .from('quizzes')
+        .select('*')
+        .eq('publie', true)
+        .order('created_at', { ascending: false })
+      if (quizzesErr) return res.status(500).json({ error: quizzesErr.message })
+
+      const quizIds = quizzesData.map(q => q.id)
+
+      const { data: questions } = quizIds.length
+        ? await supabase.from('quiz_questions').select('id, quiz_id').in('quiz_id', quizIds)
+        : { data: [] }
+
+      const { data: resultatsRes } = await supabase
+        .from('quiz_resultats')
+        .select('quiz_id, score, total')
+        .eq('etudiant_id', req.user.id)
+
       const map = {}
-      resultatsRes.rows.forEach(r => { map[r.quiz_id] = r })
-      const quizzes = quizzesRes.rows.map(q => ({
+      ;(resultatsRes || []).forEach(r => { map[r.quiz_id] = r })
+
+      const quizzes = quizzesData.map(q => ({
         ...q,
+        nb_questions: (questions || []).filter(qu => qu.quiz_id === q.id).length,
         deja_fait: !!map[q.id],
         score: map[q.id]?.score ?? null,
         total_score: map[q.id]?.total ?? null
@@ -92,6 +88,10 @@ router.post('/generer-ia', verifyToken, async (req, res) => {
   const { matiere, niveau, theme, nombre_questions } = req.body
   const n = Math.min(Math.max(parseInt(nombre_questions) || 5, 1), 20)
   if (!matiere) return res.status(400).json({ error: 'La matière est requise' })
+
+  if (!groq) {
+    return res.status(503).json({ error: 'Le service IA est momentanément indisponible (clé API manquante côté serveur)' })
+  }
 
   try {
     const completion = await groq.chat.completions.create({
@@ -141,49 +141,74 @@ router.post('/', verifyToken, async (req, res) => {
     }
   }
 
-  const client = await pool.connect()
   try {
-    await client.query('BEGIN')
-    const quizRes = await client.query(
-      `INSERT INTO quizzes (titre, matiere, niveau, created_by, ai_genere) VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-      [titre, matiere, niveau || null, req.user.id, !!ai_genere]
-    )
-    const quiz = quizRes.rows[0]
-    for (const q of questions) {
-      await client.query(
-        `INSERT INTO quiz_questions (quiz_id, question, options, bonne_reponse) VALUES ($1,$2,$3,$4)`,
-        [quiz.id, q.question, JSON.stringify(q.options), q.bonne_reponse]
-      )
+    const { data: quiz, error: quizErr } = await supabase
+      .from('quizzes')
+      .insert([{
+        titre,
+        matiere,
+        niveau: niveau || null,
+        created_by: req.user.id,
+        ai_genere: !!ai_genere
+      }])
+      .select()
+      .single()
+
+    if (quizErr) return res.status(500).json({ error: quizErr.message })
+
+    const questionsToInsert = questions.map(q => ({
+      quiz_id: quiz.id,
+      question: q.question,
+      options: q.options,
+      bonne_reponse: q.bonne_reponse
+    }))
+
+    const { error: questionsErr } = await supabase
+      .from('quiz_questions')
+      .insert(questionsToInsert)
+
+    if (questionsErr) {
+      await supabase.from('quizzes').delete().eq('id', quiz.id)
+      return res.status(500).json({ error: questionsErr.message })
     }
-    await client.query('COMMIT')
+
     res.json({ quiz })
   } catch (err) {
-    await client.query('ROLLBACK')
     console.error(err)
     res.status(500).json({ error: 'Erreur serveur' })
-  } finally {
-    client.release()
   }
 })
 
 // ── GET /api/quiz/:id — détail d'un quiz ─────────────────────────
 router.get('/:id', verifyToken, async (req, res) => {
   try {
-    const quizRes = await pool.query(`SELECT * FROM quizzes WHERE id = $1`, [req.params.id])
-    if (quizRes.rows.length === 0) return res.status(404).json({ error: 'Quiz non trouvé' })
-    const quiz = quizRes.rows[0]
+    const { data: quiz, error: quizErr } = await supabase
+      .from('quizzes')
+      .select('*')
+      .eq('id', req.params.id)
+      .single()
 
-    const questionsRes = await pool.query(`SELECT * FROM quiz_questions WHERE quiz_id = $1 ORDER BY id`, [req.params.id])
-    let questions = questionsRes.rows
+    if (quizErr || !quiz) return res.status(404).json({ error: 'Quiz non trouvé' })
+
+    const { data: questionsData, error: qErr } = await supabase
+      .from('quiz_questions')
+      .select('*')
+      .eq('quiz_id', req.params.id)
+      .order('id')
+
+    if (qErr) return res.status(500).json({ error: qErr.message })
+    let questions = questionsData
 
     if (!['professeur', 'admin'].includes(req.user.role)) {
-      const resultatRes = await pool.query(
-        `SELECT * FROM quiz_resultats WHERE quiz_id = $1 AND etudiant_id = $2`,
-        [req.params.id, req.user.id]
-      )
-      const dejaFait = resultatRes.rows[0]
-      if (dejaFait) {
-        return res.json({ quiz, questions, resultat: dejaFait })
+      const { data: resultat } = await supabase
+        .from('quiz_resultats')
+        .select('*')
+        .eq('quiz_id', req.params.id)
+        .eq('etudiant_id', req.user.id)
+        .maybeSingle()
+
+      if (resultat) {
+        return res.json({ quiz, questions, resultat })
       }
       questions = questions.map(q => ({ id: q.id, question: q.question, options: q.options }))
       return res.json({ quiz, questions, resultat: null })
@@ -200,15 +225,23 @@ router.get('/:id', verifyToken, async (req, res) => {
 router.post('/:id/soumettre', verifyToken, async (req, res) => {
   const { reponses } = req.body
   try {
-    const existing = await pool.query(
-      `SELECT id FROM quiz_resultats WHERE quiz_id = $1 AND etudiant_id = $2`,
-      [req.params.id, req.user.id]
-    )
-    if (existing.rows.length > 0) return res.status(409).json({ error: 'Vous avez déjà passé ce quiz' })
+    const { data: existing } = await supabase
+      .from('quiz_resultats')
+      .select('id')
+      .eq('quiz_id', req.params.id)
+      .eq('etudiant_id', req.user.id)
+      .maybeSingle()
 
-    const questionsRes = await pool.query(`SELECT * FROM quiz_questions WHERE quiz_id = $1 ORDER BY id`, [req.params.id])
-    const questions = questionsRes.rows
-    if (questions.length === 0) return res.status(404).json({ error: 'Quiz introuvable' })
+    if (existing) return res.status(409).json({ error: 'Vous avez déjà passé ce quiz' })
+
+    const { data: questions, error: qErr } = await supabase
+      .from('quiz_questions')
+      .select('*')
+      .eq('quiz_id', req.params.id)
+      .order('id')
+
+    if (qErr) return res.status(500).json({ error: qErr.message })
+    if (!questions || questions.length === 0) return res.status(404).json({ error: 'Quiz introuvable' })
 
     let score = 0
     const corrections = questions.map(q => {
@@ -218,10 +251,17 @@ router.post('/:id/soumettre', verifyToken, async (req, res) => {
       return { id: q.id, question: q.question, options: q.options, bonne_reponse: q.bonne_reponse, choisi, correct }
     })
 
-    await pool.query(
-      `INSERT INTO quiz_resultats (quiz_id, etudiant_id, score, total, reponses) VALUES ($1,$2,$3,$4,$5)`,
-      [req.params.id, req.user.id, score, questions.length, JSON.stringify(reponses || {})]
-    )
+    const { error: insertErr } = await supabase
+      .from('quiz_resultats')
+      .insert([{
+        quiz_id: req.params.id,
+        etudiant_id: req.user.id,
+        score,
+        total: questions.length,
+        reponses: reponses || {}
+      }])
+
+    if (insertErr) return res.status(500).json({ error: insertErr.message })
 
     res.json({ score, total: questions.length, corrections })
   } catch (err) {
@@ -236,19 +276,36 @@ router.get('/:id/resultats', verifyToken, async (req, res) => {
     return res.status(403).json({ error: 'Accès refusé' })
   }
   try {
-    const quizRes = await pool.query(`SELECT * FROM quizzes WHERE id = $1`, [req.params.id])
-    if (quizRes.rows.length === 0) return res.status(404).json({ error: 'Quiz non trouvé' })
-    if (req.user.role !== 'admin' && quizRes.rows[0].created_by !== req.user.id) {
+    const { data: quiz, error: quizErr } = await supabase
+      .from('quizzes')
+      .select('*')
+      .eq('id', req.params.id)
+      .single()
+
+    if (quizErr || !quiz) return res.status(404).json({ error: 'Quiz non trouvé' })
+    if (req.user.role !== 'admin' && quiz.created_by !== req.user.id) {
       return res.status(403).json({ error: 'Accès refusé' })
     }
 
-    const result = await pool.query(
-      `SELECT qr.score, qr.total, qr.created_at, u.username, u.prenom, u.nom, u.matricule
-       FROM quiz_resultats qr JOIN users u ON u.id = qr.etudiant_id
-       WHERE qr.quiz_id = $1 ORDER BY qr.score DESC`,
-      [req.params.id]
-    )
-    res.json({ quiz: quizRes.rows[0], resultats: result.rows })
+    const { data: resultats, error: resErr } = await supabase
+      .from('quiz_resultats')
+      .select('score, total, created_at, etudiant:etudiant_id(username, prenom, nom, matricule)')
+      .eq('quiz_id', req.params.id)
+      .order('score', { ascending: false })
+
+    if (resErr) return res.status(500).json({ error: resErr.message })
+
+    const flatResultats = (resultats || []).map(r => ({
+      score: r.score,
+      total: r.total,
+      created_at: r.created_at,
+      username: r.etudiant?.username,
+      prenom: r.etudiant?.prenom,
+      nom: r.etudiant?.nom,
+      matricule: r.etudiant?.matricule
+    }))
+
+    res.json({ quiz, resultats: flatResultats })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Erreur serveur' })
@@ -261,12 +318,19 @@ router.delete('/:id', verifyToken, async (req, res) => {
     return res.status(403).json({ error: 'Accès refusé' })
   }
   try {
-    const quizRes = await pool.query(`SELECT created_by FROM quizzes WHERE id = $1`, [req.params.id])
-    if (quizRes.rows.length === 0) return res.status(404).json({ error: 'Quiz non trouvé' })
-    if (req.user.role !== 'admin' && quizRes.rows[0].created_by !== req.user.id) {
+    const { data: quiz, error: quizErr } = await supabase
+      .from('quizzes')
+      .select('created_by')
+      .eq('id', req.params.id)
+      .single()
+
+    if (quizErr || !quiz) return res.status(404).json({ error: 'Quiz non trouvé' })
+    if (req.user.role !== 'admin' && quiz.created_by !== req.user.id) {
       return res.status(403).json({ error: 'Accès refusé' })
     }
-    await pool.query(`DELETE FROM quizzes WHERE id = $1`, [req.params.id])
+
+    const { error: delErr } = await supabase.from('quizzes').delete().eq('id', req.params.id)
+    if (delErr) return res.status(500).json({ error: delErr.message })
     res.json({ success: true })
   } catch (err) {
     console.error(err)

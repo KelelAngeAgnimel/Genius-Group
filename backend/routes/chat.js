@@ -2,7 +2,8 @@ import express from 'express'
 import Groq from 'groq-sdk'
 
 const router = express.Router()
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+// On instancie Groq seulement si la clé existe, pour ne jamais faire planter le serveur au démarrage
+const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null
 
 // Historique par session (en mémoire)
 const conversations = {}
@@ -12,6 +13,10 @@ router.post('/', async (req, res) => {
 
   if (!message || !sessionId) {
     return res.status(400).json({ error: 'message et sessionId sont requis' })
+  }
+
+  if (!groq) {
+    return res.status(503).json({ error: 'Le service IA est momentanément indisponible (clé API manquante côté serveur)' })
   }
 
   if (!conversations[sessionId]) {
