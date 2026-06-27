@@ -76,15 +76,26 @@ router.get('/', verifyToken, async (req, res) => {
         .select('quiz_id, score, total')
         .eq('etudiant_id', req.user.id)
 
-      const map = {}
-      ;(resultatsRes || []).forEach(r => { map[r.quiz_id] = r })
+      // Pour chaque quiz : nombre de tentatives déjà faites et meilleur score obtenu
+      const statsParQuiz = {}
+      ;(resultatsRes || []).forEach(r => {
+        if (!statsParQuiz[r.quiz_id]) {
+          statsParQuiz[r.quiz_id] = { nb_tentatives: 0, meilleur_score: 0, meilleur_total: r.total }
+        }
+        statsParQuiz[r.quiz_id].nb_tentatives++
+        if (r.score > statsParQuiz[r.quiz_id].meilleur_score) {
+          statsParQuiz[r.quiz_id].meilleur_score = r.score
+          statsParQuiz[r.quiz_id].meilleur_total = r.total
+        }
+      })
 
       const quizzes = quizzesData.map(q => ({
         ...q,
         nb_questions: (questions || []).filter(qu => qu.quiz_id === q.id).length,
-        deja_fait: !!map[q.id],
-        score: map[q.id]?.score ?? null,
-        total_score: map[q.id]?.total ?? null
+        deja_fait: !!statsParQuiz[q.id],
+        nb_tentatives: statsParQuiz[q.id]?.nb_tentatives ?? 0,
+        score: statsParQuiz[q.id]?.meilleur_score ?? null,
+        total_score: statsParQuiz[q.id]?.meilleur_total ?? null
       }))
       res.json({ quizzes })
     }
@@ -167,7 +178,6 @@ router.post('/importer-pdf', verifyToken, (req, res, next) => {
 
   let parser
   try {
-    // 1. Extraction du texte brut du PDF
     parser = new PDFParse({ data: req.file.buffer })
     const { text } = await parser.getText()
 
@@ -175,10 +185,8 @@ router.post('/importer-pdf', verifyToken, (req, res, next) => {
       return res.status(400).json({ error: "Le PDF semble vide ou le texte n'a pas pu être extrait (PDF scanné/image non supporté)" })
     }
 
-    // Groq a une limite de contexte : on tronque un texte anormalement long par sécurité
     const texteTronque = text.slice(0, 15000)
 
-    // 2. Demande à l'IA de structurer le texte brut en QCM exploitables
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       max_tokens: 8192,
@@ -242,9 +250,13 @@ router.post('/', verifyToken, async (req, res) => {
   if (!['professeur', 'admin'].includes(req.user.role)) {
     return res.status(403).json({ error: 'Accès réservé aux professeurs et administrateurs' })
   }
-  const { titre, matiere, niveau, questions, ai_genere } = req.body
+  const { titre, matiere, niveau, questions, ai_genere, duree_minutes } = req.body
   if (!titre || !matiere || !Array.isArray(questions) || questions.length === 0) {
     return res.status(400).json({ error: 'titre, matiere et au moins une question sont requis' })
+  }
+  const duree = parseInt(duree_minutes)
+  if (!duree || duree < 1) {
+    return res.status(400).json({ error: 'La durée du quiz (en minutes) est requise et doit être supérieure à 0' })
   }
   for (const q of questions) {
     if (!q.question || !Array.isArray(q.options) || q.options.length !== 4 || typeof q.bonne_reponse !== 'number') {
@@ -260,7 +272,8 @@ router.post('/', verifyToken, async (req, res) => {
         matiere,
         niveau: niveau || null,
         created_by: req.user.id,
-        ai_genere: !!ai_genere
+        ai_genere: !!ai_genere,
+        duree_minutes: duree
       }])
       .select()
       .single()
@@ -311,21 +324,23 @@ router.get('/:id', verifyToken, async (req, res) => {
     let questions = questionsData
 
     if (!['professeur', 'admin'].includes(req.user.role)) {
-      const { data: resultat } = await supabase
+      const { data: tentatives } = await supabase
         .from('quiz_resultats')
         .select('*')
         .eq('quiz_id', req.params.id)
         .eq('etudiant_id', req.user.id)
-        .maybeSingle()
+        .order('tentative_numero', { ascending: true })
 
-      if (resultat) {
-        return res.json({ quiz, questions, resultat })
-      }
-      questions = questions.map(q => ({ id: q.id, question: q.question, options: q.options }))
-      return res.json({ quiz, questions, resultat: null })
+      const questionsSansReponse = questions.map(q => ({ id: q.id, question: q.question, options: q.options }))
+
+      return res.json({
+        quiz,
+        questions: questionsSansReponse,
+        tentatives: tentatives || []
+      })
     }
 
-    res.json({ quiz, questions, resultat: null })
+    res.json({ quiz, questions, tentatives: [] })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Erreur serveur' })
@@ -336,14 +351,18 @@ router.get('/:id', verifyToken, async (req, res) => {
 router.post('/:id/soumettre', verifyToken, async (req, res) => {
   const { reponses } = req.body
   try {
-    const { data: existing } = await supabase
+    const { data: tentativesPrecedentes, error: tentErr } = await supabase
       .from('quiz_resultats')
-      .select('id')
+      .select('tentative_numero')
       .eq('quiz_id', req.params.id)
       .eq('etudiant_id', req.user.id)
-      .maybeSingle()
+      .order('tentative_numero', { ascending: false })
+      .limit(1)
 
-    if (existing) return res.status(409).json({ error: 'Vous avez déjà passé ce quiz' })
+    if (tentErr) return res.status(500).json({ error: tentErr.message })
+    const prochainNumero = tentativesPrecedentes && tentativesPrecedentes.length > 0
+      ? tentativesPrecedentes[0].tentative_numero + 1
+      : 1
 
     const { data: questions, error: qErr } = await supabase
       .from('quiz_questions')
@@ -357,24 +376,27 @@ router.post('/:id/soumettre', verifyToken, async (req, res) => {
     let score = 0
     const corrections = questions.map(q => {
       const choisi = reponses?.[q.id] ?? null
-      const correct = choisi === q.bonne_reponse
+      const correct = choisi !== null && choisi === q.bonne_reponse
       if (correct) score++
       return { id: q.id, question: q.question, options: q.options, bonne_reponse: q.bonne_reponse, choisi, correct }
     })
 
-    const { error: insertErr } = await supabase
+    const { data: nouvelleTentative, error: insertErr } = await supabase
       .from('quiz_resultats')
       .insert([{
         quiz_id: req.params.id,
         etudiant_id: req.user.id,
         score,
         total: questions.length,
-        reponses: reponses || {}
+        reponses: reponses || {},
+        tentative_numero: prochainNumero
       }])
+      .select()
+      .single()
 
     if (insertErr) return res.status(500).json({ error: insertErr.message })
 
-    res.json({ score, total: questions.length, corrections })
+    res.json({ score, total: questions.length, corrections, tentative_numero: prochainNumero, created_at: nouvelleTentative.created_at })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Erreur serveur' })
@@ -400,23 +422,42 @@ router.get('/:id/resultats', verifyToken, async (req, res) => {
 
     const { data: resultats, error: resErr } = await supabase
       .from('quiz_resultats')
-      .select('score, total, created_at, etudiant:etudiant_id(username, prenom, nom, matricule)')
+      .select('score, total, created_at, tentative_numero, etudiant_id, etudiant:etudiant_id(username, prenom, nom, matricule)')
       .eq('quiz_id', req.params.id)
-      .order('score', { ascending: false })
+      .order('etudiant_id')
+      .order('tentative_numero', { ascending: true })
 
     if (resErr) return res.status(500).json({ error: resErr.message })
 
-    const flatResultats = (resultats || []).map(r => ({
-      score: r.score,
-      total: r.total,
-      created_at: r.created_at,
-      username: r.etudiant?.username,
-      prenom: r.etudiant?.prenom,
-      nom: r.etudiant?.nom,
-      matricule: r.etudiant?.matricule
-    }))
+    const parEtudiant = {}
+    for (const r of (resultats || [])) {
+      if (!parEtudiant[r.etudiant_id]) {
+        parEtudiant[r.etudiant_id] = {
+          etudiant_id: r.etudiant_id,
+          username: r.etudiant?.username,
+          prenom: r.etudiant?.prenom,
+          nom: r.etudiant?.nom,
+          matricule: r.etudiant?.matricule,
+          tentatives: [],
+          meilleur_score: 0,
+          meilleur_total: r.total
+        }
+      }
+      parEtudiant[r.etudiant_id].tentatives.push({
+        tentative_numero: r.tentative_numero,
+        score: r.score,
+        total: r.total,
+        created_at: r.created_at
+      })
+      if (r.score > parEtudiant[r.etudiant_id].meilleur_score) {
+        parEtudiant[r.etudiant_id].meilleur_score = r.score
+        parEtudiant[r.etudiant_id].meilleur_total = r.total
+      }
+    }
 
-    res.json({ quiz, resultats: flatResultats })
+    const resultatsParEtudiant = Object.values(parEtudiant).sort((a, b) => (b.meilleur_score / b.meilleur_total) - (a.meilleur_score / a.meilleur_total))
+
+    res.json({ quiz, resultats: resultatsParEtudiant })
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Erreur serveur' })
