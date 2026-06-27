@@ -1,22 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useAuth } from '../../context/AuthContext'
+import API_URL from '../../config'
 
 const heures = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00']
 
 const jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
-
-const evenements = [
-  { jour: 'Lundi', debut: '08:00', fin: '10:00', titre: 'Mathématiques', type: 'cours', salle: 'Salle A1', couleur: '#C9A84C' },
-  { jour: 'Lundi', debut: '10:00', fin: '12:00', titre: 'Physique', type: 'cours', salle: 'Labo B2', couleur: '#4CC9A8' },
-  { jour: 'Mardi', debut: '08:00', fin: '10:00', titre: 'Culture Générale', type: 'cours', salle: 'Salle C3', couleur: '#7B4CC9' },
-  { jour: 'Mardi', debut: '14:00', fin: '16:00', titre: 'Concours Blanc', type: 'examen', salle: 'Grand Hall', couleur: '#C94C7B' },
-  { jour: 'Mercredi', debut: '08:00', fin: '10:00', titre: 'Anglais', type: 'cours', salle: 'Salle D1', couleur: '#4C7BC9' },
-  { jour: 'Mercredi', debut: '10:00', fin: '12:00', titre: 'Culture Littéraire', type: 'cours', salle: 'Salle A2', couleur: '#C97B4C' },
-  { jour: 'Jeudi', debut: '09:00', fin: '11:00', titre: 'Culture Scientifique', type: 'cours', salle: 'Labo C1', couleur: '#C94C7B' },
-  { jour: 'Jeudi', debut: '14:00', fin: '15:00', titre: 'Réunion parents', type: 'evenement', salle: 'Amphi 1', couleur: '#4C7BC9' },
-  { jour: 'Vendredi', debut: '08:00', fin: '10:00', titre: 'Mathématiques', type: 'cours', salle: 'Salle A1', couleur: '#C9A84C' },
-  { jour: 'Vendredi', debut: '10:00', fin: '12:00', titre: 'Physique', type: 'cours', salle: 'Labo B2', couleur: '#4CC9A8' },
-  { jour: 'Samedi', debut: '08:00', fin: '12:00', titre: 'Session révisions', type: 'evenement', salle: 'Bibliothèque', couleur: '#7B4CC9' },
-]
 
 const moisNoms = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
 
@@ -37,17 +25,62 @@ function getMiniCalendrierDays(year, month) {
 }
 
 function getHeureIndex(heure) {
-  return heures.indexOf(heure)
+  const idx = heures.indexOf(heure)
+  return idx === -1 ? heures.length : idx
 }
 
 export default function EmploiDuTemps() {
+  const { token } = useAuth()
   const today = new Date()
   const [moisActuel, setMoisActuel] = useState(today.getMonth())
   const [anneeActuelle, setAnneeActuelle] = useState(today.getFullYear())
   const [vue, setVue] = useState('semaine')
   const [jourSelectionne, setJourSelectionne] = useState(null)
+  const [evenements, setEvenements] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [erreur, setErreur] = useState('')
+  const [derniereSynchro, setDerniereSynchro] = useState(today)
 
   const days = getMiniCalendrierDays(anneeActuelle, moisActuel)
+
+  useEffect(() => {
+    chargerPlanning()
+  }, [])
+
+  const chargerPlanning = async () => {
+    setLoading(true)
+    setErreur('')
+    try {
+      const res = await fetch(`${API_URL}/api/planning`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setErreur(data.error || 'Impossible de charger le planning.')
+        setEvenements([])
+        return
+      }
+
+      const formates = (Array.isArray(data) ? data : []).map(c => ({
+        jour: c.jour,
+        debut: c.heure_debut,
+        fin: c.heure_fin,
+        titre: c.matiere,
+        type: c.type,
+        salle: c.salle,
+        prof: c.prof,
+        couleur: typeConfig[c.type]?.couleur || '#C9A84C'
+      }))
+      setEvenements(formates)
+      setDerniereSynchro(new Date())
+    } catch {
+      setErreur('Erreur de connexion au serveur.')
+      setEvenements([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const moisPrecedent = () => {
     if (moisActuel === 0) { setMoisActuel(11); setAnneeActuelle(a => a - 1) }
@@ -98,9 +131,15 @@ export default function EmploiDuTemps() {
           </div>
         </div>
         <p className="text-gray-400 text-sm mt-1">
-          Dernière synchro. le {today.toLocaleDateString('fr-FR')} à {today.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+          Dernière synchro. le {derniereSynchro.toLocaleDateString('fr-FR')} à {derniereSynchro.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
+
+      {erreur && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3 mb-4">
+          {erreur}
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
 
@@ -209,7 +248,11 @@ export default function EmploiDuTemps() {
         {/* CALENDRIER PRINCIPAL */}
         <div className="flex-1">
 
-          {vue === 'semaine' ? (
+          {loading ? (
+            <div className="bg-white rounded-2xl p-10 text-center" style={{ border: '1px solid #f0ece0' }}>
+              <p className="text-gray-400 text-sm">Chargement du planning...</p>
+            </div>
+          ) : vue === 'semaine' ? (
             <div className="bg-white rounded-2xl overflow-hidden" style={{ border: '1px solid #f0ece0' }}>
 
               {/* En-tete jours */}
@@ -263,7 +306,8 @@ export default function EmploiDuTemps() {
                                 {ev.titre}
                               </p>
                               <p className="text-xs text-gray-400 mt-0.5">{ev.debut} - {ev.fin}</p>
-                              <p className="text-xs text-gray-400">{ev.salle}</p>
+                              {ev.salle && <p className="text-xs text-gray-400">{ev.salle}</p>}
+                              {ev.prof && <p className="text-xs text-gray-400 italic">{ev.prof}</p>}
                             </div>
                           )}
                         </div>
@@ -277,6 +321,11 @@ export default function EmploiDuTemps() {
           ) : (
             // VUE LISTE
             <div className="flex flex-col gap-3">
+              {evenementsFiltres.length === 0 && (
+                <div className="bg-white rounded-2xl p-10 text-center" style={{ border: '1px solid #f0ece0' }}>
+                  <p className="text-gray-400 text-sm">Aucun cours prévu pour le moment.</p>
+                </div>
+              )}
               {jours.map(jour => {
                 const evJour = evenementsFiltres.filter(e => e.jour === jour)
                 if (evJour.length === 0) return null
@@ -296,11 +345,13 @@ export default function EmploiDuTemps() {
                             style={{ background: ev.couleur }} />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-bold text-gray-800">{ev.titre}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">{ev.debut} - {ev.fin} — {ev.salle}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {ev.debut} - {ev.fin}{ev.salle ? ` — ${ev.salle}` : ''}{ev.prof ? ` — ${ev.prof}` : ''}
+                            </p>
                           </div>
                           <span className="text-xs font-semibold px-2 py-1 rounded-lg flex-shrink-0"
                             style={{ background: `${ev.couleur}15`, color: ev.couleur }}>
-                            {typeConfig[ev.type].label}
+                            {typeConfig[ev.type]?.label || ev.type}
                           </span>
                         </div>
                       ))}

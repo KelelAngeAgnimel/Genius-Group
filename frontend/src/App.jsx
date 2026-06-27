@@ -2,6 +2,7 @@ import AccueilPublic from './pages/AccueilPublic'
 import Admin from './pages/admin/Admin'
 import GestionUtilisateurs from './pages/admin/GestionUtilisateurs'
 import CreerUtilisateur from './pages/admin/CreerUtilisateur'
+import GestionPlanning from './pages/admin/GestionPlanning'
 import EspaceProfesseur from './pages/professeur/EspaceProfesseur'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
@@ -105,6 +106,7 @@ export default function App() {
           <Route index element={<Navigate to="utilisateurs" />} />
           <Route path="utilisateurs" element={<GestionUtilisateurs />} />
           <Route path="creer" element={<CreerUtilisateur />} />
+          <Route path="planning" element={<GestionPlanning />} />
         </Route>
 
       </Routes>
