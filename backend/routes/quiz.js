@@ -1,6 +1,8 @@
 import express from 'express'
 import { createClient } from '@supabase/supabase-js'
 import Groq from 'groq-sdk'
+import multer from 'multer'
+import { PDFParse } from 'pdf-parse'
 import { verifyToken } from './auth.js'
 import dotenv from 'dotenv'
 
@@ -10,6 +12,18 @@ const router = express.Router()
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
 // On instancie Groq seulement si la clé existe, pour ne jamais faire planter le serveur au démarrage
 const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null
+
+// Upload PDF en mémoire (pas de disque, adapté à Render dont le disque est éphémère)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 Mo max
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype !== 'application/pdf') {
+      return cb(new Error('Seuls les fichiers PDF sont acceptés'))
+    }
+    cb(null, true)
+  }
+})
 
 // ── GET /api/quiz — liste des quiz (adaptée au rôle) ─────────────
 router.get('/', verifyToken, async (req, res) => {
@@ -123,6 +137,103 @@ router.post('/generer-ia', verifyToken, async (req, res) => {
   } catch (err) {
     console.error('Erreur génération IA:', err)
     res.status(500).json({ error: 'Erreur lors de la génération IA' })
+  }
+})
+
+// ── POST /api/quiz/importer-pdf — extraction de QCM depuis un PDF ─
+router.post('/importer-pdf', verifyToken, (req, res, next) => {
+  upload.single('fichier')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'Le fichier PDF dépasse la taille maximale autorisée (10 Mo)' })
+      }
+      return res.status(400).json({ error: `Erreur d'upload : ${err.message}` })
+    }
+    if (err) {
+      return res.status(400).json({ error: err.message || 'Fichier invalide, seuls les PDF sont acceptés' })
+    }
+    next()
+  })
+}, async (req, res) => {
+  if (!['professeur', 'admin'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Accès réservé aux professeurs et administrateurs' })
+  }
+  if (!req.file) {
+    return res.status(400).json({ error: 'Aucun fichier PDF reçu' })
+  }
+  if (!groq) {
+    return res.status(503).json({ error: 'Le service IA est momentanément indisponible (clé API manquante côté serveur)' })
+  }
+
+  let parser
+  try {
+    // 1. Extraction du texte brut du PDF
+    parser = new PDFParse({ data: req.file.buffer })
+    const { text } = await parser.getText()
+
+    if (!text || text.trim().length < 20) {
+      return res.status(400).json({ error: "Le PDF semble vide ou le texte n'a pas pu être extrait (PDF scanné/image non supporté)" })
+    }
+
+    // Groq a une limite de contexte : on tronque un texte anormalement long par sécurité
+    const texteTronque = text.slice(0, 15000)
+
+    // 2. Demande à l'IA de structurer le texte brut en QCM exploitables
+    const completion = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 8192,
+      messages: [
+        {
+          role: 'system',
+          content: 'Tu reçois le texte brut extrait d\'un PDF contenant un QCM (questions à choix multiples). Identifie chaque question et ses options de réponse, puis détermine la bonne réponse si elle est indiquée dans le texte (par exemple par un astérisque, un "Réponse :", un soulignement signalé, une mise en gras perdue à l\'extraction, etc.). Si la bonne réponse n\'est pas identifiable avec certitude, choisis l\'option la plus plausible. Tu réponds UNIQUEMENT avec un tableau JSON valide, sans aucun texte avant ou après, sans balises markdown. Format exact : [{"question": "texte", "options": ["a","b","c","d"], "bonne_reponse": 0}]. bonne_reponse est l\'index (0 à 3) de la bonne réponse dans options. Ignore les éléments qui ne sont pas des questions (en-têtes, numéros de page, instructions générales, noms d\'examen). Chaque question doit avoir exactement 4 options : si le document en propose plus ou moins, adapte en conservant les plus pertinentes ou en complétant avec des options plausibles.'
+        },
+        {
+          role: 'user',
+          content: `Voici le texte extrait du PDF :\n\n${texteTronque}`
+        }
+      ]
+    })
+
+    let raw = completion.choices[0].message.content.trim()
+    raw = raw.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim()
+
+    let questions
+    let reponseTronquee = false
+    try {
+      questions = JSON.parse(raw)
+    } catch {
+      const dernierObjetComplet = raw.lastIndexOf('},')
+      if (dernierObjetComplet === -1) {
+        return res.status(500).json({ error: "L'IA n'a pas pu structurer le contenu du PDF en QCM valide" })
+      }
+      try {
+        questions = JSON.parse(raw.slice(0, dernierObjetComplet + 1) + ']')
+        reponseTronquee = true
+      } catch {
+        return res.status(500).json({ error: "L'IA n'a pas pu structurer le contenu du PDF en QCM valide" })
+      }
+    }
+
+    const valides = questions.filter(q =>
+      q.question && Array.isArray(q.options) && q.options.length === 4 &&
+      typeof q.bonne_reponse === 'number' && q.bonne_reponse >= 0 && q.bonne_reponse <= 3
+    )
+
+    if (valides.length === 0) {
+      return res.status(422).json({ error: "Aucune question de type QCM n'a pu être identifiée dans ce PDF" })
+    }
+
+    res.json({
+      questions: valides,
+      nb_detectees: questions.length,
+      nb_valides: valides.length,
+      tronque: reponseTronquee
+    })
+  } catch (err) {
+    console.error('Erreur import PDF:', err)
+    res.status(500).json({ error: "Erreur lors du traitement du PDF" })
+  } finally {
+    if (parser) await parser.destroy()
   }
 })
 

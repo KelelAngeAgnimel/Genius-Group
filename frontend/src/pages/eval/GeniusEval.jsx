@@ -148,7 +148,7 @@ function LecteurQuiz({ quizId, token, onTermine, onRetour }) {
 function VueEtudiant({ token }) {
   const [quizzes, setQuizzes] = useState([])
   const [loading, setLoading] = useState(true)
-  const [quizOuvert, setQuizOuvert] = useState(null)
+  const [quizActif, setQuizActif] = useState(null)
 
   const charger = async () => {
     setLoading(true)
@@ -162,43 +162,37 @@ function VueEtudiant({ token }) {
 
   useEffect(() => { charger() }, [])
 
-  if (quizOuvert) {
-    return <LecteurQuiz quizId={quizOuvert} token={token} onTermine={charger} onRetour={() => setQuizOuvert(null)} />
+  if (quizActif) {
+    return <LecteurQuiz quizId={quizActif} token={token} onTermine={charger} onRetour={() => { setQuizActif(null); charger() }} />
   }
 
+  if (loading) return <p className="text-xs text-gray-400 text-center py-10">Chargement...</p>
+
   return (
-    <div>
-      {loading ? (
-        <p className="text-xs text-gray-400 text-center py-10">Chargement des quiz...</p>
-      ) : quizzes.length === 0 ? (
-        <div className="rounded-2xl p-8 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
-          <p className="text-3xl mb-2">📭</p>
-          <p className="text-sm text-gray-400">Aucun quiz disponible pour le moment</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {quizzes.map((q, i) => (
-            <div key={i} onClick={() => setQuizOuvert(q.id)}
-              className="rounded-2xl p-5 cursor-pointer transition hover:shadow-lg"
-              style={{ background: `linear-gradient(145deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${q.deja_fait ? COULEURS.vert + '4D' : COULEURS.or + '4D'}` }}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs tracking-widest uppercase" style={{ color: COULEURS.or }}>{q.matiere}</span>
-                {q.deja_fait ? (
-                  <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '20px', background: `${COULEURS.vert}26`, color: COULEURS.vert, border: `1px solid ${COULEURS.vert}` }}>
-                    {q.score}/{q.total_score}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '20px', background: `${COULEURS.or}26`, color: COULEURS.or, border: `1px solid ${COULEURS.or}` }}>
-                    À faire
-                  </span>
-                )}
-              </div>
-              <p className="font-bold text-white">{q.titre}</p>
-              <p className="text-xs text-gray-400 mt-1">{q.nb_questions} questions</p>
-            </div>
-          ))}
-        </div>
+    <div className="flex flex-col gap-3">
+      {quizzes.length === 0 && (
+        <p className="text-xs text-gray-400 text-center py-10">Aucun quiz disponible pour le moment.</p>
       )}
+      {quizzes.map(q => (
+        <div key={q.id} onClick={() => setQuizActif(q.id)}
+          className="rounded-2xl p-4 cursor-pointer transition flex items-center justify-between"
+          style={{ background: '#fff', border: '1px solid #f0ece0' }}>
+          <div>
+            <p className="text-xs tracking-widest uppercase mb-1" style={{ color: COULEURS.or }}>{q.matiere}</p>
+            <p className="font-bold text-sm" style={{ color: COULEURS.navy }}>{q.titre}</p>
+            <p className="text-xs text-gray-400 mt-1">{q.nb_questions} question(s)</p>
+          </div>
+          {q.deja_fait ? (
+            <span className="text-xs font-bold px-3 py-1.5 rounded-lg" style={{ background: `${COULEURS.vert}1A`, color: COULEURS.vert }}>
+              {q.score}/{q.total_score}
+            </span>
+          ) : (
+            <span className="text-xs font-bold px-3 py-1.5 rounded-lg" style={{ background: `${COULEURS.or}1A`, color: COULEURS.or }}>
+              À faire
+            </span>
+          )}
+        </div>
+      ))}
     </div>
   )
 }
@@ -216,6 +210,7 @@ function VueProf({ token }) {
   const [questions, setQuestions] = useState([{ question: '', options: ['', '', '', ''], bonne_reponse: 0 }])
   const [iaForm, setIaForm] = useState({ theme: '', nombre_questions: 5 })
   const [generating, setGenerating] = useState(false)
+  const [importingPdf, setImportingPdf] = useState(false)
   const [saving, setSaving] = useState(false)
   const [erreur, setErreur] = useState('')
 
@@ -260,6 +255,46 @@ function VueProf({ token }) {
     finally { setGenerating(false) }
   }
 
+  const importerPdf = async (e) => {
+    const fichier = e.target.files?.[0]
+    if (!fichier) return
+    e.target.value = ''
+
+    if (fichier.type !== 'application/pdf') {
+      setErreur('Seuls les fichiers PDF sont acceptés.')
+      return
+    }
+
+    setImportingPdf(true)
+    setErreur('')
+    try {
+      const formData = new FormData()
+      formData.append('fichier', fichier)
+
+      const res = await fetch(`${API_URL}/api/quiz/importer-pdf`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      })
+      const d = await res.json()
+
+      if (res.ok && d.questions) {
+        setQuestions(d.questions)
+        if (d.tronque) {
+          setErreur(`Le PDF contenait beaucoup de questions : seules les ${d.nb_valides} premières ont pu être importées proprement. Vous pouvez ajouter le reste manuellement.`)
+        } else if (d.nb_valides < d.nb_detectees) {
+          setErreur(`${d.nb_valides} question(s) importée(s) sur ${d.nb_detectees} détectée(s) — vérifiez le contenu avant de publier.`)
+        }
+      } else {
+        setErreur(d.error || "Erreur lors de l'import du PDF")
+      }
+    } catch (err) {
+      setErreur('Erreur réseau lors de l\'import du PDF')
+    } finally {
+      setImportingPdf(false)
+    }
+  }
+
   const enregistrer = async () => {
     if (!form.titre || !form.matiere) { setErreur('Le titre et la matière sont requis.'); return }
     const valides = questions.every(q => q.question.trim() && q.options.every(o => o.trim()))
@@ -298,39 +333,32 @@ function VueProf({ token }) {
   return (
     <div>
       <div className="flex gap-2 mb-5">
-        {[{ k: 'liste', l: 'Mes quiz' }, { k: 'creer', l: '+ Créer un quiz' }].map(t => (
-          <button key={t.k} onClick={() => { setVue(t.k); if (t.k === 'creer') reinitialiserForm() }}
-            className="px-4 py-2 rounded-xl text-xs font-bold transition"
-            style={{
-              background: vue === t.k ? `linear-gradient(135deg, #b8891e, ${COULEURS.or})` : '#fff',
-              color: vue === t.k ? COULEURS.navy : '#9ca3af',
-              border: `1px solid ${vue === t.k ? COULEURS.or : '#f0ece0'}`
-            }}>
-            {t.l}
-          </button>
-        ))}
+        <button onClick={() => setVue('liste')} className="text-xs font-bold px-4 py-2 rounded-xl"
+          style={{ background: vue === 'liste' ? COULEURS.navy : '#fff', color: vue === 'liste' ? COULEURS.or : '#6b7280', border: '1px solid #f0ece0' }}>
+          Mes quiz
+        </button>
+        <button onClick={() => { reinitialiserForm(); setVue('creer') }} className="text-xs font-bold px-4 py-2 rounded-xl"
+          style={{ background: vue === 'creer' ? COULEURS.navy : '#fff', color: vue === 'creer' ? COULEURS.or : '#6b7280', border: '1px solid #f0ece0' }}>
+          + Créer un quiz
+        </button>
       </div>
 
       {vue === 'liste' && (
-        loading ? <p className="text-xs text-gray-400 text-center py-10">Chargement...</p> :
-        quizzes.length === 0 ? (
-          <div className="rounded-2xl p-8 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
-            <p className="text-3xl mb-2">📭</p>
-            <p className="text-sm text-gray-400">Aucun quiz créé pour le moment</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {quizzes.map((q, i) => (
-              <div key={i} className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs tracking-widest uppercase" style={{ color: COULEURS.or }}>{q.matiere}</span>
-                  {q.ai_genere && <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: `${COULEURS.bleu}1A`, color: COULEURS.bleu }}>IA</span>}
+        loading ? <p className="text-xs text-gray-400 text-center py-10">Chargement...</p> : (
+          <div className="flex flex-col gap-3">
+            {quizzes.length === 0 && (
+              <p className="text-xs text-gray-400 text-center py-10">Aucun quiz créé pour le moment.</p>
+            )}
+            {quizzes.map(q => (
+              <div key={q.id} className="rounded-2xl p-4 flex items-center justify-between" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
+                <div onClick={() => voirResultats(q.id)} className="cursor-pointer flex-1">
+                  <p className="text-xs tracking-widest uppercase mb-1" style={{ color: COULEURS.or }}>{q.matiere}</p>
+                  <p className="font-bold text-sm" style={{ color: COULEURS.navy }}>{q.titre}</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {q.nb_questions} question(s) — {q.nb_tentatives} tentative(s){q.moyenne_pct !== null ? ` — moyenne ${q.moyenne_pct}%` : ''}
+                  </p>
                 </div>
-                <p className="font-bold text-sm" style={{ color: COULEURS.navy }}>{q.titre}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {q.nb_questions} questions · {q.nb_tentatives} tentative{q.nb_tentatives !== '1' ? 's' : ''}{q.moyenne_pct ? ` · moy. ${q.moyenne_pct}%` : ''}
-                </p>
-                <div className="flex gap-2 mt-3">
+                <div className="flex items-center gap-2">
                   <button onClick={() => voirResultats(q.id)} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
                     style={{ background: `${COULEURS.bleu}1A`, color: COULEURS.bleu, border: `1px solid ${COULEURS.bleu}4D` }}>
                     Résultats
@@ -383,6 +411,29 @@ function VueProf({ token }) {
               style={{ background: generating ? 'rgba(76,123,201,0.3)' : COULEURS.bleu, color: 'white', cursor: generating ? 'wait' : 'pointer' }}>
               {generating ? 'Génération en cours...' : 'Générer avec l\'IA'}
             </button>
+          </div>
+
+          <div className="rounded-2xl p-5" style={{ background: `linear-gradient(135deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${COULEURS.vert}4D` }}>
+            <p className="font-bold text-sm text-white mb-1">📄 Importer depuis un PDF</p>
+            <p className="text-xs text-gray-400 mb-3">
+              Glissez un PDF contenant un QCM existant — l'IA détecte les questions, les options et reconstitue le quiz automatiquement. Modifiable ensuite ci-dessous.
+            </p>
+            <label
+              className="inline-flex items-center text-xs font-bold px-4 py-2 rounded-xl"
+              style={{
+                background: importingPdf ? 'rgba(76,201,168,0.3)' : COULEURS.vert,
+                color: 'white',
+                cursor: importingPdf ? 'wait' : 'pointer'
+              }}>
+              {importingPdf ? 'Analyse du PDF en cours...' : 'Choisir un fichier PDF'}
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={importerPdf}
+                disabled={importingPdf}
+                className="hidden"
+              />
+            </label>
           </div>
 
           <div className="flex flex-col gap-3">
