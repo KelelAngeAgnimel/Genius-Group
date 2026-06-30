@@ -4,22 +4,23 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import axios from 'axios'
 
-// Images libres de droits (Unsplash) — étudiants, campus, bibliothèque
+// Photos d'étudiants africains/noirs — Unsplash (libres de droits)
+// Sources : Emmanuel Ikwuegbu, Desola Lanre-Ologun, TopSphere Media, Nqobile Vundla
 const SLIDES = [
   {
-    url: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80',
+    url: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1200&q=85',
     legende: 'Préparez votre avenir avec méthode'
   },
   {
-    url: 'https://images.unsplash.com/photo-1434030216411-0b793f4b6f64?w=1200&q=80',
+    url: 'https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=1200&q=85',
     legende: 'Des outils pensés pour votre réussite'
   },
   {
-    url: 'https://images.unsplash.com/photo-1513258496099-48168024aec0?w=1200&q=80',
+    url: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&q=85',
     legende: 'Rejoignez la communauté Genius Group'
   },
   {
-    url: 'https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1200&q=80',
+    url: 'https://images.unsplash.com/photo-1529390079861-591de354faf5?w=1200&q=85',
     legende: 'Excellence · Méthode · Ambition'
   }
 ]
@@ -54,28 +55,24 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [slideIndex, setSlideIndex] = useState(0)
-  const [slideTransition, setSlideTransition] = useState(true)
+  const [fondu, setFondu] = useState(true)
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  // Défilement automatique des images toutes les 5 secondes
   useEffect(() => {
     const timer = setInterval(() => {
-      setSlideTransition(false)
+      setFondu(false)
       setTimeout(() => {
         setSlideIndex(i => (i + 1) % SLIDES.length)
-        setSlideTransition(true)
-      }, 300)
+        setFondu(true)
+      }, 400)
     }, 5000)
     return () => clearInterval(timer)
   }, [])
 
   const allerSlide = (index) => {
-    setSlideTransition(false)
-    setTimeout(() => {
-      setSlideIndex(index)
-      setSlideTransition(true)
-    }, 200)
+    setFondu(false)
+    setTimeout(() => { setSlideIndex(index); setFondu(true) }, 200)
   }
 
   const handleSubmit = async (e) => {
@@ -96,176 +93,113 @@ export default function Login() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', fontFamily: 'system-ui, sans-serif' }}>
 
-      {/* ══════════════════════════════════════
-          PARTIE GAUCHE — Diaporama d'images
-          Cachée sur mobile (moins de 768px)
-      ══════════════════════════════════════ */}
+      {/* ── PANNEAU GAUCHE : Diaporama ── */}
       <div style={{
         display: 'none',
         position: 'relative',
         overflow: 'hidden',
-        flex: '1'
-      }} className="login-left-panel">
+        flex: 1
+      }} className="login-left">
 
-        {/* Image de fond avec transition */}
+        {/* Image en fond */}
         <div style={{
           position: 'absolute',
           inset: 0,
           backgroundImage: `url(${SLIDES[slideIndex].url})`,
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          opacity: slideTransition ? 1 : 0,
+          backgroundPosition: 'center top',
+          opacity: fondu ? 1 : 0,
           transition: 'opacity 0.5s ease-in-out'
         }} />
 
-        {/* Overlay dégradé sombre pour lisibilité */}
+        {/* Dégradé sombre en bas pour lisibilité du texte */}
         <div style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(to bottom, rgba(7,16,32,0.3) 0%, rgba(7,16,32,0.15) 40%, rgba(7,16,32,0.7) 100%)'
+          background: 'linear-gradient(to bottom, rgba(7,16,32,0.25) 0%, rgba(7,16,32,0.1) 35%, rgba(7,16,32,0.75) 100%)'
         }} />
 
-        {/* Logo en haut à gauche */}
+        {/* Logo Genius Group en haut à gauche */}
         <div style={{
-          position: 'absolute',
-          top: 32,
-          left: 32,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          zIndex: 10
+          position: 'absolute', top: 28, left: 28,
+          display: 'flex', alignItems: 'center', gap: 10, zIndex: 10
         }}>
           <div style={{
-            width: 44,
-            height: 44,
-            borderRadius: '50%',
-            background: '#071020',
-            border: '1px solid rgba(201,168,76,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
+            width: 42, height: 42, borderRadius: '50%',
+            background: '#071020', border: '1px solid rgba(201,168,76,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
-            <BrainLogo size={28} />
+            <BrainLogo size={26} />
           </div>
           <div>
-            <p style={{ color: '#C9A84C', fontWeight: 800, fontSize: 13, letterSpacing: '0.2em', margin: 0 }}>GENIUS GROUP</p>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10, letterSpacing: '0.15em', margin: 0 }}>PORTAIL ÉTUDIANT</p>
+            <p style={{ color: '#C9A84C', fontWeight: 800, fontSize: 12, letterSpacing: '0.2em', margin: 0 }}>GENIUS GROUP</p>
+            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 9, letterSpacing: '0.15em', margin: 0 }}>PORTAIL ÉTUDIANT</p>
           </div>
         </div>
 
-        {/* Légende en bas */}
-        <div style={{
-          position: 'absolute',
-          bottom: 80,
-          left: 40,
-          right: 40,
-          zIndex: 10
-        }}>
-          <div style={{
-            width: 40,
-            height: 3,
-            background: '#C9A84C',
-            borderRadius: 2,
-            marginBottom: 16
-          }} />
+        {/* Texte en bas */}
+        <div style={{ position: 'absolute', bottom: 72, left: 36, right: 36, zIndex: 10 }}>
+          <div style={{ width: 36, height: 3, background: '#C9A84C', borderRadius: 2, marginBottom: 14 }} />
           <p style={{
-            color: 'white',
-            fontSize: 22,
-            fontWeight: 700,
-            lineHeight: 1.3,
-            margin: 0,
-            opacity: slideTransition ? 1 : 0,
-            transition: 'opacity 0.5s ease-in-out'
+            color: 'white', fontSize: 20, fontWeight: 700, lineHeight: 1.35, margin: 0,
+            opacity: fondu ? 1 : 0, transition: 'opacity 0.5s ease-in-out'
           }}>
             {SLIDES[slideIndex].legende}
           </p>
         </div>
 
-        {/* Indicateurs de slide (points) */}
+        {/* Points de navigation */}
         <div style={{
-          position: 'absolute',
-          bottom: 36,
-          left: 40,
-          display: 'flex',
-          gap: 8,
-          zIndex: 10
+          position: 'absolute', bottom: 30, left: 36,
+          display: 'flex', gap: 8, zIndex: 10
         }}>
           {SLIDES.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => allerSlide(i)}
-              style={{
-                width: i === slideIndex ? 24 : 8,
-                height: 8,
-                borderRadius: 4,
-                border: 'none',
-                cursor: 'pointer',
-                background: i === slideIndex ? '#C9A84C' : 'rgba(255,255,255,0.4)',
-                transition: 'all 0.3s ease',
-                padding: 0
-              }}
-            />
+            <button key={i} onClick={() => allerSlide(i)} style={{
+              width: i === slideIndex ? 22 : 8, height: 8,
+              borderRadius: 4, border: 'none', cursor: 'pointer', padding: 0,
+              background: i === slideIndex ? '#C9A84C' : 'rgba(255,255,255,0.4)',
+              transition: 'all 0.3s ease'
+            }} />
           ))}
         </div>
       </div>
 
-      {/* ══════════════════════════════════════
-          PARTIE DROITE — Formulaire
-          Prend toute la largeur sur mobile
-      ══════════════════════════════════════ */}
+      {/* ── PANNEAU DROIT : Formulaire ── */}
       <div style={{
-        width: '100%',
-        maxWidth: '100%',
-        background: 'white',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '32px 24px',
-        minHeight: '100vh',
-        boxSizing: 'border-box'
-      }} className="login-right-panel">
+        width: '100%', background: 'white',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '40px 24px', minHeight: '100vh', boxSizing: 'border-box'
+      }} className="login-right">
 
-        <div style={{ width: '100%', maxWidth: 400 }}>
+        <div style={{ width: '100%', maxWidth: 390 }}>
 
-          {/* Logo sur mobile (caché sur desktop car il est dans le panel gauche) */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            marginBottom: 36
-          }} className="login-mobile-logo">
+          {/* Logo visible uniquement sur mobile */}
+          <div className="login-mobile-logo" style={{
+            display: 'flex', alignItems: 'center', gap: 12, marginBottom: 36
+          }}>
             <div style={{
-              width: 48,
-              height: 48,
-              borderRadius: '50%',
-              background: '#071020',
-              border: '1px solid rgba(201,168,76,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
+              width: 48, height: 48, borderRadius: '50%',
+              background: '#071020', border: '1px solid rgba(201,168,76,0.5)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
             }}>
               <BrainLogo size={30} />
             </div>
             <div>
-              <p style={{ color: '#071020', fontWeight: 800, fontSize: 14, letterSpacing: '0.15em', margin: 0 }}>GENIUS GROUP</p>
+              <p style={{ color: '#071020', fontWeight: 800, fontSize: 13, letterSpacing: '0.15em', margin: 0 }}>GENIUS GROUP</p>
               <p style={{ color: '#9ca3af', fontSize: 10, letterSpacing: '0.1em', margin: 0 }}>PORTAIL ÉTUDIANT</p>
             </div>
           </div>
 
-          {/* Titre */}
-          <h1 style={{ fontSize: 30, fontWeight: 800, color: '#071020', margin: '0 0 6px 0' }}>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: '#071020', margin: '0 0 6px 0' }}>
             Connexion
           </h1>
-          <p style={{ color: '#6b7280', fontSize: 14, margin: '0 0 32px 0' }}>
+          <p style={{ color: '#6b7280', fontSize: 14, margin: '0 0 30px 0' }}>
             Utiliser votre compte Genius Group
           </p>
 
-          {/* Formulaire */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-            {/* Identifiant */}
             <div>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
                 Identifiant
@@ -277,23 +211,16 @@ export default function Login() {
                 placeholder="ex: jean.dupont"
                 required
                 style={{
-                  width: '100%',
-                  padding: '13px 16px',
-                  fontSize: 14,
-                  border: '2px solid #e5e7eb',
-                  borderRadius: 12,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                  color: '#111827',
-                  transition: 'border-color 0.2s',
-                  background: '#f9fafb'
+                  width: '100%', padding: '13px 16px', fontSize: 14,
+                  border: '2px solid #e5e7eb', borderRadius: 12, outline: 'none',
+                  boxSizing: 'border-box', color: '#111827',
+                  transition: 'border-color 0.2s', background: '#f9fafb'
                 }}
                 onFocus={e => e.target.style.borderColor = '#C9A84C'}
                 onBlur={e => e.target.style.borderColor = '#e5e7eb'}
               />
             </div>
 
-            {/* Mot de passe */}
             <div>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
                 Mot de passe
@@ -306,105 +233,60 @@ export default function Login() {
                   placeholder="••••••••"
                   required
                   style={{
-                    width: '100%',
-                    padding: '13px 48px 13px 16px',
-                    fontSize: 14,
-                    border: '2px solid #e5e7eb',
-                    borderRadius: 12,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    color: '#111827',
-                    transition: 'border-color 0.2s',
-                    background: '#f9fafb'
+                    width: '100%', padding: '13px 48px 13px 16px', fontSize: 14,
+                    border: '2px solid #e5e7eb', borderRadius: 12, outline: 'none',
+                    boxSizing: 'border-box', color: '#111827',
+                    transition: 'border-color 0.2s', background: '#f9fafb'
                   }}
                   onFocus={e => e.target.style.borderColor = '#C9A84C'}
                   onBlur={e => e.target.style.borderColor = '#e5e7eb'}
                 />
-                {/* Bouton afficher/masquer mot de passe */}
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(v => !v)}
-                  style={{
-                    position: 'absolute',
-                    right: 14,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#9ca3af',
-                    fontSize: 18,
-                    padding: 4,
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
+                <button type="button" onClick={() => setShowPassword(v => !v)} style={{
+                  position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: '#9ca3af', fontSize: 16, padding: 4,
+                  display: 'flex', alignItems: 'center'
+                }}>
                   {showPassword ? '🙈' : '👁'}
                 </button>
               </div>
             </div>
 
-            {/* Message d'erreur */}
             {error && (
               <div style={{
-                background: '#fef2f2',
-                border: '1px solid #fecaca',
-                borderRadius: 10,
-                padding: '10px 14px',
-                color: '#dc2626',
-                fontSize: 13,
-                textAlign: 'center'
+                background: '#fef2f2', border: '1px solid #fecaca',
+                borderRadius: 10, padding: '10px 14px',
+                color: '#dc2626', fontSize: 13, textAlign: 'center'
               }}>
                 {error}
               </div>
             )}
 
-            {/* Bouton connexion */}
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '14px',
-                background: loading ? '#9ca3af' : 'linear-gradient(135deg, #071020, #1a3a6b)',
-                color: '#C9A84C',
-                border: '1px solid rgba(201,168,76,0.3)',
-                borderRadius: 12,
-                fontSize: 14,
-                fontWeight: 800,
-                letterSpacing: '0.15em',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s',
-                boxShadow: '0 4px 20px rgba(201,168,76,0.15)',
-                marginTop: 4
-              }}>
+            <button type="submit" disabled={loading} style={{
+              width: '100%', padding: '14px',
+              background: loading ? '#9ca3af' : 'linear-gradient(135deg, #071020, #1a3a6b)',
+              color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)',
+              borderRadius: 12, fontSize: 14, fontWeight: 800,
+              letterSpacing: '0.15em', cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s', marginTop: 6,
+              boxShadow: '0 4px 20px rgba(201,168,76,0.15)'
+            }}>
               {loading ? 'Connexion en cours...' : 'SE CONNECTER'}
             </button>
           </form>
 
-          {/* Pied de page */}
           <p style={{ color: '#d1d5db', fontSize: 11, textAlign: 'center', marginTop: 40 }}>
             © 2026 Genius Group — Tous droits réservés
           </p>
         </div>
       </div>
 
-      {/* ══════════════════════════════════════
-          CSS responsive injecté directement
-          (évite d'avoir à modifier tailwind.config)
-      ══════════════════════════════════════ */}
+      {/* CSS responsive */}
       <style>{`
         @media (min-width: 768px) {
-          .login-left-panel {
-            display: block !important;
-          }
-          .login-right-panel {
-            width: 420px !important;
-            max-width: 420px !important;
-            flex-shrink: 0;
-          }
-          .login-mobile-logo {
-            display: none !important;
-          }
+          .login-left { display: block !important; }
+          .login-right { width: 440px !important; flex-shrink: 0; }
+          .login-mobile-logo { display: none !important; }
         }
       `}</style>
     </div>
