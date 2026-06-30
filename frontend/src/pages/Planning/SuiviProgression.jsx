@@ -16,6 +16,12 @@ const matieres = {
     { nom: 'Physique', couleur: '#4CC9A8' },
     { nom: 'Anglais', couleur: '#C94C7B' },
     { nom: 'Français', couleur: '#C9A84C' },
+  ],
+  'CME': [
+    { nom: 'Culture Générale', couleur: '#4CC9A8' },
+    { nom: 'Culture Scientifique', couleur: '#7BC94C' },
+    { nom: 'Anglais', couleur: '#4C9AC9' },
+    { nom: 'Français', couleur: '#C9A84C' },
   ]
 }
 
@@ -23,12 +29,26 @@ const roleLabel = {
   etudiant_inphb: 'INP-HB',
   etudiant_esatic: 'ESATIC',
   etudiant_both: 'INP-HB + ESATIC',
+  etudiant_cme: 'CME',
+  etudiant_inphb_cme: 'INP-HB + CME',
+  etudiant_esatic_cme: 'ESATIC + CME',
+  etudiant_all: 'INP-HB + ESATIC + CME',
 }
 
 const roleCouleur = {
   etudiant_inphb: '#C9A84C',
   etudiant_esatic: '#4C7BC9',
   etudiant_both: '#4CC9A8',
+  etudiant_cme: '#4CC9A8',
+  etudiant_inphb_cme: '#C97B4C',
+  etudiant_esatic_cme: '#C94C7B',
+  etudiant_all: '#C9A84C',
+}
+
+const couleurConcours = {
+  'INP-HB': '#C9A84C',
+  'ESATIC': '#4C7BC9',
+  'CME': '#4CC9A8',
 }
 
 function SuiviProfesseur({ token }) {
@@ -91,6 +111,10 @@ function SuiviProfesseur({ token }) {
     if (role === 'etudiant_inphb') return ['INP-HB']
     if (role === 'etudiant_esatic') return ['ESATIC']
     if (role === 'etudiant_both') return ['INP-HB', 'ESATIC']
+    if (role === 'etudiant_cme') return ['CME']
+    if (role === 'etudiant_inphb_cme') return ['INP-HB', 'CME']
+    if (role === 'etudiant_esatic_cme') return ['ESATIC', 'CME']
+    if (role === 'etudiant_all') return ['INP-HB', 'ESATIC', 'CME']
     return []
   }
 
@@ -190,7 +214,7 @@ function SuiviProfesseur({ token }) {
               {getConcours(etudiantActif.role).map((concours, ci) => {
                 const matieresConcours = matieres[concours] || []
                 const moyenne = getMoyenneConcours(concours)
-                const couleur = concours === 'INP-HB' ? '#C9A84C' : '#4C7BC9'
+                const couleur = couleurConcours[concours] || '#C9A84C'
 
                 return (
                   <div key={ci} className="bg-white rounded-2xl overflow-hidden"
@@ -316,7 +340,7 @@ function SuiviProfesseur({ token }) {
               onBlur={e => e.target.style.borderColor = '#f0ece0'}
             />
             <div className="flex gap-2 flex-wrap">
-              {['tous', 'etudiant_inphb', 'etudiant_esatic', 'etudiant_both'].map((role, i) => (
+              {['tous', 'etudiant_inphb', 'etudiant_esatic', 'etudiant_both', 'etudiant_cme', 'etudiant_inphb_cme', 'etudiant_esatic_cme', 'etudiant_all'].map((role, i) => (
                 <button key={i}
                   onClick={() => setFiltreRole(role)}
                   className="px-3 py-2 rounded-xl text-xs font-semibold transition whitespace-nowrap"
@@ -375,8 +399,8 @@ function SuiviProfesseur({ token }) {
                           {concours.map((c, ci) => (
                             <span key={ci} className="text-xs px-2 py-0.5 rounded-full"
                               style={{
-                                background: c === 'INP-HB' ? 'rgba(201,168,76,0.1)' : 'rgba(76,123,201,0.1)',
-                                color: c === 'INP-HB' ? '#C9A84C' : '#4C7BC9'
+                                background: `${couleurConcours[c] || '#C9A84C'}18`,
+                                color: couleurConcours[c] || '#C9A84C'
                               }}>
                               {c}
                             </span>

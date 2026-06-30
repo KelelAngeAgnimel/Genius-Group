@@ -2,6 +2,22 @@ import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
+// Fonction utilitaire : label lisible du rôle pour le badge
+function getRoleLabel(role) {
+  const labels = {
+    admin: 'Admin',
+    professeur: 'Professeur',
+    etudiant_inphb: 'INP-HB',
+    etudiant_esatic: 'ESATIC',
+    etudiant_both: 'INP-HB + ESATIC',
+    etudiant_cme: 'CME',
+    etudiant_inphb_cme: 'INP-HB + CME',
+    etudiant_esatic_cme: 'ESATIC + CME',
+    etudiant_all: 'INP-HB + ESATIC + CME',
+  }
+  return labels[role] || role
+}
+
 const menuItems = [
   {
     label: 'Accueil',
@@ -29,6 +45,7 @@ const menuItems = [
       { label: 'Centre de ressources', path: '/ressources' },
       { label: 'INP-HB', path: '/ressources' },
       { label: 'ESATIC', path: '/ressources' },
+      { label: 'CME', path: '/ressources' },
     ]
   },
   {
@@ -170,7 +187,7 @@ export default function Navbar() {
               background: isAdmin ? 'rgba(201,76,123,0.1)' : isProfOrAdmin ? 'rgba(76,201,168,0.1)' : 'rgba(201,168,76,0.1)',
               color: isAdmin ? '#C94C7B' : isProfOrAdmin ? '#4CC9A8' : '#C9A84C'
             }}>
-            {isAdmin ? 'Admin' : user?.role === 'professeur' ? 'Professeur' : user?.role === 'etudiant_inphb' ? 'INP-HB' : user?.role === 'etudiant_esatic' ? 'ESATIC' : user?.role === 'etudiant_both' ? 'INP-HB + ESATIC' : user?.role}
+            {getRoleLabel(user?.role)}
           </span>
 
           <div className="flex items-center gap-2">

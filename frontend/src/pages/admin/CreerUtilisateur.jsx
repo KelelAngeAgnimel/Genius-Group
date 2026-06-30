@@ -5,7 +5,11 @@ import API_URL from '../../config'
 const rolesDisponibles = [
   { value: 'etudiant_inphb', label: 'Etudiant INP-HB', couleur: '#C9A84C', description: 'Accès aux ressources INP-HB uniquement' },
   { value: 'etudiant_esatic', label: 'Etudiant ESATIC', couleur: '#4C7BC9', description: 'Accès aux ressources ESATIC uniquement' },
-  { value: 'etudiant_both', label: 'Etudiant INP-HB + ESATIC', couleur: '#4CC9A8', description: 'Accès aux ressources des deux concours' },
+  { value: 'etudiant_cme', label: 'Etudiant CME', couleur: '#4CC9A8', description: 'Accès aux ressources CME uniquement' },
+  { value: 'etudiant_both', label: 'Etudiant INP-HB + ESATIC', couleur: '#7B4CC9', description: 'Accès aux ressources INP-HB et ESATIC' },
+  { value: 'etudiant_inphb_cme', label: 'Etudiant INP-HB + CME', couleur: '#C97B4C', description: 'Accès aux ressources INP-HB et CME' },
+  { value: 'etudiant_esatic_cme', label: 'Etudiant ESATIC + CME', couleur: '#C94C7B', description: 'Accès aux ressources ESATIC et CME' },
+  { value: 'etudiant_all', label: 'Etudiant INP-HB + ESATIC + CME', couleur: '#C9A84C', description: 'Accès aux ressources des trois concours' },
   { value: 'professeur', label: 'Professeur', couleur: '#7B4CC9', description: 'Peut publier des ressources et envoyer des messages' },
   { value: 'admin', label: 'Administrateur', couleur: '#C94C7B', description: 'Accès complet à toutes les fonctionnalites' },
 ]

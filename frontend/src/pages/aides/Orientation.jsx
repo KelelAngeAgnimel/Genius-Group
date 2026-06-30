@@ -211,6 +211,53 @@ const ecoles = [
       },
     ]
   }
+
+  ,
+  {
+    sigle: "CME",
+    nom: "Concours des Meilleurs Etudiants",
+    logo: "/cme-logo.png",
+    couleur: "#4CC9A8",
+    site: "#",
+    contact: {
+      telephone: "A completer",
+      email: "A completer",
+      site: "A completer",
+      adresse: "A completer"
+    },
+    presentation: "Le Concours des Meilleurs Etudiants (CME) est un concours national destine aux bacheliers. Il evalue les candidats sur leur culture generale, scientifique, leur maitrise du francais et de l'anglais.",
+    selection: [
+      { titre: "Phase ecrite", description: "Epreuves de Culture Generale, Culture Scientifique, Francais et Anglais." },
+      { titre: "Phase orale", description: "Entretien de motivation pour les candidats admissibles." },
+    ],
+    dossier: [
+      "Photocopie du releve de notes et attestation de reussite au BAC",
+      "Photocopie de la Carte Nationale d'Identite",
+      "Lettre de motivation",
+      "Frais d'inscription (montant a confirmer)",
+    ],
+    chronogramme: [
+      { phase: "1", date: "A confirmer", activite: "Depot des dossiers", detail: "Inscription en ligne et depot des pieces" },
+      { phase: "2", date: "A confirmer", activite: "Epreuves ecrites", detail: "Culture Generale, Culture Scientifique, Francais, Anglais" },
+      { phase: "3", date: "A confirmer", activite: "Resultats", detail: "Proclamation des resultats en ligne" },
+    ],
+    filieres: [
+      {
+        ecole: "Formations accessibles via le CME",
+        couleur: "#4CC9A8",
+        parcours: [
+          {
+            sigle: "CME",
+            nom: "Concours des Meilleurs Etudiants",
+            series: "Toutes series",
+            duree: "Variable selon la formation integree",
+            conditions: "Etre titulaire du BAC de l'annee en cours. Remplir le dossier d'inscription dans les delais.",
+            debouches: "Acces aux meilleures formations superieures selon les resultats obtenus au concours."
+          },
+        ]
+      },
+    ]
+  }
 ]
 
 export default function Orientation() {
