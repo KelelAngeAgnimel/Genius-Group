@@ -93,6 +93,13 @@ export default function Ressources() {
   }
 
   const ouvrirRessource = (ressource) => {
+    // Lien externe (Google Drive) → passe par le proxy sécurisé du backend
+    // Le vrai lien n'est jamais exposé dans le navigateur
+    if (ressource.estLienExterne) {
+      window.open(`${API_URL}/api/ressources/proxy/${ressource.id}`, '_blank')
+      return
+    }
+    // Fichier Supabase Storage → URL signée valable 1h
     const url = ressource.urlSigne || ressource.url
     if (url) window.open(url, '_blank')
   }

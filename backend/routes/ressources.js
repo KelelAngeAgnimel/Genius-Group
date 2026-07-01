@@ -45,6 +45,12 @@ router.get('/', verifyToken, async (req, res) => {
     // Générer des URLs signées pour chaque ressource (valables 1 heure)
     const ressourcesAvecUrls = await Promise.all(
       data.map(async (ressource) => {
+        // Lien externe (Google Drive, etc.) : on ne renvoie JAMAIS le vrai lien
+        // Le frontend appellera /api/ressources/proxy/:id pour y accéder
+        if (ressource.url && ressource.url.startsWith('http')) {
+          return { ...ressource, url: null, urlSigne: null, estLienExterne: true }
+        }
+
         if (!ressource.url) return ressource
 
         // Extraire le nom du fichier depuis l'URL stockée
@@ -70,7 +76,62 @@ router.get('/', verifyToken, async (req, res) => {
   }
 })
 
-// GET — Toutes les ressources pour prof/admin (même invisibles)
+// GET — Proxy sécurisé pour les liens externes (Google Drive, etc.)
+// L'élève n'a jamais accès au vrai lien — le backend vérifie le token puis redirige
+router.get('/proxy/:id', verifyToken, async (req, res) => {
+  try {
+    const { data: ressource, error } = await supabase
+      .from('ressources')
+      .select('url, type, titre, visible, concours')
+      .eq('id', req.params.id)
+      .single()
+
+    if (error || !ressource) {
+      return res.status(404).json({ message: 'Ressource introuvable' })
+    }
+
+    if (!ressource.visible) {
+      return res.status(403).json({ message: 'Ressource non disponible' })
+    }
+
+    if (!ressource.url) {
+      return res.status(404).json({ message: 'Aucun lien associé à cette ressource' })
+    }
+
+    // Vérifier que l'élève a accès au concours de cette ressource
+    const { role } = req.user
+    const concoursRessource = ressource.concours
+    const rolesInphb = ['etudiant_inphb', 'etudiant_both', 'etudiant_inphb_cme', 'etudiant_all']
+    const rolesEsatic = ['etudiant_esatic', 'etudiant_both', 'etudiant_esatic_cme', 'etudiant_all']
+    const rolesCme = ['etudiant_cme', 'etudiant_inphb_cme', 'etudiant_esatic_cme', 'etudiant_all']
+
+    const peutAcceder = role === 'admin' || role === 'professeur' ||
+      (concoursRessource === 'INP-HB' && rolesInphb.includes(role)) ||
+      (concoursRessource === 'ESATIC' && rolesEsatic.includes(role)) ||
+      (concoursRessource === 'CME' && rolesCme.includes(role)) ||
+      concoursRessource === 'tous'
+
+    if (!peutAcceder) {
+      return res.status(403).json({ message: 'Accès refusé pour votre concours' })
+    }
+
+    // Transformer le lien Google Drive pour ouverture directe du PDF
+    let urlFinale = ressource.url
+    const matchDrive = ressource.url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+    if (matchDrive) {
+      // Convertit le lien de prévisualisation en lien de téléchargement direct
+      urlFinale = `https://drive.google.com/file/d/${matchDrive[1]}/preview`
+    }
+
+    // Redirection sécurisée — le vrai lien n'est jamais dans le HTML de la page
+    res.redirect(302, urlFinale)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: 'Erreur serveur' })
+  }
+})
+
+
 router.get('/toutes', verifyToken, async (req, res) => {
   try {
     const { role } = req.user
