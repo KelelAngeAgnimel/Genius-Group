@@ -2,8 +2,6 @@ import express from 'express'
 import multer from 'multer'
 import { createClient } from '@supabase/supabase-js'
 import { verifyToken } from './auth.js'
-import { google } from 'googleapis'
-import { Readable } from 'stream'
 import dotenv from 'dotenv'
 
 dotenv.config()
@@ -11,31 +9,13 @@ dotenv.config()
 const router = express.Router()
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
 
-// ══════════════════════════════════════════
-// CLIENT GOOGLE DRIVE
-// ══════════════════════════════════════════
-function getDriveClient() {
-  let credentials
-  try {
-    credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT)
-  } catch (e) {
-    throw new Error('Variable GOOGLE_SERVICE_ACCOUNT invalide ou manquante sur le serveur')
-  }
-  const auth = new google.auth.GoogleAuth({
-    credentials,
-    scopes: ['https://www.googleapis.com/auth/drive'],
-  })
-  return google.drive({ version: 'v3', auth })
-}
-
-// Multer en mémoire
+// Multer en mémoire — 50 Mo max, PDF uniquement
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = ['application/pdf', 'video/mp4', 'image/jpeg', 'image/png']
-    if (allowed.includes(file.mimetype)) cb(null, true)
-    else cb(new Error('Seuls les PDF, vidéos et images sont acceptés'))
+    if (file.mimetype === 'application/pdf') cb(null, true)
+    else cb(new Error('Seuls les fichiers PDF sont acceptés'))
   }
 })
 
@@ -54,22 +34,20 @@ function peutAcceder(role, concours) {
 }
 
 // ══════════════════════════════════════════
-// GET — Liste des ressources (sans URL Drive)
+// GET — Liste des ressources (sans URL)
 // ══════════════════════════════════════════
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const { role } = req.user
-    let query = supabase
+    const { data, error } = await supabase
       .from('ressources')
       .select('id, titre, description, type, matiere, concours, visible, created_at, professeur:professeur_id(username, prenom, nom)')
       .eq('visible', true)
       .order('created_at', { ascending: false })
 
-    const { data, error } = await query
     if (error) return res.status(500).json({ message: error.message })
 
-    // Filtrer selon le concours de l'élève — ne jamais exposer drive_file_id
-    const filtrees = data.filter(r => peutAcceder(role, r.concours))
+    // Filtrer selon le concours — ne jamais exposer l'URL du fichier
+    const filtrees = data.filter(r => peutAcceder(req.user.role, r.concours))
     res.json({ ressources: filtrees })
   } catch (err) {
     console.error(err)
@@ -99,15 +77,14 @@ router.get('/toutes', verifyToken, async (req, res) => {
 
 // ══════════════════════════════════════════
 // GET — Ouvrir un document (proxy sécurisé)
-// Le fichier est streamé depuis Drive directement
-// L'élève ne voit jamais l'URL Drive
+// Génère une URL signée valable 1h uniquement
+// si le token Genius est valide
 // ══════════════════════════════════════════
 router.get('/ouvrir/:id', verifyToken, async (req, res) => {
   try {
-    // Récupérer la ressource avec l'ID Drive (jamais exposé au front)
     const { data: ressource, error } = await supabase
       .from('ressources')
-      .select('id, titre, type, concours, visible, drive_file_id')
+      .select('id, titre, type, concours, visible, storage_path')
       .eq('id', req.params.id)
       .single()
 
@@ -120,38 +97,38 @@ router.get('/ouvrir/:id', verifyToken, async (req, res) => {
     if (!peutAcceder(req.user.role, ressource.concours)) {
       return res.status(403).json({ message: 'Accès refusé pour votre concours' })
     }
-    if (!ressource.drive_file_id) {
-      return res.status(404).json({ message: 'Fichier non trouvé dans le stockage' })
+    if (!ressource.storage_path) {
+      return res.status(404).json({ message: 'Fichier non trouvé' })
     }
 
-    const drive = getDriveClient()
+    // Générer une URL signée valable 1 heure — jamais exposée dans le HTML
+    const { data: signedData, error: signedError } = await supabase.storage
+      .from('ressources')
+      .createSignedUrl(ressource.storage_path, 3600)
 
-    // Récupérer les métadonnées du fichier
-    const fileMeta = await drive.files.get({
-      fileId: ressource.drive_file_id,
-      fields: 'name, mimeType'
-    })
+    if (signedError) {
+      return res.status(500).json({ message: 'Impossible de générer l\'accès au fichier' })
+    }
 
-    const mimeType = fileMeta.data.mimeType || 'application/pdf'
-    const fileName = encodeURIComponent(ressource.titre || fileMeta.data.name || 'document')
+    // Télécharger le fichier et le streamer directement à l'élève
+    // L'URL signée n'est jamais transmise au navigateur
+    const fileResponse = await fetch(signedData.signedUrl)
+    if (!fileResponse.ok) {
+      return res.status(500).json({ message: 'Erreur lors de la récupération du fichier' })
+    }
 
-    // Headers pour afficher dans le navigateur (pas télécharger)
-    res.setHeader('Content-Type', mimeType)
-    res.setHeader('Content-Disposition', `inline; filename="${fileName}.pdf"`)
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(ressource.titre)}.pdf"`)
     res.setHeader('Cache-Control', 'private, no-store')
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN')
 
-    // Streamer le fichier depuis Drive vers l'élève
-    const fileStream = await drive.files.get(
-      { fileId: ressource.drive_file_id, alt: 'media' },
-      { responseType: 'stream' }
-    )
-
-    fileStream.data.pipe(res)
-    fileStream.data.on('error', (err) => {
-      console.error('Erreur stream:', err)
-      if (!res.headersSent) res.status(500).end()
-    })
+    const reader = fileResponse.body.getReader()
+    const pump = async () => {
+      const { done, value } = await reader.read()
+      if (done) { res.end(); return }
+      res.write(Buffer.from(value))
+      await pump()
+    }
+    await pump()
 
   } catch (err) {
     console.error('Erreur ouverture:', err)
@@ -160,8 +137,8 @@ router.get('/ouvrir/:id', verifyToken, async (req, res) => {
 })
 
 // ══════════════════════════════════════════
-// POST — Upload d'un document par le prof
-// Stocké sur Google Drive, ID dans Supabase
+// POST — Upload d'un PDF par le prof
+// Stocké dans Supabase Storage (bucket privé)
 // ══════════════════════════════════════════
 router.post('/upload', verifyToken, (req, res, next) => {
   upload.single('fichier')(req, res, (err) => {
@@ -187,30 +164,23 @@ router.post('/upload', verifyToken, (req, res, next) => {
       return res.status(400).json({ message: 'titre, matière et concours sont requis' })
     }
 
-    // Upload sur Google Drive
-    const drive = getDriveClient()
-    const bufferStream = new Readable()
-    bufferStream.push(req.file.buffer)
-    bufferStream.push(null)
-
+    // Chemin unique dans Supabase Storage
     const ext = req.file.originalname.split('.').pop()
-    const nomFichier = `${Date.now()}-${titre.replace(/[^a-zA-Z0-9]/g, '_')}.${ext}`
+    const storagePath = `${concours}/${Date.now()}-${titre.replace(/[^a-zA-Z0-9]/g, '_')}.${ext}`
 
-    const uploadResponse = await drive.files.create({
-      requestBody: {
-        name: nomFichier,
-        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
-      },
-      media: {
-        mimeType: req.file.mimetype,
-        body: bufferStream,
-      },
-      fields: 'id, name',
-    })
+    // Upload dans le bucket "ressources" de Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from('ressources')
+      .upload(storagePath, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false
+      })
 
-    const driveFileId = uploadResponse.data.id
+    if (uploadError) {
+      return res.status(500).json({ message: `Erreur upload : ${uploadError.message}` })
+    }
 
-    // Sauvegarder dans Supabase — uniquement les métadonnées + ID Drive
+    // Sauvegarder dans la table ressources — uniquement le chemin, jamais l'URL
     const { data, error } = await supabase
       .from('ressources')
       .insert([{
@@ -219,8 +189,9 @@ router.post('/upload', verifyToken, (req, res, next) => {
         type: type || 'pdf',
         matiere,
         concours,
-        drive_file_id: driveFileId,
+        storage_path: storagePath,
         url: null,
+        drive_file_id: null,
         professeur_id,
         visible: true
       }])
@@ -228,14 +199,15 @@ router.post('/upload', verifyToken, (req, res, next) => {
       .single()
 
     if (error) {
-      await drive.files.delete({ fileId: driveFileId }).catch(() => {})
+      // Supprimer le fichier uploadé si la DB échoue
+      await supabase.storage.from('ressources').remove([storagePath])
       return res.status(500).json({ message: error.message })
     }
 
     res.json({ success: true, ressource: data })
   } catch (err) {
     console.error('Erreur upload:', err)
-    res.status(500).json({ message: `Erreur upload : ${err.message}` })
+    res.status(500).json({ message: `Erreur : ${err.message}` })
   }
 })
 
@@ -263,7 +235,7 @@ router.patch('/:id/visibilite', verifyToken, async (req, res) => {
 })
 
 // ══════════════════════════════════════════
-// DELETE — Supprimer (Supabase + Drive)
+// DELETE — Supprimer (DB + Storage)
 // ══════════════════════════════════════════
 router.delete('/:id', verifyToken, async (req, res) => {
   try {
@@ -273,18 +245,13 @@ router.delete('/:id', verifyToken, async (req, res) => {
 
     const { data: ressource } = await supabase
       .from('ressources')
-      .select('drive_file_id')
+      .select('storage_path')
       .eq('id', req.params.id)
       .single()
 
-    // Supprimer de Google Drive
-    if (ressource?.drive_file_id) {
-      try {
-        const drive = getDriveClient()
-        await drive.files.delete({ fileId: ressource.drive_file_id })
-      } catch (e) {
-        console.error('Erreur suppression Drive:', e)
-      }
+    // Supprimer le fichier de Supabase Storage
+    if (ressource?.storage_path) {
+      await supabase.storage.from('ressources').remove([ressource.storage_path])
     }
 
     const { error } = await supabase.from('ressources').delete().eq('id', req.params.id)
