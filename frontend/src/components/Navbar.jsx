@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-// Fonction utilitaire : label lisible du rôle pour le badge
 function getRoleLabel(role) {
   const labels = {
     admin: 'Admin',
@@ -23,63 +22,59 @@ const menuItems = [
     label: 'Accueil',
     path: '/accueil',
     dropdown: [
-      { label: 'Tableau de bord', path: '/accueil/tableau-de-bord' },
-      { label: 'Actualites', path: '/accueil/actualites' },
-      { label: 'Guide', path: '/accueil/guide' },
-      { label: 'Statistiques', path: '/accueil/statistiques' },
+      { label: 'Mon Espace', path: '/accueil/tableau-de-bord' },
+      { label: 'Actualités & Concours', path: '/accueil/actualites' },
+      { label: 'Guide de Préparation', path: '/accueil/guide' },
+      { label: 'Mes Statistiques', path: '/accueil/statistiques' },
     ]
   },
   {
-    label: 'Planning',
+    label: 'Mon Planning',
     path: '/planning',
     dropdown: [
-      { label: 'Emploi du temps', path: '/planning/emploi-du-temps' },
-      { label: 'Suivi progression', path: '/planning/suivi-progression' },
-      { label: 'Planning perso', path: '/planning/planning-perso' },
+      { label: 'Emploi du Temps', path: '/planning/emploi-du-temps' },
+      { label: 'Suivi de Progression', path: '/planning/suivi-progression' },
+      { label: 'Agenda Personnel', path: '/planning/planning-perso' },
     ]
   },
   {
-    label: 'Ressources',
+    label: 'Bibliothèque',
     path: '/ressources',
     dropdown: [
-      { label: 'Centre de ressources', path: '/ressources' },
+      { label: 'Tous les Documents', path: '/ressources' },
       { label: 'INP-HB', path: '/ressources' },
       { label: 'ESATIC', path: '/ressources' },
       { label: 'CME', path: '/ressources' },
     ]
   },
   {
-    label: 'Outils',
+    label: 'Espace Pratique',
     path: '/outils',
     dropdown: [
-      { label: 'Teams', path: '/outils/teams' },
-      { label: 'Notes', path: '/outils/notes' },
-      { label: 'Genius Eval', path: '/outils/genius-eval' },
+      { label: 'Cours à Distance', path: '/outils/teams' },
+      { label: 'Mes Notes', path: '/outils/notes' },
+      { label: 'Évaluations & Quiz', path: '/outils/genius-eval' },
     ]
   },
   {
-    label: 'Aides',
+    label: 'Accompagnement',
     path: '/aides',
     dropdown: [
-      { label: 'FAQ', path: '/aides/faq-generale' },
-      { label: 'Contacts', path: '/aides/contacts' },
-      { label: 'Orientation', path: '/aides/orientation' },
-      { label: 'Preparation mentale', path: '/aides/preparation-mentale' },
-      { label: 'Chatbot', path: '/aides/chatbot' },
+      { label: 'Questions Fréquentes', path: '/aides/faq-generale' },
+      { label: 'Nous Contacter', path: '/aides/contacts' },
+      { label: 'Guide d\'Orientation', path: '/aides/orientation' },
+      { label: 'Préparation Mentale', path: '/aides/preparation-mentale' },
+      { label: 'Assistant IA', path: '/aides/chatbot' },
     ]
   },
 ]
 
 function DropdownMenu({ items, onClose }) {
   return (
-    <div
-      className="absolute top-full left-0 mt-1 w-52 rounded-xl shadow-xl z-50 overflow-hidden"
+    <div className="absolute top-full left-0 mt-1 w-52 rounded-xl shadow-xl z-50 overflow-hidden"
       style={{ background: '#0d1f3c', border: '1px solid rgba(201,168,76,0.2)' }}>
       {items.map((item, i) => (
-        <Link
-          key={i}
-          to={item.path}
-          onClick={onClose}
+        <Link key={i} to={item.path} onClick={onClose}
           className="flex items-center px-4 py-2.5 text-sm text-gray-300 hover:text-white transition-all"
           style={{ borderBottom: i < items.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}
           onMouseEnter={e => e.currentTarget.style.background = 'rgba(201,168,76,0.1)'}
@@ -102,19 +97,13 @@ export default function Navbar() {
 
   useEffect(() => {
     function handleClickOutside(e) {
-      if (navRef.current && !navRef.current.contains(e.target)) {
-        setOpenMenu(null)
-      }
+      if (navRef.current && !navRef.current.contains(e.target)) setOpenMenu(null)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleLogout = () => {
-    logout()
-    navigate('/')
-  }
-
+  const handleLogout = () => { logout(); navigate('/') }
   const isProfOrAdmin = ['professeur', 'admin'].includes(user?.role)
   const isAdmin = user?.role === 'admin'
 
@@ -124,18 +113,16 @@ export default function Navbar() {
 
       <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
 
+        {/* Logo */}
         <Link to="/accueil" className="flex items-center gap-2 flex-shrink-0">
           <span className="text-xl">🧠</span>
           <div className="hidden sm:block">
-            <p className="font-bold tracking-widest text-xs leading-tight" style={{ color: '#C9A84C' }}>
-              GENIUS GROUP
-            </p>
-            <p className="leading-tight" style={{ color: 'rgba(201,168,76,0.5)', fontSize: '9px', letterSpacing: '0.2em' }}>
-              LA METHODE GENIUS
-            </p>
+            <p className="font-bold tracking-widest text-xs leading-tight" style={{ color: '#C9A84C' }}>GENIUS GROUP</p>
+            <p className="leading-tight" style={{ color: 'rgba(201,168,76,0.5)', fontSize: '9px', letterSpacing: '0.2em' }}>LA METHODE GENIUS</p>
           </div>
         </Link>
 
+        {/* Menu desktop */}
         <div className="hidden md:flex items-center gap-1">
           {menuItems.map((item) => (
             <div key={item.label} className="relative">
@@ -164,7 +151,7 @@ export default function Navbar() {
                 background: location.pathname === '/professeur' ? 'rgba(76,201,168,0.1)' : 'transparent',
                 borderBottom: location.pathname === '/professeur' ? '2px solid #4CC9A8' : '2px solid transparent'
               }}>
-              Professeur
+              Espace Enseignant
             </Link>
           )}
 
@@ -176,11 +163,12 @@ export default function Navbar() {
                 background: location.pathname.startsWith('/admin') ? 'rgba(201,76,123,0.1)' : 'transparent',
                 borderBottom: location.pathname.startsWith('/admin') ? '2px solid #C94C7B' : '2px solid transparent'
               }}>
-              Admin
+              Administration
             </Link>
           )}
         </div>
 
+        {/* Profil desktop */}
         <div className="hidden md:flex items-center gap-3">
           <span className="text-xs px-2 py-1 rounded-lg font-semibold"
             style={{
@@ -189,7 +177,6 @@ export default function Navbar() {
             }}>
             {getRoleLabel(user?.role)}
           </span>
-
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
               style={{ background: 'rgba(201,168,76,0.2)', color: '#C9A84C' }}>
@@ -197,19 +184,20 @@ export default function Navbar() {
             </div>
             <span className="text-xs text-gray-400">{user?.username}</span>
           </div>
-
           <button onClick={handleLogout}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold transition"
             style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)' }}>
-            Deconnexion
+            Déconnexion
           </button>
         </div>
 
+        {/* Burger mobile */}
         <button className="md:hidden text-white text-xl p-2" onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? 'X' : '='}
+          {mobileOpen ? '✕' : '☰'}
         </button>
       </div>
 
+      {/* Menu mobile */}
       {mobileOpen && (
         <div className="md:hidden px-4 pb-4 overflow-y-auto max-h-96"
           style={{ background: '#071020', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
@@ -235,35 +223,32 @@ export default function Navbar() {
               )}
             </div>
           ))}
-
           {isProfOrAdmin && (
             <Link to="/professeur" onClick={() => setMobileOpen(false)}
               className="block py-3 text-sm font-semibold"
               style={{ color: '#4CC9A8', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              Professeur
+              Espace Enseignant
             </Link>
           )}
-
           {isAdmin && (
             <Link to="/admin" onClick={() => setMobileOpen(false)}
               className="block py-3 text-sm font-semibold"
               style={{ color: '#C94C7B', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              Admin
+              Administration
             </Link>
           )}
-
           <div className="pt-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500">{user?.username}</span>
               <span className="text-xs px-2 py-0.5 rounded-full"
-                style={{ background: isAdmin ? 'rgba(201,76,123,0.1)' : 'rgba(201,168,76,0.1)', color: isAdmin ? '#C94C7B' : '#C9A84C' }}>
-                {isAdmin ? 'Admin' : user?.role === 'professeur' ? 'Prof' : 'Etudiant'}
+                style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
+                {getRoleLabel(user?.role)}
               </span>
             </div>
             <button onClick={handleLogout}
               className="text-xs px-3 py-1.5 rounded-lg"
               style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
-              Deconnexion
+              Déconnexion
             </button>
           </div>
         </div>
