@@ -15,16 +15,14 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 // CLIENT GOOGLE DRIVE
 // ══════════════════════════════════════════
 function getDriveClient() {
+  let credentials
+  try {
+    credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT)
+  } catch (e) {
+    throw new Error('Variable GOOGLE_SERVICE_ACCOUNT invalide ou manquante sur le serveur')
+  }
   const auth = new google.auth.GoogleAuth({
-    credentials: {
-      type: 'service_account',
-      project_id: process.env.GOOGLE_PROJECT_ID,
-      private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
-      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      client_email: process.env.GOOGLE_CLIENT_EMAIL,
-      client_id: process.env.GOOGLE_CLIENT_ID,
-      token_uri: 'https://oauth2.googleapis.com/token',
-    },
+    credentials,
     scopes: ['https://www.googleapis.com/auth/drive'],
   })
   return google.drive({ version: 'v3', auth })
