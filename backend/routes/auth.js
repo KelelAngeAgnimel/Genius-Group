@@ -5,19 +5,41 @@ import supabase from '../supabase.js'
 
 const router = express.Router()
 
-// POST /api/auth/login
+// POST /api/auth/login — connexion par MATRICULE + mot de passe
+// Les profs et admins se connectent par username
+// Les étudiants se connectent par matricule
 router.post('/login', async (req, res) => {
-  const { username, password } = req.body
+  const { matricule, password } = req.body
+
+  if (!matricule || !password) {
+    return res.status(400).json({ message: 'Matricule et mot de passe requis' })
+  }
 
   try {
-    const { data: user, error } = await supabase
+    // Chercher d'abord par matricule (étudiants)
+    // puis par username (profs et admins qui n'ont pas de matricule)
+    let user = null
+
+    const { data: parMatricule } = await supabase
       .from('users')
       .select('*')
-      .eq('username', username)
+      .eq('matricule', matricule)
       .single()
 
-    if (error || !user) {
-      return res.status(401).json({ message: 'Identifiant incorrect' })
+    if (parMatricule) {
+      user = parMatricule
+    } else {
+      // Fallback : connexion par username pour profs/admins
+      const { data: parUsername } = await supabase
+        .from('users')
+        .select('*')
+        .eq('username', matricule) // le champ "matricule" du body peut contenir un username
+        .single()
+      user = parUsername
+    }
+
+    if (!user) {
+      return res.status(401).json({ message: 'Matricule ou identifiant incorrect' })
     }
 
     const validPassword = await bcrypt.compare(password, user.password)
@@ -25,14 +47,14 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Mot de passe incorrect' })
     }
 
-    // Token avec role et concours
     const token = jwt.sign(
       {
         id: user.id,
         username: user.username,
         role: user.role,
         matricule: user.matricule,
-        concours: user.concours
+        concours: user.concours,
+        modalite: user.modalite
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
@@ -47,7 +69,8 @@ router.post('/login', async (req, res) => {
         nom: user.nom,
         prenom: user.prenom,
         role: user.role,
-        concours: user.concours
+        concours: user.concours,
+        modalite: user.modalite
       }
     })
 
@@ -55,8 +78,6 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur', error: err.message })
   }
 })
-
-//copilote
 
 export function verifyToken(req, res, next) {
   const authHeader = req.headers.authorization
@@ -74,6 +95,5 @@ export function verifyToken(req, res, next) {
     return res.status(403).json({ message: 'Token invalide' })
   }
 }
-
 
 export default router

@@ -49,7 +49,7 @@ const BrainLogo = ({ size = 56 }) => (
 )
 
 export default function Login() {
-  const [username, setUsername] = useState('')
+  const [matricule, setMatricule] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
@@ -80,11 +80,11 @@ export default function Login() {
     setLoading(true)
     setError('')
     try {
-      const res = await axios.post(`${API_URL}/api/auth/login`, { username, password })
+      const res = await axios.post(`${API_URL}/api/auth/login`, { matricule, password })
       login(res.data.user, res.data.token)
       navigate('/accueil')
     } catch (err) {
-      setError(err.response?.data?.message || 'Identifiant ou mot de passe incorrect')
+      setError(err.response?.data?.message || 'Matricule ou mot de passe incorrect')
     } finally {
       setLoading(false)
     }
@@ -202,13 +202,13 @@ export default function Login() {
 
             <div>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
-                Identifiant
+                Matricule
               </label>
               <input
                 type="text"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                placeholder="ex: jean.dupont"
+                value={matricule}
+                onChange={e => setMatricule(e.target.value)}
+                placeholder="Ex: 26GEN0001"
                 required
                 style={{
                   width: '100%', padding: '13px 16px', fontSize: 14,
