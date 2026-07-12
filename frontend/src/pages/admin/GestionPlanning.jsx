@@ -14,6 +14,13 @@ const concoursConfig = {
   inphb: { label: 'INP-HB' },
   esatic: { label: 'ESATIC' },
   both: { label: 'INP-HB + ESATIC' },
+  all: { label: 'Tous les étudiants' },
+}
+
+const modaliteConfig = {
+  en_ligne: { label: 'En ligne', icone: '💻', couleur: '#4C7BC9' },
+  presentiel: { label: 'Présentiel', icone: '🏫', couleur: '#C9A84C' },
+  les_deux: { label: 'En ligne + Présentiel', icone: '🔀', couleur: '#4CC9A8' },
 }
 
 const formVide = {
@@ -24,6 +31,7 @@ const formVide = {
   type: 'cours',
   salle: '',
   concours: 'both',
+  modalite: 'les_deux',
   professeur_id: ''
 }
 
@@ -130,6 +138,7 @@ export default function GestionPlanning() {
       type: c.type,
       salle: c.salle || '',
       concours: c.concours,
+      modalite: c.modalite || 'les_deux',
       professeur_id: c.professeur_id || ''
     })
     setSucces('')
@@ -263,6 +272,29 @@ export default function GestionPlanning() {
             </select>
           </div>
 
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">
+              Modalité du cours <span className="text-red-400">*</span>
+            </label>
+            <div className="flex gap-2">
+              {Object.entries(modaliteConfig).map(([key, val]) => (
+                <button key={key} type="button"
+                  onClick={() => handleChange('modalite', key)}
+                  className="flex-1 py-2 px-2 rounded-lg text-xs font-semibold transition text-center"
+                  style={{
+                    background: form.modalite === key ? val.couleur : `${val.couleur}15`,
+                    color: form.modalite === key ? 'white' : val.couleur,
+                    border: `1px solid ${val.couleur}40`
+                  }}>
+                  {val.icone} {val.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              Détermine quels étudiants voient ce cours selon leur mode d'inscription
+            </p>
+          </div>
+
           <div className="md:col-span-3">
             <label className="block text-xs font-semibold text-gray-500 mb-1">Professeur mandaté</label>
             <select
@@ -342,6 +374,7 @@ export default function GestionPlanning() {
                 <th className="py-2 pr-4">Salle</th>
                 <th className="py-2 pr-4">Professeur</th>
                 <th className="py-2 pr-4">Concours</th>
+                <th className="py-2 pr-4">Modalité</th>
                 <th className="py-2 pr-4"></th>
               </tr>
             </thead>
@@ -365,6 +398,17 @@ export default function GestionPlanning() {
                   <td className="py-3 pr-4 text-gray-500">{c.salle || '—'}</td>
                   <td className="py-3 pr-4 text-gray-500">{c.prof || '—'}</td>
                   <td className="py-3 pr-4 text-gray-500">{concoursConfig[c.concours]?.label || c.concours}</td>
+                  <td className="py-3 pr-4">
+                    {c.modalite && modaliteConfig[c.modalite] && (
+                      <span className="text-xs font-semibold px-2 py-1 rounded-lg"
+                        style={{
+                          background: `${modaliteConfig[c.modalite].couleur}15`,
+                          color: modaliteConfig[c.modalite].couleur
+                        }}>
+                        {modaliteConfig[c.modalite].icone} {modaliteConfig[c.modalite].label}
+                      </span>
+                    )}
+                  </td>
                   <td className="py-3 pr-4 text-right whitespace-nowrap">
                     <button
                       onClick={() => handleEdit(c)}
