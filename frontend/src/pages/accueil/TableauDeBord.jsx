@@ -309,7 +309,7 @@ function CarteCompetencesFIFA({ config, notes }) {
 // ══════════════════════════════════════════
 // DÉCOMPTE DYNAMIQUE VERS LE CONCOURS
 // ══════════════════════════════════════════
-function DecompteConcours({ dateConcours, nomConcours }) {
+function DecompteConcours({ dateConcours, nomConcours, couleurConcours }) {
   const calcJours = () => {
     const auj = new Date(); auj.setHours(0, 0, 0, 0)
     const cible = new Date(dateConcours); cible.setHours(0, 0, 0, 0)
@@ -321,7 +321,8 @@ function DecompteConcours({ dateConcours, nomConcours }) {
     return () => clearInterval(t)
   }, [])
 
-  const couleur = jours <= 30 ? '#C94C7B' : jours <= 60 ? '#C9A84C' : '#4CC9A8'
+  // Couleur du concours en priorité, sinon urgence
+  const couleur = couleurConcours || (jours <= 30 ? '#C94C7B' : jours <= 60 ? '#C9A84C' : '#4CC9A8')
   const semaines = Math.floor(jours / 7)
   const joursR = jours % 7
 
@@ -331,12 +332,12 @@ function DecompteConcours({ dateConcours, nomConcours }) {
   const pct = Math.min(100, Math.max(0, Math.round(((auj - dateDebut) / (dateFin - dateDebut)) * 100)))
 
   return (
-    <div className="rounded-2xl p-4 md:p-5 bg-white col-span-2 md:col-span-1" style={{ border: `1px solid ${couleur}30` }}>
-      <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Prochain concours</p>
-      <p className="text-sm font-bold" style={{ color: '#071020' }}>{nomConcours}</p>
+    <div className="rounded-2xl p-4 md:p-5 bg-white" style={{ border: `1px solid ${couleur}30` }}>
+      <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Épreuves écrites</p>
+      <p className="text-sm font-bold" style={{ color: couleur }}>{nomConcours}</p>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 6 }}>
-        <span style={{ fontSize: 30, fontWeight: 900, color: couleur, lineHeight: 1 }}>{jours}</span>
-        <span style={{ fontSize: 12, fontWeight: 600, color: couleur }}>jours</span>
+        <span style={{ fontSize: 32, fontWeight: 900, color: couleur, lineHeight: 1 }}>{jours}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: couleur }}>jours</span>
       </div>
       <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>
         {semaines > 0 ? `${semaines}sem ${joursR}j · ` : ''}
@@ -345,10 +346,10 @@ function DecompteConcours({ dateConcours, nomConcours }) {
       <div style={{ marginTop: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
           <span style={{ fontSize: 9, color: '#d1d5db' }}>Jan 2026</span>
-          <span style={{ fontSize: 9, color: '#d1d5db' }}>Concours</span>
+          <span style={{ fontSize: 9, color: '#d1d5db' }}>Épreuves</span>
         </div>
         <div style={{ width: '100%', height: 5, background: '#f0ece0', borderRadius: 3 }}>
-          <div style={{ width: `${pct}%`, height: 5, background: `linear-gradient(90deg, ${couleur}80, ${couleur})`, borderRadius: 3 }} />
+          <div style={{ width: `${pct}%`, height: 5, background: `linear-gradient(90deg, ${couleur}60, ${couleur})`, borderRadius: 3 }} />
         </div>
         <p style={{ fontSize: 9, color: '#d1d5db', marginTop: 2, textAlign: 'right' }}>{pct}% du parcours écoulé</p>
       </div>
@@ -369,8 +370,8 @@ const CONCOURS_CONFIG = [
     couleur: '#C9A84C',
     site: 'https://inphb.ci',
     roles: ['etudiant_inphb', 'etudiant_both', 'etudiant_inphb_cme', 'etudiant_all'],
-    dateConcours: '2026-08-10',
-    nomConcours: 'Concours INP-HB 2026'
+    dateConcours: '2026-08-05',
+    nomConcours: 'Épreuves INP-HB'
   },
   {
     sigle: 'ESATIC',
@@ -381,8 +382,8 @@ const CONCOURS_CONFIG = [
     couleur: '#4C7BC9',
     site: 'https://esatic.ci',
     roles: ['etudiant_esatic', 'etudiant_both', 'etudiant_esatic_cme', 'etudiant_all'],
-    dateConcours: '2026-08-10',
-    nomConcours: 'Concours ESATIC 2026'
+    dateConcours: '2026-08-04',
+    nomConcours: 'Épreuves ESATIC'
   },
   {
     sigle: 'CME',
@@ -394,7 +395,7 @@ const CONCOURS_CONFIG = [
     site: '#',
     roles: ['etudiant_cme', 'etudiant_inphb_cme', 'etudiant_esatic_cme', 'etudiant_all'],
     dateConcours: '2026-08-10',
-    nomConcours: 'Concours CME 2026'
+    nomConcours: 'Épreuves CME'
   },
 ]
 
@@ -496,7 +497,13 @@ function DashboardEtudiant({ user, token, navigate }) {
       </div>
 
       {/* CARTES STATS DU HAUT */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6">
+      <div className={`grid gap-3 md:gap-4 mb-6 ${
+        concoursVisibles.length <= 1
+          ? 'grid-cols-2 md:grid-cols-3'
+          : concoursVisibles.length === 2
+          ? 'grid-cols-2 md:grid-cols-4'
+          : 'grid-cols-2 md:grid-cols-5'
+      }`}>
 
         {/* Messages */}
         <div className="rounded-2xl p-4 md:p-5"
@@ -524,12 +531,16 @@ function DashboardEtudiant({ user, token, navigate }) {
           )}
         </div>
 
-        {/* Décompte concours */}
-        {concoursPrincipal ? (
-          <DecompteConcours
-            dateConcours={concoursPrincipal.dateConcours}
-            nomConcours={concoursPrincipal.nomConcours}
-          />
+        {/* Décomptes — un par concours visible, chacun avec sa couleur */}
+        {concoursVisibles.length > 0 ? (
+          concoursVisibles.map((config, i) => (
+            <DecompteConcours
+              key={i}
+              dateConcours={config.dateConcours}
+              nomConcours={config.nomConcours}
+              couleurConcours={config.couleur}
+            />
+          ))
         ) : (
           <div className="rounded-2xl p-4 md:p-5 bg-white col-span-2 md:col-span-1" style={{ border: '1px solid #f0ece0' }}>
             <p className="text-xs text-gray-400 uppercase tracking-widest mb-2">Concours</p>
