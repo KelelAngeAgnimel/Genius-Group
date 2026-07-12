@@ -77,9 +77,7 @@ export default function EspaceProfesseur() {
   const chargerEtudiants = async () => {
     const res = await fetch(`${API_URL}/api/users/all`, { headers })
     const data = await res.json()
-    if (data.users) setEtudiants(data.users.filter(u =>
-      ['etudiant_inphb', 'etudiant_esatic', 'etudiant_both'].includes(u.role)
-    ))
+    if (data.users) setEtudiants(data.users.filter(u => u.role.startsWith('etudiant')))
   }
 
   const chargerMessages = async () => {
@@ -216,7 +214,8 @@ export default function EspaceProfesseur() {
   const etudiantsPourNotes = etudiants.filter(e =>
     noteForm.concours === 'tous' ||
     e.role === `etudiant_${noteForm.concours.toLowerCase().replace('-', '')}` ||
-    e.role === 'etudiant_both'
+    e.role === 'etudiant_both' ||
+    e.role === 'etudiant_all'
   )
 
   // Organiser les notes par étudiant pour l'affichage
@@ -666,13 +665,21 @@ export default function EspaceProfesseur() {
                 style={{ background: '#f8f7f4', border: '1px solid #f0ece0' }}>
                 <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white"
                   style={{ background: '#071020' }}>
-                  {etudiant.username?.[0]?.toUpperCase()}
+                  {(etudiant.prenom || etudiant.username)?.[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-800">
-                    {etudiant.prenom || ''} {etudiant.nom || etudiant.username}
+                    {etudiant.prenom || ''} {etudiant.nom || ''}
                   </p>
-                  <p className="text-xs text-gray-400">{etudiant.matricule}</p>
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span className="text-xs font-bold" style={{ color: '#C9A84C' }}>
+                      {etudiant.matricule || etudiant.username}
+                    </span>
+                    <span className="text-xs text-gray-400">·</span>
+                    <span className="text-xs text-gray-400">
+                      Identifiant : {etudiant.username}
+                    </span>
+                  </div>
                 </div>
                 <span className="text-xs font-semibold px-2 py-1 rounded-lg flex-shrink-0"
                   style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
