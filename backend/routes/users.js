@@ -52,12 +52,16 @@ router.post('/create', verifyToken, async (req, res) => {
 
   const { username, password, nom, prenom, role, concours, modalite } = req.body
 
-  if (!username || !password) {
-    return res.status(400).json({ message: 'Identifiant et mot de passe sont requis' })
+  if (!password) {
+    return res.status(400).json({ message: 'Le mot de passe est requis' })
   }
 
-  // Valider la modalité uniquement pour les étudiants
+  // Pour les profs et admins, le username est obligatoire
+  // Pour les étudiants, le matricule généré automatiquement servira d'identifiant
   const estEtudiant = role?.startsWith('etudiant')
+  if (!estEtudiant && !username) {
+    return res.status(400).json({ message: 'L\'identifiant est requis pour les professeurs et administrateurs' })
+  }
   if (estEtudiant && !['en_ligne', 'presentiel'].includes(modalite)) {
     return res.status(400).json({ message: 'La modalité (en ligne ou présentiel) est requise pour un étudiant' })
   }
