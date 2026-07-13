@@ -205,28 +205,46 @@ router.post('/importer-pdf', verifyToken, (req, res, next) => {
   let parser
   try {
     parser = new PDFParse({ data: req.file.buffer })
-    const { text } = await parser.getText()
+    const { text: texteBrut } = await parser.getText()
 
-    if (!text || text.trim().length < 20) {
+    if (!texteBrut || texteBrut.trim().length < 20) {
       return res.status(400).json({ error: "Le PDF semble vide ou le texte n'a pas pu être extrait (PDF scanné/image non supporté)" })
     }
 
+    // Les PDF avec beaucoup de notation mathématique (fractions, sommes, racines...)
+    // produisent souvent des caractères de contrôle invisibles lors de l'extraction
+    // (ligatures/glyphes de police non standards mal mappés). On les retire pour
+    // éviter de perturber l'IA, tout en gardant les retours à la ligne utiles.
+    const text = texteBrut
+      .split('').filter(c => {
+        const code = c.charCodeAt(0)
+        return code >= 32 || c === '\n' || c === '\r' || c === '\t'
+      }).join('')
+      .replace(/[ \t]{2,}/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+
     const texteTronque = text.slice(0, 15000)
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      max_tokens: 8192,
-      messages: [
-        {
-          role: 'system',
-          content: 'Tu reçois le texte brut extrait d\'un PDF contenant un QCM (questions à choix multiples). Identifie chaque question et ses options de réponse, puis détermine la bonne réponse si elle est indiquée dans le texte (par exemple par un astérisque, un "Réponse :", un soulignement signalé, une mise en gras perdue à l\'extraction, etc.). Si la bonne réponse n\'est pas identifiable avec certitude, choisis l\'option la plus plausible. Tu réponds UNIQUEMENT avec un tableau JSON valide, sans aucun texte avant ou après, sans balises markdown. Format exact : [{"question": "texte", "options": ["a","b","c","d"], "bonne_reponse": 0}]. bonne_reponse est l\'index (0 à 3) de la bonne réponse dans options. Ignore les éléments qui ne sont pas des questions (en-têtes, numéros de page, instructions générales, noms d\'examen). Chaque question doit avoir exactement 4 options : si le document en propose plus ou moins, adapte en conservant les plus pertinentes ou en complétant avec des options plausibles.'
-        },
-        {
-          role: 'user',
-          content: `Voici le texte extrait du PDF :\n\n${texteTronque}`
-        }
-      ]
-    })
+    let completion
+    try {
+      completion = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 8192,
+        messages: [
+          {
+            role: 'system',
+            content: 'Tu reçois le texte brut extrait d\'un PDF contenant un QCM (questions à choix multiples). Ce texte peut contenir de la notation mathématique désorganisée par l\'extraction (fractions, exposants, sommes ou racines éclatés sur plusieurs lignes, symboles mal reconnus) : reconstitue du mieux possible le sens mathématique de chaque question à partir du contexte. Identifie chaque question et ses options de réponse, puis détermine la bonne réponse si elle est indiquée dans le texte (par exemple par un astérisque, un "Réponse :", une grille de réponses en fin de document, un corrigé détaillé, etc.). Si la bonne réponse n\'est pas identifiable avec certitude, choisis l\'option la plus plausible. Tu réponds UNIQUEMENT avec un tableau JSON valide, sans aucun texte avant ou après, sans balises markdown. Format exact : [{"question": "texte", "options": ["a","b","c","d"], "bonne_reponse": 0}]. bonne_reponse est l\'index (0 à 3) de la bonne réponse dans options. Ignore les éléments qui ne sont pas des questions (en-têtes, numéros de page, instructions générales, noms d\'examen, corrigé détaillé). Chaque question doit avoir exactement 4 options : si le document en propose plus ou moins, adapte en conservant les plus pertinentes ou en complétant avec des options plausibles.'
+          },
+          {
+            role: 'user',
+            content: `Voici le texte extrait du PDF :\n\n${texteTronque}`
+          }
+        ]
+      })
+    } catch (groqErr) {
+      console.error('Erreur appel Groq (import PDF):', groqErr?.message || groqErr)
+      return res.status(502).json({ error: "Le service IA n'a pas pu traiter ce PDF (erreur de communication avec le modèle). Réessaie dans quelques instants." })
+    }
 
     let raw = completion.choices[0].message.content.trim()
     raw = raw.replace(/^```json/i, '').replace(/^```/, '').replace(/```$/, '').trim()
@@ -238,12 +256,14 @@ router.post('/importer-pdf', verifyToken, (req, res, next) => {
     } catch {
       const dernierObjetComplet = raw.lastIndexOf('},')
       if (dernierObjetComplet === -1) {
+        console.error('JSON IA invalide (import PDF), début de la réponse:', raw.slice(0, 300))
         return res.status(500).json({ error: "L'IA n'a pas pu structurer le contenu du PDF en QCM valide" })
       }
       try {
         questions = JSON.parse(raw.slice(0, dernierObjetComplet + 1) + ']')
         reponseTronquee = true
       } catch {
+        console.error('JSON IA invalide même après troncature (import PDF), début de la réponse:', raw.slice(0, 300))
         return res.status(500).json({ error: "L'IA n'a pas pu structurer le contenu du PDF en QCM valide" })
       }
     }
@@ -264,7 +284,7 @@ router.post('/importer-pdf', verifyToken, (req, res, next) => {
       tronque: reponseTronquee
     })
   } catch (err) {
-    console.error('Erreur import PDF:', err)
+    console.error('Erreur import PDF:', err?.message || err, err?.stack)
     res.status(500).json({ error: "Erreur lors du traitement du PDF" })
   } finally {
     if (parser) await parser.destroy()
