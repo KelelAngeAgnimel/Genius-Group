@@ -2,6 +2,15 @@ import { useAuth } from '../../context/AuthContext'
 import { useState, useEffect, useRef } from 'react'
 import API_URL from '../../config'
 
+
+// Matières par concours — doivent correspondre exactement aux matières dans la table notes
+const MATIERES_PAR_CONCOURS = {
+  inphb: ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire'],
+  esatic: ['Mathématiques', 'Physique', 'Anglais', 'Français'],
+  all: ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire', 'Mathématiques', 'Physique', 'Anglais', 'Français']
+}
+
+
 const COULEURS = { or: '#C9A84C', bleu: '#4C7BC9', vert: '#4CC9A8', rose: '#C94C7B', navy: '#071020' }
 
 function formatChrono(secondes) {
@@ -157,6 +166,18 @@ function LecteurQuiz({ quizId, token, onTermine, onRetour }) {
               {resultat.score}/{resultat.total}
             </p>
             <p className="text-xs text-gray-400 mt-1">{Math.round((resultat.score / resultat.total) * 100)}% de bonnes réponses</p>
+            {/* Message selon si la note est conservée ou non */}
+            {resultat.note_conservee === false ? (
+              <p className="text-xs mt-3 px-3 py-1.5 rounded-full inline-block"
+                style={{ background: 'rgba(201,76,123,0.15)', color: '#C94C7B' }}>
+                ⚠️ Note non conservée — seule la première tentative compte
+              </p>
+            ) : (
+              <p className="text-xs mt-3 px-3 py-1.5 rounded-full inline-block"
+                style={{ background: 'rgba(76,201,168,0.15)', color: '#4CC9A8' }}>
+                ✓ Note enregistrée — première tentative
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-3 mb-4">
@@ -326,7 +347,7 @@ function VueProf({ token }) {
   const [resultats, setResultats] = useState(null)
   const [etudiantOuvert, setEtudiantOuvert] = useState(null)
 
-  const [form, setForm] = useState({ titre: '', matiere: '', niveau: '', duree_minutes: 10 })
+  const [form, setForm] = useState({ titre: '', matiere: '', niveau: '', duree_minutes: 10, concours: 'all', modalite: 'les_deux' })
   const [questions, setQuestions] = useState([{ question: '', options: ['', '', '', ''], bonne_reponse: 0 }])
   const [iaForm, setIaForm] = useState({ theme: '', nombre_questions: 5 })
   const [generating, setGenerating] = useState(false)
@@ -347,7 +368,7 @@ function VueProf({ token }) {
   useEffect(() => { charger() }, [])
 
   const reinitialiserForm = () => {
-    setForm({ titre: '', matiere: '', niveau: '', duree_minutes: 10 })
+    setForm({ titre: '', matiere: '', niveau: '', duree_minutes: 10, concours: 'all', modalite: 'les_deux' })
     setQuestions([{ question: '', options: ['', '', '', ''], bonne_reponse: 0 }])
     setIaForm({ theme: '', nombre_questions: 5 })
     setErreur('')
@@ -514,18 +535,85 @@ function VueProf({ token }) {
 
           <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
             <p className="font-bold text-sm mb-3" style={{ color: COULEURS.navy }}>Informations générales</p>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <input value={form.titre} onChange={e => setForm(p => ({ ...p, titre: e.target.value }))}
-                placeholder="Titre du quiz *" className="text-xs rounded-xl px-3 py-2 outline-none" style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} />
-              <input value={form.matiere} onChange={e => setForm(p => ({ ...p, matiere: e.target.value }))}
-                placeholder="Matière *" className="text-xs rounded-xl px-3 py-2 outline-none" style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} />
-              <input value={form.niveau} onChange={e => setForm(p => ({ ...p, niveau: e.target.value }))}
-                placeholder="Niveau (optionnel)" className="text-xs rounded-xl px-3 py-2 outline-none" style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} />
-              <div className="flex items-center gap-2">
-                <input type="number" min="1" value={form.duree_minutes}
-                  onChange={e => setForm(p => ({ ...p, duree_minutes: e.target.value }))}
-                  placeholder="Durée *" className="w-full text-xs rounded-xl px-3 py-2 outline-none" style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} />
-                <span className="text-xs text-gray-400 whitespace-nowrap">min *</span>
+            <div className="flex flex-col gap-3">
+
+              {/* Ligne 1 — Concours cible */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 mb-2">1. Concours concerné</p>
+                <div className="flex gap-2">
+                  {[
+                    { val: 'inphb', label: 'INP-HB', couleur: '#C9A84C' },
+                    { val: 'esatic', label: 'ESATIC', couleur: '#4C7BC9' },
+                    { val: 'all', label: 'INP-HB + ESATIC + CME', couleur: '#7B4CC9' },
+                  ].map(c => (
+                    <button key={c.val} type="button"
+                      onClick={() => setForm(p => ({ ...p, concours: c.val, matiere: '' }))}
+                      className="text-xs font-bold px-4 py-2 rounded-xl transition"
+                      style={{
+                        background: form.concours === c.val ? c.couleur : `${c.couleur}15`,
+                        color: form.concours === c.val ? 'white' : c.couleur,
+                        border: `1px solid ${c.couleur}40`
+                      }}>
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ligne 2 — Modalité */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 mb-2">2. Visible par</p>
+                <div className="flex gap-2">
+                  {[
+                    { val: 'les_deux', label: '🔀 Tous les élèves', couleur: '#4CC9A8' },
+                    { val: 'en_ligne', label: '💻 En ligne uniquement', couleur: '#4C7BC9' },
+                    { val: 'presentiel', label: '🏫 Présentiel uniquement', couleur: '#C9A84C' },
+                  ].map(m => (
+                    <button key={m.val} type="button"
+                      onClick={() => setForm(p => ({ ...p, modalite: m.val }))}
+                      className="text-xs font-bold px-3 py-2 rounded-xl transition"
+                      style={{
+                        background: form.modalite === m.val ? m.couleur : `${m.couleur}15`,
+                        color: form.modalite === m.val ? 'white' : m.couleur,
+                        border: `1px solid ${m.couleur}40`
+                      }}>
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ligne 3 — Matière (menu déroulant selon concours) */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 mb-2">3. Matière <span className="text-red-400">*</span></p>
+                <div className="flex gap-2 flex-wrap">
+                  {(MATIERES_PAR_CONCOURS[form.concours] || MATIERES_PAR_CONCOURS.all).map(m => (
+                    <button key={m} type="button"
+                      onClick={() => setForm(p => ({ ...p, matiere: m }))}
+                      className="text-xs font-semibold px-3 py-2 rounded-xl transition"
+                      style={{
+                        background: form.matiere === m ? '#071020' : '#f8f7f4',
+                        color: form.matiere === m ? '#C9A84C' : '#374151',
+                        border: `1px solid ${form.matiere === m ? 'rgba(201,168,76,0.4)' : '#e8e4da'}`
+                      }}>
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ligne 4 — Titre, niveau, durée */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input value={form.titre} onChange={e => setForm(p => ({ ...p, titre: e.target.value }))}
+                  placeholder="Titre du quiz *" className="text-xs rounded-xl px-3 py-2 outline-none" style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} />
+                <input value={form.niveau} onChange={e => setForm(p => ({ ...p, niveau: e.target.value }))}
+                  placeholder="Niveau (optionnel)" className="text-xs rounded-xl px-3 py-2 outline-none" style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} />
+                <div className="flex items-center gap-2">
+                  <input type="number" min="1" value={form.duree_minutes}
+                    onChange={e => setForm(p => ({ ...p, duree_minutes: e.target.value }))}
+                    placeholder="Durée *" className="w-full text-xs rounded-xl px-3 py-2 outline-none" style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} />
+                  <span className="text-xs text-gray-400 whitespace-nowrap">min *</span>
+                </div>
               </div>
             </div>
           </div>
