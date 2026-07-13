@@ -3,14 +3,23 @@ import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import API_URL from '../../config'
 
-// Sections par concours affichées dans "Mes notes", dans cet ordre.
-// Les libellés correspondent aux valeurs stockées dans la table "notes"
-// (saisie manuelle par le professeur ou notes générées automatiquement par Genius Eval).
-const SECTIONS_CONCOURS = [
-  { val: 'INP-HB', label: 'INP-HB', couleur: '#C9A84C' },
-  { val: 'ESATIC', label: 'ESATIC', couleur: '#4C7BC9' },
-  { val: 'CME', label: 'CME', couleur: '#7B4CC9' },
-  { val: 'tous', label: 'Général', couleur: '#4CC9A8' },
+// Deux blocs fixes, un par concours, avec leurs matières officielles.
+// Ce sont ces mêmes matières qui sont proposées lors de la création d'un quiz
+// dans Genius Eval (voir MATIERES_PAR_CONCOURS dans GeniusEval.jsx) : la note
+// d'un quiz atterrit donc automatiquement dans le bon bloc, sous la bonne matière.
+const BLOCS_CONCOURS = [
+  {
+    val: 'INP-HB',
+    label: 'INP-HB',
+    couleur: '#C9A84C',
+    matieres: ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire']
+  },
+  {
+    val: 'ESATIC',
+    label: 'ESATIC',
+    couleur: '#4C7BC9',
+    matieres: ['Mathématiques', 'Physique', 'Anglais', 'Français']
+  }
 ]
 
 export default function MesNotes() {
@@ -36,17 +45,16 @@ export default function MesNotes() {
   const getCouleur = (note) => note >= 14 ? '#4CC9A8' : note >= 10 ? '#C9A84C' : '#C94C7B'
   const moyenne = notes.length > 0 ? notes.reduce((s, n) => s + n.note, 0) / notes.length : 0
 
-  // Regroupement des notes par concours (INP-HB / ESATIC / CME / Général),
-  // avec repli sur "Général" pour d'éventuelles notes sans concours renseigné.
-  const notesParConcours = notes.reduce((acc, n) => {
-    const key = n.concours || 'tous'
-    if (!acc[key]) acc[key] = []
-    acc[key].push(n)
-    return acc
-  }, {})
-  const sectionsAffichees = SECTIONS_CONCOURS
-    .filter(s => notesParConcours[s.val]?.length > 0)
-    .map(s => ({ ...s, notes: notesParConcours[s.val] }))
+  // On classe chaque note dans le bon bloc uniquement à partir de sa matière
+  // (les matières INP-HB et ESATIC ne se recoupent pas), ce qui fonctionne
+  // automatiquement quel que soit le concours technique enregistré sur la note.
+  const blocsAvecNotes = BLOCS_CONCOURS.map(bloc => ({
+    ...bloc,
+    matieresAvecNotes: bloc.matieres.map(matiere => ({
+      matiere,
+      notes: notes.filter(n => n.matiere === matiere)
+    }))
+  }))
 
   if (isProfOrAdmin) {
     return (
@@ -91,57 +99,66 @@ export default function MesNotes() {
         <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
           <p className="text-xs text-gray-400 text-center py-8">Chargement...</p>
         </div>
-      ) : notes.length === 0 ? (
-        <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
-          <p className="text-xs text-gray-400 text-center py-8">Aucune note disponible pour le moment</p>
-        </div>
       ) : (
         <div className="flex flex-col gap-5">
-          {sectionsAffichees.map(section => {
-            const moyenneSection = section.notes.reduce((s, n) => s + n.note, 0) / section.notes.length
+          {blocsAvecNotes.map(bloc => {
+            const toutesNotesDuBloc = bloc.matieresAvecNotes.flatMap(m => m.notes)
+            const moyenneBloc = toutesNotesDuBloc.length > 0
+              ? toutesNotesDuBloc.reduce((s, n) => s + n.note, 0) / toutesNotesDuBloc.length
+              : null
+
             return (
-              <div key={section.val} className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
+              <div key={bloc.val} className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold px-3 py-1 rounded-full"
-                      style={{ background: `${section.couleur}1A`, color: section.couleur, border: `1px solid ${section.couleur}4D` }}>
-                      {section.label}
-                    </span>
-                    <span className="text-xs text-gray-400">{section.notes.length} note{section.notes.length > 1 ? 's' : ''}</span>
-                  </div>
-                  <span className="text-sm font-bold" style={{ color: getCouleur(moyenneSection) }}>
-                    Moy. {moyenneSection.toFixed(2)}/20
+                  <span className="text-xs font-bold px-3 py-1 rounded-full"
+                    style={{ background: `${bloc.couleur}1A`, color: bloc.couleur, border: `1px solid ${bloc.couleur}4D` }}>
+                    {bloc.label}
                   </span>
+                  {moyenneBloc !== null && (
+                    <span className="text-sm font-bold" style={{ color: getCouleur(moyenneBloc) }}>
+                      Moy. {moyenneBloc.toFixed(2)}/20
+                    </span>
+                  )}
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid #f0ece0' }}>
-                        <th className="text-left py-2 px-2 text-gray-400 font-semibold">Matière</th>
-                        <th className="text-left py-2 px-2 text-gray-400 font-semibold">Évaluation</th>
-                        <th className="text-right py-2 px-2 text-gray-400 font-semibold">Note</th>
-                        <th className="text-right py-2 px-2 text-gray-400 font-semibold">Appréciation</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {section.notes.map((n, i) => (
-                        <tr key={i} style={{ borderBottom: '1px solid #f8f7f4' }}>
-                          <td className="py-2.5 px-2 font-semibold" style={{ color: '#071020' }}>{n.matiere}</td>
-                          <td className="py-2.5 px-2 text-gray-400">{n.periode || '—'}</td>
-                          <td className="py-2.5 px-2 text-right font-bold" style={{ color: getCouleur(n.note) }}>{n.note}/20</td>
-                          <td className="py-2.5 px-2 text-right">
-                            <span style={{
-                              fontSize: '10px', padding: '2px 8px', borderRadius: '20px',
-                              background: `${getCouleur(n.note)}1A`, color: getCouleur(n.note),
-                              border: `1px solid ${getCouleur(n.note)}55`
-                            }}>
-                              {n.note >= 14 ? 'Très bien' : n.note >= 10 ? 'Satisfaisant' : 'À améliorer'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+
+                <div className="flex flex-col gap-4">
+                  {bloc.matieresAvecNotes.map(({ matiere, notes: notesMatiere }) => (
+                    <div key={matiere}>
+                      <p className="text-xs font-bold mb-2" style={{ color: '#071020' }}>{matiere}</p>
+                      {notesMatiere.length === 0 ? (
+                        <p className="text-xs text-gray-400 italic pl-2">Aucune note pour le moment</p>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr style={{ borderBottom: '1px solid #f0ece0' }}>
+                                <th className="text-left py-1.5 px-2 text-gray-400 font-semibold">Évaluation</th>
+                                <th className="text-right py-1.5 px-2 text-gray-400 font-semibold">Note</th>
+                                <th className="text-right py-1.5 px-2 text-gray-400 font-semibold">Appréciation</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {notesMatiere.map((n, i) => (
+                                <tr key={i} style={{ borderBottom: '1px solid #f8f7f4' }}>
+                                  <td className="py-2 px-2 text-gray-500">{n.periode || '—'}</td>
+                                  <td className="py-2 px-2 text-right font-bold" style={{ color: getCouleur(n.note) }}>{n.note}/20</td>
+                                  <td className="py-2 px-2 text-right">
+                                    <span style={{
+                                      fontSize: '10px', padding: '2px 8px', borderRadius: '20px',
+                                      background: `${getCouleur(n.note)}1A`, color: getCouleur(n.note),
+                                      border: `1px solid ${getCouleur(n.note)}55`
+                                    }}>
+                                      {n.note >= 14 ? 'Très bien' : n.note >= 10 ? 'Satisfaisant' : 'À améliorer'}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             )
