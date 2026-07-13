@@ -2,16 +2,18 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import API_URL from '../../config'
 
+// Rôles réellement utilisés dans l'application (alignés avec CreerUtilisateur.jsx)
 const roleConfig = {
-  admin:             { label: 'Admin',                  couleur: '#C94C7B' },
-  professeur:        { label: 'Professeur',             couleur: '#4CC9A8' },
-  etudiant_inphb:    { label: 'INP-HB',                couleur: '#C9A84C' },
-  etudiant_esatic:   { label: 'ESATIC',                couleur: '#4C7BC9' },
-  etudiant_both:     { label: 'INP-HB + ESATIC',       couleur: '#7B4CC9' },
-  etudiant_cme:      { label: 'CME',                   couleur: '#4CC9A8' },
-  etudiant_inphb_cme:{ label: 'INP-HB + CME',         couleur: '#C97B4C' },
-  etudiant_esatic_cme:{ label: 'ESATIC + CME',        couleur: '#C94C7B' },
-  etudiant_all:      { label: 'INP-HB + ESATIC + CME', couleur: '#C9A84C' },
+  admin:           { label: 'Admin',                    couleur: '#C94C7B' },
+  professeur:      { label: 'Professeur',                couleur: '#4CC9A8' },
+  etudiant_inphb:  { label: 'INP-HB',                    couleur: '#C9A84C' },
+  etudiant_esatic: { label: 'ESATIC',                    couleur: '#4C7BC9' },
+  etudiant_all:    { label: 'INP-HB + ESATIC + CME',     couleur: '#7B4CC9' },
+}
+
+const modaliteConfig = {
+  en_ligne:   { label: 'En ligne',   icone: '💻', couleur: '#4C7BC9' },
+  presentiel: { label: 'Présentiel', icone: '🏫', couleur: '#C9A84C' },
 }
 
 export default function GestionUtilisateurs() {
@@ -21,6 +23,12 @@ export default function GestionUtilisateurs() {
   const [erreur, setErreur] = useState('')
   const [recherche, setRecherche] = useState('')
   const [filtreRole, setFiltreRole] = useState('tous')
+  const [filtreModalite, setFiltreModalite] = useState('tous')
+
+  // Édition en ligne
+  const [editingId, setEditingId] = useState(null)
+  const [editForm, setEditForm] = useState({ nom: '', prenom: '', modalite: '' })
+  const [enregistrement, setEnregistrement] = useState(false)
 
   useEffect(() => { chargerUtilisateurs() }, [])
 
@@ -52,13 +60,50 @@ export default function GestionUtilisateurs() {
     }
   }
 
+  const commencerEdition = (u) => {
+    setEditingId(u.id)
+    setEditForm({ nom: u.nom || '', prenom: u.prenom || '', modalite: u.modalite || '' })
+  }
+
+  const annulerEdition = () => {
+    setEditingId(null)
+    setEditForm({ nom: '', prenom: '', modalite: '' })
+  }
+
+  const enregistrerEdition = async (id) => {
+    setEnregistrement(true)
+    try {
+      const res = await fetch(`${API_URL}/api/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          nom: editForm.nom,
+          prenom: editForm.prenom,
+          ...(editForm.modalite ? { modalite: editForm.modalite } : {})
+        })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data.user } : u))
+        setEditingId(null)
+      } else {
+        alert(data.message || 'Erreur lors de la modification')
+      }
+    } catch {
+      alert('Erreur serveur lors de la modification')
+    } finally {
+      setEnregistrement(false)
+    }
+  }
+
   const usersFiltres = users.filter(u => {
     const matchRecherche = recherche === '' ||
       u.username?.toLowerCase().includes(recherche.toLowerCase()) ||
       u.nom?.toLowerCase().includes(recherche.toLowerCase()) ||
       u.prenom?.toLowerCase().includes(recherche.toLowerCase())
     const matchRole = filtreRole === 'tous' || u.role === filtreRole
-    return matchRecherche && matchRole
+    const matchModalite = filtreModalite === 'tous' || u.modalite === filtreModalite
+    return matchRecherche && matchRole && matchModalite
   })
 
   // Stats simplifiées : admins, profs, étudiants total
@@ -119,6 +164,15 @@ export default function GestionUtilisateurs() {
             <option key={key} value={key}>{val.label}</option>
           ))}
         </select>
+        <select
+          value={filtreModalite}
+          onChange={e => setFiltreModalite(e.target.value)}
+          className="border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none bg-white"
+          style={{ borderColor: '#f0ece0' }}>
+          <option value="tous">Toutes les modalités</option>
+          <option value="en_ligne">💻 En ligne</option>
+          <option value="presentiel">🏫 Présentiel</option>
+        </select>
       </div>
 
       {/* CHARGEMENT */}
@@ -161,6 +215,9 @@ export default function GestionUtilisateurs() {
                 {usersFiltres.map((u) => {
                   const role = roleConfig[u.role] || { label: u.role, couleur: '#9ca3af' }
                   const initiale = (u.prenom || u.username)?.[0]?.toUpperCase()
+                  const enEdition = editingId === u.id
+                  const estEtudiant = u.role?.startsWith('etudiant')
+
                   return (
                     <tr key={u.id}
                       style={{ borderBottom: '1px solid #f8f7f4' }}
@@ -168,23 +225,63 @@ export default function GestionUtilisateurs() {
 
                       {/* Nom complet */}
                       <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                            style={{ background: role.couleur }}>
-                            {initiale}
+                        {enEdition ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                              style={{ background: role.couleur }}>
+                              {initiale}
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <div className="flex gap-1.5">
+                                <input
+                                  type="text"
+                                  value={editForm.prenom}
+                                  onChange={e => setEditForm({ ...editForm, prenom: e.target.value })}
+                                  placeholder="Prénom"
+                                  className="w-24 border rounded-lg px-2 py-1 text-xs focus:outline-none"
+                                  style={{ borderColor: '#C9A84C' }}
+                                />
+                                <input
+                                  type="text"
+                                  value={editForm.nom}
+                                  onChange={e => setEditForm({ ...editForm, nom: e.target.value })}
+                                  placeholder="Nom"
+                                  className="w-24 border rounded-lg px-2 py-1 text-xs focus:outline-none"
+                                  style={{ borderColor: '#C9A84C' }}
+                                />
+                              </div>
+                              {estEtudiant && (
+                                <select
+                                  value={editForm.modalite}
+                                  onChange={e => setEditForm({ ...editForm, modalite: e.target.value })}
+                                  className="border rounded-lg px-2 py-1 text-xs bg-white focus:outline-none"
+                                  style={{ borderColor: '#C9A84C' }}>
+                                  <option value="">— Modalité —</option>
+                                  <option value="en_ligne">💻 En ligne</option>
+                                  <option value="presentiel">🏫 Présentiel</option>
+                                </select>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-semibold text-gray-800">
-                              {u.prenom || ''} {u.nom || '—'}
-                            </p>
-                            {/* Modalité sous le nom pour les étudiants */}
-                            {u.modalite && (
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                {u.modalite === 'en_ligne' ? '💻 En ligne' : '🏫 Présentiel'}
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                              style={{ background: role.couleur }}>
+                              {initiale}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-800">
+                                {u.prenom || ''} {u.nom || '—'}
                               </p>
-                            )}
+                              {/* Modalité sous le nom pour les étudiants */}
+                              {u.modalite && modaliteConfig[u.modalite] && (
+                                <p className="text-xs text-gray-400 mt-0.5">
+                                  {modaliteConfig[u.modalite].icone} {modaliteConfig[u.modalite].label}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </td>
 
                       {/* Identifiant */}
@@ -209,12 +306,39 @@ export default function GestionUtilisateurs() {
 
                       {/* Actions */}
                       <td className="p-4">
-                        <button
-                          onClick={() => supprimerUtilisateur(u.id)}
-                          className="px-3 py-1 rounded-lg text-xs font-semibold transition"
-                          style={{ background: 'rgba(201,76,123,0.1)', color: '#C94C7B' }}>
-                          Supprimer
-                        </button>
+                        {enEdition ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => enregistrerEdition(u.id)}
+                              disabled={enregistrement}
+                              className="px-3 py-1 rounded-lg text-xs font-semibold transition disabled:opacity-50"
+                              style={{ background: 'rgba(76,201,168,0.1)', color: '#4CC9A8' }}>
+                              {enregistrement ? '...' : 'Enregistrer'}
+                            </button>
+                            <button
+                              onClick={annulerEdition}
+                              disabled={enregistrement}
+                              className="px-3 py-1 rounded-lg text-xs font-semibold transition disabled:opacity-50"
+                              style={{ background: '#f8f7f4', color: '#6b7280' }}>
+                              Annuler
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => commencerEdition(u)}
+                              className="px-3 py-1 rounded-lg text-xs font-semibold transition"
+                              style={{ background: 'rgba(76,123,201,0.1)', color: '#4C7BC9' }}>
+                              Modifier
+                            </button>
+                            <button
+                              onClick={() => supprimerUtilisateur(u.id)}
+                              className="px-3 py-1 rounded-lg text-xs font-semibold transition"
+                              style={{ background: 'rgba(201,76,123,0.1)', color: '#C94C7B' }}>
+                              Supprimer
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   )
