@@ -30,7 +30,7 @@ const formVide = {
   matiere: '',
   type: 'cours',
   salle: '',
-  concours: 'both',
+  concours: 'all',
   modalite: 'les_deux',
   professeur_id: ''
 }
@@ -259,8 +259,12 @@ export default function GestionPlanning() {
             />
           </div>
 
+          {/* Concours — champ avancé optionnel */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">Concours concerné</label>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">
+              Concours concerné
+              <span className="ml-1 text-gray-300 font-normal">(optionnel)</span>
+            </label>
             <select
               value={form.concours}
               onChange={e => handleChange('concours', e.target.value)}
@@ -270,29 +274,34 @@ export default function GestionPlanning() {
                 <option key={key} value={key}>{val.label}</option>
               ))}
             </select>
+            <p className="text-xs text-gray-300 mt-1">Par défaut : tous les étudiants</p>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">
-              Modalité du cours <span className="text-red-400">*</span>
+          {/* Modalité — la distinction principale */}
+          <div className="md:col-span-3">
+            <label className="block text-xs font-semibold text-gray-500 mb-2">
+              Qui peut voir ce cours ? <span className="text-red-400">*</span>
             </label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-3">
               {Object.entries(modaliteConfig).map(([key, val]) => (
                 <button key={key} type="button"
                   onClick={() => handleChange('modalite', key)}
-                  className="flex-1 py-2 px-2 rounded-lg text-xs font-semibold transition text-center"
+                  className="py-3 px-3 rounded-xl text-sm font-semibold transition text-center"
                   style={{
-                    background: form.modalite === key ? val.couleur : `${val.couleur}15`,
+                    background: form.modalite === key ? val.couleur : `${val.couleur}10`,
                     color: form.modalite === key ? 'white' : val.couleur,
-                    border: `1px solid ${val.couleur}40`
+                    border: `2px solid ${form.modalite === key ? val.couleur : `${val.couleur}30`}`
                   }}>
-                  {val.icone} {val.label}
+                  <div className="text-xl mb-1">{val.icone}</div>
+                  <div>{val.label}</div>
+                  <div className="text-xs mt-1 opacity-80">
+                    {key === 'en_ligne' ? 'Étudiants en ligne uniquement'
+                      : key === 'presentiel' ? 'Étudiants en présentiel uniquement'
+                      : 'Tous les étudiants'}
+                  </div>
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-400 mt-1">
-              Détermine quels étudiants voient ce cours selon leur mode d'inscription
-            </p>
           </div>
 
           <div className="md:col-span-3">
