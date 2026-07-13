@@ -446,6 +446,58 @@ router.post('/:id/soumettre', verifyToken, async (req, res) => {
         .single()
       if (insertErr) return res.status(500).json({ error: insertErr.message })
       created_at = nouvelleTentative.created_at
+
+      // Répercuter automatiquement la note dans "Mes notes" de l'étudiant.
+      // On récupère le quiz pour connaître la matière et le concours indiqués
+      // à sa création : c'est cette matière/concours qui reçoit la note.
+      try {
+        const { data: quizInfo } = await supabase
+          .from('quizzes')
+          .select('titre, matiere, concours, created_by')
+          .eq('id', req.params.id)
+          .single()
+
+        if (quizInfo) {
+          const noteSur20 = Math.round((score / questions.length) * 20 * 100) / 100
+          // La table "notes" utilise des libellés différents de la table "quizzes"
+          // pour le concours : on fait correspondre les deux conventions.
+          const concoursNote = { inphb: 'INP-HB', esatic: 'ESATIC', all: 'tous' }[quizInfo.concours] || 'tous'
+          // Une "periode" propre au quiz évite d'écraser une note saisie
+          // manuellement par le professeur pour la même matière/concours.
+          const periodeNote = `Genius Eval — ${quizInfo.titre}`
+
+          const { data: noteExistante } = await supabase
+            .from('notes')
+            .select('id')
+            .eq('etudiant_id', req.user.id)
+            .eq('matiere', quizInfo.matiere)
+            .eq('concours', concoursNote)
+            .eq('periode', periodeNote)
+            .single()
+
+          if (noteExistante) {
+            await supabase
+              .from('notes')
+              .update({ note: noteSur20, professeur_id: quizInfo.created_by })
+              .eq('id', noteExistante.id)
+          } else {
+            await supabase
+              .from('notes')
+              .insert([{
+                etudiant_id: req.user.id,
+                matiere: quizInfo.matiere,
+                concours: concoursNote,
+                note: noteSur20,
+                periode: periodeNote,
+                professeur_id: quizInfo.created_by
+              }])
+          }
+        }
+      } catch (noteErr) {
+        // On ne bloque jamais la remise du résultat à l'étudiant si la
+        // synchronisation vers "Mes notes" échoue.
+        console.error('Erreur synchronisation Genius Eval -> Mes notes:', noteErr)
+      }
     }
 
     res.json({
