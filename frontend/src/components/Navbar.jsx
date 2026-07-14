@@ -69,7 +69,7 @@ const menuItems = [
     ]
   },
   {
-    label: 'Mon Planning',
+    label: 'Planning',
     icon: 'calendar',
     path: '/planning',
     dropdown: [
@@ -83,19 +83,19 @@ const menuItems = [
     icon: 'book',
     path: '/ressources',
     dropdown: [
-      { label: 'Tous les Documents', icon: 'fileText', path: '/ressources' },
+      { label: 'Documents', icon: 'fileText', path: '/ressources' },
       { label: 'INP-HB', icon: 'cap', path: '/ressources' },
       { label: 'ESATIC', icon: 'cap', path: '/ressources' },
       { label: 'CME', icon: 'cap', path: '/ressources' },
     ]
   },
   {
-    label: 'Espace Pratique',
+    label: 'Outils',
     icon: 'target',
     path: '/outils',
     dropdown: [
       { label: 'Cours à Distance', icon: 'video', path: '/outils/teams' },
-      { label: 'Mes Notes', icon: 'clipboard', path: '/outils/notes' },
+      { label: 'Notes', icon: 'clipboard', path: '/outils/notes' },
       { label: 'Évaluations & Quiz', icon: 'checkSquare', path: '/outils/genius-eval' },
     ]
   },
@@ -198,7 +198,7 @@ export default function Navbar() {
                 borderBottom: location.pathname === '/professeur' ? '2px solid #4CC9A8' : '2px solid transparent'
               }}>
               <Icon name="presentation" className="w-4 h-4" />
-              Espace Enseignant
+              Enseignant
             </Link>
           )}
 
@@ -280,7 +280,7 @@ export default function Navbar() {
               className="flex items-center gap-2 py-3 text-sm font-semibold"
               style={{ color: '#4CC9A8', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <Icon name="presentation" className="w-4 h-4" />
-              Espace Enseignant
+              Enseignant
             </Link>
           )}
           {isAdmin && (
