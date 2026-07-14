@@ -27,7 +27,7 @@ export default function GestionUtilisateurs() {
 
   // Édition en ligne
   const [editingId, setEditingId] = useState(null)
-  const [editForm, setEditForm] = useState({ nom: '', prenom: '', modalite: '' })
+  const [editForm, setEditForm] = useState({ nom: '', prenom: '', modalite: '', password: '' })
   const [enregistrement, setEnregistrement] = useState(false)
 
   useEffect(() => { chargerUtilisateurs() }, [])
@@ -62,12 +62,12 @@ export default function GestionUtilisateurs() {
 
   const commencerEdition = (u) => {
     setEditingId(u.id)
-    setEditForm({ nom: u.nom || '', prenom: u.prenom || '', modalite: u.modalite || '' })
+    setEditForm({ nom: u.nom || '', prenom: u.prenom || '', modalite: u.modalite || '', password: '' })
   }
 
   const annulerEdition = () => {
     setEditingId(null)
-    setEditForm({ nom: '', prenom: '', modalite: '' })
+    setEditForm({ nom: '', prenom: '', modalite: '', password: '' })
   }
 
   const enregistrerEdition = async (id) => {
@@ -79,7 +79,8 @@ export default function GestionUtilisateurs() {
         body: JSON.stringify({
           nom: editForm.nom,
           prenom: editForm.prenom,
-          ...(editForm.modalite ? { modalite: editForm.modalite } : {})
+          ...(editForm.modalite ? { modalite: editForm.modalite } : {}),
+          ...(editForm.password ? { password: editForm.password } : {})
         })
       })
       const data = await res.json()
@@ -261,6 +262,15 @@ export default function GestionUtilisateurs() {
                                   <option value="presentiel">🏫 Présentiel</option>
                                 </select>
                               )}
+                              <input
+                                type="text"
+                                value={editForm.password}
+                                onChange={e => setEditForm({ ...editForm, password: e.target.value })}
+                                placeholder="Nouveau mot de passe (laisser vide)"
+                                autoComplete="new-password"
+                                className="w-full border rounded-lg px-2 py-1 text-xs focus:outline-none"
+                                style={{ borderColor: '#C9A84C' }}
+                              />
                             </div>
                           </div>
                         ) : (
