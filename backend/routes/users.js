@@ -6,24 +6,36 @@ import { verifyToken } from '../middleware/authMiddleware.js'
 const router = express.Router()
 
 // ══════════════════════════════════════════
-// Génère un matricule séquentiel : 26GEN0001
+// Génère un matricule : 26GEN0001
 // Année 2 chiffres + GEN + numéro sur 4 chiffres
-// Basé sur le nombre total d'étudiants en base
+// Choisit le PLUS PETIT numéro libre : réutilise le créneau
+// d'un étudiant supprimé et n'entre jamais en collision.
 // ══════════════════════════════════════════
-async function genererMatricule() {
+async function prochainMatriculeLibre() {
   const annee = new Date().getFullYear().toString().slice(-2)
+  const prefixe = `${annee}GEN`
 
-  // Compter TOUS les étudiants existants (peu importe le rôle)
-  const { count, error } = await supabase
+  // Récupérer matricules ET usernames pour repérer TOUS les numéros déjà pris
+  const { data, error } = await supabase
     .from('users')
-    .select('id', { count: 'exact', head: true })
-    .like('role', 'etudiant%')
+    .select('matricule, username')
 
   if (error) throw new Error('Impossible de générer le matricule')
 
-  // Le prochain numéro = count + 1, formaté sur 4 chiffres
-  const numero = String((count || 0) + 1).padStart(4, '0')
-  return `${annee}GEN${numero}`
+  const pris = new Set()
+  for (const u of (data || [])) {
+    for (const val of [u.matricule, u.username]) {
+      if (typeof val === 'string' && val.startsWith(prefixe)) {
+        const n = parseInt(val.slice(prefixe.length), 10)
+        if (!Number.isNaN(n)) pris.add(n)
+      }
+    }
+  }
+
+  // Plus petit numéro non utilisé (comble le trou laissé par une suppression)
+  let numero = 1
+  while (pris.has(numero)) numero++
+  return { prefixe, numero }
 }
 
 // ══════════════════════════════════════════
@@ -69,31 +81,48 @@ router.post('/create', verifyToken, async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Générer le matricule séquentiel uniquement pour les étudiants
-    let matricule = null
-    if (estEtudiant) {
-      matricule = await genererMatricule()
+    const champsCommuns = {
+      password: hashedPassword,
+      nom: nom || null,
+      prenom: prenom || null,
+      role: role || 'etudiant_inphb',
+      concours: concours || 'aucun',
+      modalite: estEtudiant ? modalite : null,
+    }
+    const champsSelect = 'id, matricule, username, nom, prenom, role, concours, modalite, created_at'
+
+    // Profs / admins : username fourni manuellement, pas de matricule
+    if (!estEtudiant) {
+      const { data, error } = await supabase
+        .from('users')
+        .insert([{ ...champsCommuns, username, matricule: null }])
+        .select(champsSelect)
+
+      if (error) return res.status(400).json({ message: error.message })
+      return res.status(201).json({ message: 'Utilisateur créé', user: data[0] })
     }
 
-    // Si pas de username fourni, le matricule devient l'identifiant de connexion
-    const usernameEffectif = username || matricule
+    // Étudiants : le matricule sert d'identifiant. On part du plus petit
+    // numéro libre, et si jamais il est déjà pris (course entre deux
+    // créations, ancien username, etc.) on tente automatiquement le suivant.
+    const { prefixe, numero: depart } = await prochainMatriculeLibre()
 
-    const { data, error } = await supabase
-      .from('users')
-      .insert([{
-        username: usernameEffectif,
-        password: hashedPassword,
-        nom: nom || null,
-        prenom: prenom || null,
-        role: role || 'etudiant_inphb',
-        concours: concours || 'aucun',
-        matricule,
-        modalite: estEtudiant ? modalite : null
-      }])
-      .select('id, matricule, username, nom, prenom, role, concours, modalite, created_at')
+    for (let numero = depart; numero < depart + 100; numero++) {
+      const matricule = `${prefixe}${String(numero).padStart(4, '0')}`
+      const { data, error } = await supabase
+        .from('users')
+        .insert([{ ...champsCommuns, username: matricule, matricule }])
+        .select(champsSelect)
 
-    if (error) return res.status(400).json({ message: error.message })
-    res.status(201).json({ message: 'Utilisateur créé', user: data[0] })
+      if (!error) {
+        return res.status(201).json({ message: 'Utilisateur créé', user: data[0] })
+      }
+      // 23505 = violation d'unicité → ce numéro est pris, on essaie le suivant
+      if (error.code === '23505') continue
+      return res.status(400).json({ message: error.message })
+    }
+
+    return res.status(500).json({ message: 'Impossible de générer un identifiant libre' })
 
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur', error: err.message })
