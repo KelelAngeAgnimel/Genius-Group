@@ -34,7 +34,7 @@ export default function EmploiDuTemps() {
   const today = new Date()
   const [moisActuel, setMoisActuel] = useState(today.getMonth())
   const [anneeActuelle, setAnneeActuelle] = useState(today.getFullYear())
-  const [vue, setVue] = useState('semaine')
+  const [vue, setVue] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 768 ? 'liste' : 'semaine'))
   const [jourSelectionne, setJourSelectionne] = useState(null)
   const [evenements, setEvenements] = useState([])
   const [loading, setLoading] = useState(true)
@@ -255,66 +255,77 @@ export default function EmploiDuTemps() {
           ) : vue === 'semaine' ? (
             <div className="bg-white rounded-2xl overflow-hidden" style={{ border: '1px solid #f0ece0' }}>
 
-              {/* En-tete jours */}
-              <div className="grid overflow-x-auto" style={{ gridTemplateColumns: '60px repeat(6, 1fr)' }}>
-                <div className="p-3 border-b border-r" style={{ borderColor: '#f0ece0' }} />
-                {jours.map(j => (
-                  <div key={j}
-                    className="p-3 text-center border-b border-r text-xs font-bold"
-                    style={{
-                      borderColor: '#f0ece0',
-                      color: jourSelectionne === j ? '#C9A84C' : '#071020',
-                      background: jourSelectionne === j ? 'rgba(201,168,76,0.05)' : 'transparent'
-                    }}>
-                    {j}
+              {/* Indice de défilement horizontal, visible seulement sur petit écran */}
+              <p className="md:hidden text-xs text-gray-400 px-3 pt-2 pb-1">
+                ← Fais glisser pour voir tous les jours →
+              </p>
+
+              {/* En-tete jours + grille horaire : défilent ensemble comme un seul bloc */}
+              <div className="overflow-x-auto">
+                <div style={{ minWidth: '760px' }}>
+
+                  {/* En-tete jours */}
+                  <div className="grid" style={{ gridTemplateColumns: '60px repeat(6, 1fr)' }}>
+                    <div className="p-3 border-b border-r" style={{ borderColor: '#f0ece0' }} />
+                    {jours.map(j => (
+                      <div key={j}
+                        className="p-3 text-center border-b border-r text-xs font-bold"
+                        style={{
+                          borderColor: '#f0ece0',
+                          color: jourSelectionne === j ? '#C9A84C' : '#071020',
+                          background: jourSelectionne === j ? 'rgba(201,168,76,0.05)' : 'transparent'
+                        }}>
+                        {j}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
 
-              {/* Grille horaire */}
-              <div className="overflow-y-auto" style={{ maxHeight: '500px' }}>
-                {heures.map((heure, hi) => (
-                  <div key={heure}
-                    className="grid"
-                    style={{ gridTemplateColumns: '60px repeat(6, 1fr)', minHeight: '60px' }}>
+                  {/* Grille horaire */}
+                  <div className="overflow-y-auto" style={{ maxHeight: '500px' }}>
+                    {heures.map((heure, hi) => (
+                      <div key={heure}
+                        className="grid"
+                        style={{ gridTemplateColumns: '60px repeat(6, 1fr)', minHeight: '60px' }}>
 
-                    {/* Heure */}
-                    <div className="p-2 border-r border-b text-xs text-gray-400 font-medium flex-shrink-0"
-                      style={{ borderColor: '#f0ece0' }}>
-                      {heure}
-                    </div>
-
-                    {/* Cellules par jour */}
-                    {jours.map(jour => {
-                      const ev = evenements.find(e =>
-                        e.jour === jour && e.debut === heure
-                      )
-                      return (
-                        <div key={jour}
-                          className="border-r border-b relative"
-                          style={{ borderColor: '#f0ece0', minHeight: '60px' }}>
-                          {ev && (
-                            <div
-                              className="absolute inset-x-1 top-1 rounded-lg p-2 cursor-pointer"
-                              style={{
-                                background: `${ev.couleur}15`,
-                                border: `1px solid ${ev.couleur}40`,
-                                minHeight: `${(getHeureIndex(ev.fin) - getHeureIndex(ev.debut)) * 60 - 8}px`,
-                                zIndex: 10
-                              }}>
-                              <p className="text-xs font-bold leading-tight" style={{ color: ev.couleur }}>
-                                {ev.titre}
-                              </p>
-                              <p className="text-xs text-gray-400 mt-0.5">{ev.debut} - {ev.fin}</p>
-                              {ev.salle && <p className="text-xs text-gray-400">{ev.salle}</p>}
-                              {ev.prof && <p className="text-xs text-gray-400 italic">{ev.prof}</p>}
-                            </div>
-                          )}
+                        {/* Heure */}
+                        <div className="p-2 border-r border-b text-xs text-gray-400 font-medium flex-shrink-0"
+                          style={{ borderColor: '#f0ece0' }}>
+                          {heure}
                         </div>
-                      )
-                    })}
+
+                        {/* Cellules par jour */}
+                        {jours.map(jour => {
+                          const ev = evenements.find(e =>
+                            e.jour === jour && e.debut === heure
+                          )
+                          return (
+                            <div key={jour}
+                              className="border-r border-b relative"
+                              style={{ borderColor: '#f0ece0', minHeight: '60px' }}>
+                              {ev && (
+                                <div
+                                  className="absolute inset-x-1 top-1 rounded-lg p-2 cursor-pointer overflow-hidden"
+                                  style={{
+                                    background: `${ev.couleur}15`,
+                                    border: `1px solid ${ev.couleur}40`,
+                                    minHeight: `${(getHeureIndex(ev.fin) - getHeureIndex(ev.debut)) * 60 - 8}px`,
+                                    zIndex: 10
+                                  }}>
+                                  <p className="text-xs font-bold leading-tight" style={{ color: ev.couleur }}>
+                                    {ev.titre}
+                                  </p>
+                                  <p className="text-xs text-gray-400 mt-0.5">{ev.debut} - {ev.fin}</p>
+                                  {ev.salle && <p className="text-xs text-gray-400">{ev.salle}</p>}
+                                  {ev.prof && <p className="text-xs text-gray-400 italic">{ev.prof}</p>}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
             </div>
 
