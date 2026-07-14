@@ -16,6 +16,13 @@ const modaliteConfig = {
   presentiel: { label: 'Présentiel', icone: '🏫', couleur: '#C9A84C' },
 }
 
+// Rôles étudiants proposés à la modification
+const ROLES_ETUDIANT = [
+  { value: 'etudiant_inphb',  label: 'INP-HB' },
+  { value: 'etudiant_esatic', label: 'ESATIC' },
+  { value: 'etudiant_all',    label: 'INP-HB + ESATIC + CME' },
+]
+
 export default function GestionUtilisateurs() {
   const { token } = useAuth()
   const [users, setUsers] = useState([])
@@ -27,7 +34,7 @@ export default function GestionUtilisateurs() {
 
   // Édition en ligne
   const [editingId, setEditingId] = useState(null)
-  const [editForm, setEditForm] = useState({ nom: '', prenom: '', modalite: '', password: '' })
+  const [editForm, setEditForm] = useState({ nom: '', prenom: '', modalite: '', password: '', role: '' })
   const [enregistrement, setEnregistrement] = useState(false)
 
   useEffect(() => { chargerUtilisateurs() }, [])
@@ -62,12 +69,12 @@ export default function GestionUtilisateurs() {
 
   const commencerEdition = (u) => {
     setEditingId(u.id)
-    setEditForm({ nom: u.nom || '', prenom: u.prenom || '', modalite: u.modalite || '', password: '' })
+    setEditForm({ nom: u.nom || '', prenom: u.prenom || '', modalite: u.modalite || '', password: '', role: u.role || '' })
   }
 
   const annulerEdition = () => {
     setEditingId(null)
-    setEditForm({ nom: '', prenom: '', modalite: '', password: '' })
+    setEditForm({ nom: '', prenom: '', modalite: '', password: '', role: '' })
   }
 
   const enregistrerEdition = async (id) => {
@@ -79,6 +86,7 @@ export default function GestionUtilisateurs() {
         body: JSON.stringify({
           nom: editForm.nom,
           prenom: editForm.prenom,
+          ...(editForm.role ? { role: editForm.role } : {}),
           ...(editForm.modalite ? { modalite: editForm.modalite } : {}),
           ...(editForm.password ? { password: editForm.password } : {})
         })
@@ -102,15 +110,21 @@ export default function GestionUtilisateurs() {
       u.username?.toLowerCase().includes(recherche.toLowerCase()) ||
       u.nom?.toLowerCase().includes(recherche.toLowerCase()) ||
       u.prenom?.toLowerCase().includes(recherche.toLowerCase())
-    const matchRole = filtreRole === 'tous' || u.role === filtreRole
+    const matchRole =
+      filtreRole === 'tous' ||
+      (filtreRole === 'etudiants' ? u.role?.startsWith('etudiant') : u.role === filtreRole)
     const matchModalite = filtreModalite === 'tous' || u.modalite === filtreModalite
     return matchRecherche && matchRole && matchModalite
   })
 
-  // Stats simplifiées : admins, profs, étudiants total
-  const nbAdmins    = users.filter(u => u.role === 'admin').length
-  const nbProfs     = users.filter(u => u.role === 'professeur').length
-  const nbEtudiants = users.filter(u => u.role?.startsWith('etudiant')).length
+  // Un filtre est-il actif ?
+  const filtreActif = recherche !== '' || filtreRole !== 'tous' || filtreModalite !== 'tous'
+
+  // Stats : calculées sur la liste filtrée dès qu'un filtre est actif
+  const base = filtreActif ? usersFiltres : users
+  const nbAdmins    = base.filter(u => u.role === 'admin').length
+  const nbProfs     = base.filter(u => u.role === 'professeur').length
+  const nbEtudiants = base.filter(u => u.role?.startsWith('etudiant')).length
 
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
@@ -124,7 +138,9 @@ export default function GestionUtilisateurs() {
           Gestion des utilisateurs
         </h1>
         <p className="text-gray-400 text-sm mt-1">
-          {users.length} utilisateur{users.length > 1 ? 's' : ''} inscrit{users.length > 1 ? 's' : ''}
+          {filtreActif
+            ? `${usersFiltres.length} résultat${usersFiltres.length > 1 ? 's' : ''} sur ${users.length}`
+            : `${users.length} utilisateur${users.length > 1 ? 's' : ''} inscrit${users.length > 1 ? 's' : ''}`}
         </p>
       </div>
 
@@ -161,6 +177,7 @@ export default function GestionUtilisateurs() {
           className="border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none bg-white"
           style={{ borderColor: '#f0ece0' }}>
           <option value="tous">Tous les rôles</option>
+          <option value="etudiants">Étudiants (tous)</option>
           {Object.entries(roleConfig).map(([key, val]) => (
             <option key={key} value={key}>{val.label}</option>
           ))}
@@ -251,6 +268,17 @@ export default function GestionUtilisateurs() {
                                   style={{ borderColor: '#C9A84C' }}
                                 />
                               </div>
+                              {estEtudiant && (
+                                <select
+                                  value={editForm.role}
+                                  onChange={e => setEditForm({ ...editForm, role: e.target.value })}
+                                  className="border rounded-lg px-2 py-1 text-xs bg-white focus:outline-none"
+                                  style={{ borderColor: '#C9A84C' }}>
+                                  {ROLES_ETUDIANT.map(r => (
+                                    <option key={r.value} value={r.value}>{r.label}</option>
+                                  ))}
+                                </select>
+                              )}
                               {estEtudiant && (
                                 <select
                                   value={editForm.modalite}
