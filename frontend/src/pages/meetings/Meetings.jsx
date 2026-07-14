@@ -13,6 +13,7 @@ const concoursConfig = {
 export default function Meetings() {
   const { user, token } = useAuth()
   const isAdmin = user?.role === 'admin'
+  const peutPublier = user?.role === 'admin' || user?.role === 'professeur'
 
   const [cours, setCours] = useState([])
   const [loading, setLoading] = useState(true)
@@ -131,7 +132,7 @@ export default function Meetings() {
               }}>
               {filtreActive ? 'En cours seulement' : 'Tous les cours'}
             </button>
-            {isAdmin && (
+            {peutPublier && (
               <button
                 onClick={() => { setShowForm(true); setEditId(null); setForm(formVide); setErreur(''); setSucces('') }}
                 className="px-4 py-2 rounded-xl text-xs font-bold transition"
@@ -154,7 +155,7 @@ export default function Meetings() {
         </div>
       )}
 
-      {isAdmin && showForm && (
+      {peutPublier && showForm && (
         <div className="rounded-2xl p-5 mb-6" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
           <p className="font-bold text-sm mb-4" style={{ color: COULEURS.navy }}>
             {editId ? 'Modifier le cours' : 'Publier un nouveau cours'}
@@ -273,7 +274,7 @@ export default function Meetings() {
                 {c.live ? 'Rejoindre le cours maintenant' : 'Ouvrir le lien du cours'}
               </a>
 
-              {isAdmin && (
+              {peutPublier && (
                 <div className="flex items-center gap-2 pt-1 border-t" style={{ borderColor: '#f0ece0' }}>
                   <button
                     onClick={() => toggleLive(c.id, c.live)}

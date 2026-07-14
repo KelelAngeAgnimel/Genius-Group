@@ -39,8 +39,8 @@ router.get('/', verifyToken, async (req, res) => {
 
 // POST /api/meetings — créer un cours (admin uniquement)
 router.post('/', verifyToken, async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Accès réservé aux administrateurs' })
+  if (req.user.role !== 'admin' && req.user.role !== 'professeur') {
+    return res.status(403).json({ error: 'Accès réservé aux enseignants' })
   }
   const { titre, prof, heure, lien, concours } = req.body
   if (!titre || !lien) {
@@ -73,8 +73,8 @@ router.post('/', verifyToken, async (req, res) => {
 
 // PATCH /api/meetings/:id — modifier un cours (admin uniquement)
 router.patch('/:id', verifyToken, async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Accès réservé aux administrateurs' })
+  if (req.user.role !== 'admin' && req.user.role !== 'professeur') {
+    return res.status(403).json({ error: 'Accès réservé aux enseignants' })
   }
   const { titre, prof, heure, lien, concours, live } = req.body
   const updates = {}
@@ -107,8 +107,8 @@ router.patch('/:id', verifyToken, async (req, res) => {
 
 // DELETE /api/meetings/:id — supprimer un cours (admin uniquement)
 router.delete('/:id', verifyToken, async (req, res) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Accès réservé aux administrateurs' })
+  if (req.user.role !== 'admin' && req.user.role !== 'professeur') {
+    return res.status(403).json({ error: 'Accès réservé aux enseignants' })
   }
   try {
     const { error } = await supabase

@@ -47,6 +47,12 @@ export default function EspaceProfesseur() {
 
   // Message
   const [msgForm, setMsgForm] = useState({ a_id: '', sujet: '', contenu: '' })
+  const [msgMode, setMsgMode] = useState('etudiant')   // 'etudiant' | 'groupe'
+  const [msgGroupe, setMsgGroupe] = useState('tous')   // 'tous' | 'inphb' | 'esatic' | 'all'
+
+  // Filtres de la liste des étudiants
+  const [filtreEtuConcours, setFiltreEtuConcours] = useState('tous') // 'tous' | 'inphb' | 'esatic' | 'all'
+  const [filtreEtuModalite, setFiltreEtuModalite] = useState('tous') // 'tous' | 'en_ligne' | 'presentiel'
 
   // Notes
   const [noteForm, setNoteForm] = useState({
@@ -155,16 +161,36 @@ export default function EspaceProfesseur() {
     setSucces('')
     setErreur('')
     try {
-      const res = await fetch(`${API_URL}/api/messages/envoyer`, {
-        method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify(msgForm)
-      })
-      const data = await res.json()
-      if (data.success) {
-        setSucces('Message envoye avec succes !')
-        setMsgForm({ a_id: '', sujet: '', contenu: '' })
-        chargerMessages()
+      if (msgMode === 'groupe') {
+        // Diffusion à un groupe d'étudiants
+        const res = await fetch(`${API_URL}/api/messages/diffuser`, {
+          method: 'POST',
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ groupe: msgGroupe, sujet: msgForm.sujet, contenu: msgForm.contenu })
+        })
+        const data = await res.json()
+        if (data.success) {
+          setSucces(`Message envoye a ${data.count} etudiant${data.count > 1 ? 's' : ''} !`)
+          setMsgForm({ a_id: '', sujet: '', contenu: '' })
+          chargerMessages()
+        } else {
+          setErreur(data.message || 'Erreur lors de la diffusion')
+        }
+      } else {
+        // Envoi à un seul étudiant
+        const res = await fetch(`${API_URL}/api/messages/envoyer`, {
+          method: 'POST',
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify(msgForm)
+        })
+        const data = await res.json()
+        if (data.success) {
+          setSucces('Message envoye avec succes !')
+          setMsgForm({ a_id: '', sujet: '', contenu: '' })
+          chargerMessages()
+        } else {
+          setErreur(data.message || 'Erreur envoi message')
+        }
       }
     } catch {
       setErreur('Erreur envoi message')
@@ -201,6 +227,22 @@ export default function EspaceProfesseur() {
       setLoading(false)
     }
   }
+
+  // Un étudiant appartient-il au groupe de concours donné ?
+  // (un étudiant "all" fait aussi INP-HB et ESATIC)
+  const appartientAuGroupe = (role, groupe) => {
+    const r = role || ''
+    if (groupe === 'inphb')  return r.includes('inphb') || r === 'etudiant_both' || r === 'etudiant_all'
+    if (groupe === 'esatic') return r.includes('esatic') || r === 'etudiant_both' || r === 'etudiant_all'
+    if (groupe === 'all')    return r === 'etudiant_all'
+    return true // 'tous'
+  }
+
+  // Liste des étudiants filtrée (onglet "Mes étudiants")
+  const etudiantsFiltres = etudiants.filter(e =>
+    appartientAuGroupe(e.role, filtreEtuConcours) &&
+    (filtreEtuModalite === 'tous' || e.modalite === filtreEtuModalite)
+  )
 
   const onglets = [
     { key: 'ressources', label: 'Mes ressources' },
@@ -655,11 +697,44 @@ export default function EspaceProfesseur() {
       {/* ONGLET ETUDIANTS */}
       {onglet === 'etudiants' && (
         <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
-          <h2 className="font-bold text-base mb-5" style={{ color: '#071020' }}>
-            Liste des etudiants ({etudiants.length})
+          <h2 className="font-bold text-base mb-4" style={{ color: '#071020' }}>
+            Liste des etudiants ({etudiantsFiltres.length})
           </h2>
+
+          {/* Filtres */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-5">
+            <div className="flex-1">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Concours</label>
+              <select
+                value={filtreEtuConcours}
+                onChange={e => setFiltreEtuConcours(e.target.value)}
+                className="w-full border rounded-xl px-3 py-2 text-sm bg-white"
+                style={{ borderColor: '#f0ece0' }}>
+                <option value="tous">Tous les concours</option>
+                <option value="inphb">INP-HB</option>
+                <option value="esatic">ESATIC</option>
+                <option value="all">INP-HB + ESATIC + CME</option>
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Modalité</label>
+              <select
+                value={filtreEtuModalite}
+                onChange={e => setFiltreEtuModalite(e.target.value)}
+                className="w-full border rounded-xl px-3 py-2 text-sm bg-white"
+                style={{ borderColor: '#f0ece0' }}>
+                <option value="tous">Toutes les modalités</option>
+                <option value="en_ligne">💻 En ligne</option>
+                <option value="presentiel">🏫 Présentiel</option>
+              </select>
+            </div>
+          </div>
+
           <div className="flex flex-col gap-2">
-            {etudiants.map((etudiant, i) => (
+            {etudiantsFiltres.length === 0 && (
+              <p className="text-xs text-gray-400 text-center py-8">Aucun étudiant pour ces filtres</p>
+            )}
+            {etudiantsFiltres.map((etudiant, i) => (
               <div key={i}
                 className="flex items-center gap-3 p-3 rounded-xl"
                 style={{ background: '#f8f7f4', border: '1px solid #f0ece0' }}>
@@ -708,21 +783,62 @@ export default function EspaceProfesseur() {
               Envoyer un message
             </h2>
             <form onSubmit={envoyerMessage} className="flex flex-col gap-4">
+              {/* Choix du type de destinataire */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Destinataire</label>
-                <select required
-                  value={msgForm.a_id}
-                  onChange={e => setMsgForm({ ...msgForm, a_id: e.target.value })}
-                  className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
-                  style={{ borderColor: '#f0ece0' }}>
-                  <option value="">Choisir un etudiant</option>
-                  {etudiants.map((e, i) => (
-                    <option key={i} value={e.id}>
-                      {e.prenom || ''} {e.nom || e.username} — {roleLabel[e.role]}
-                    </option>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Envoyer à</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { val: 'etudiant', label: '👤 Un étudiant' },
+                    { val: 'groupe', label: '👥 Un groupe' },
+                  ].map(m => (
+                    <button key={m.val} type="button"
+                      onClick={() => setMsgMode(m.val)}
+                      className="rounded-xl px-3 py-2 text-sm font-bold transition"
+                      style={{
+                        border: msgMode === m.val ? '2px solid #C9A84C' : '1px solid #f0ece0',
+                        background: msgMode === m.val ? 'rgba(201,168,76,0.1)' : 'white',
+                        color: msgMode === m.val ? '#C9A84C' : '#071020',
+                      }}>
+                      {m.label}
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
+
+              {msgMode === 'etudiant' ? (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Destinataire</label>
+                  <select required
+                    value={msgForm.a_id}
+                    onChange={e => setMsgForm({ ...msgForm, a_id: e.target.value })}
+                    className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
+                    style={{ borderColor: '#f0ece0' }}>
+                    <option value="">Choisir un etudiant</option>
+                    {etudiants.map((e, i) => (
+                      <option key={i} value={e.id}>
+                        {e.prenom || ''} {e.nom || e.username} — {roleLabel[e.role]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Groupe destinataire</label>
+                  <select
+                    value={msgGroupe}
+                    onChange={e => setMsgGroupe(e.target.value)}
+                    className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800 bg-white"
+                    style={{ borderColor: '#f0ece0' }}>
+                    <option value="tous">Tous les étudiants</option>
+                    <option value="inphb">Tous les INP-HB (incl. INP-HB+ESATIC+CME)</option>
+                    <option value="esatic">Tous les ESATIC (incl. INP-HB+ESATIC+CME)</option>
+                    <option value="all">INP-HB + ESATIC + CME uniquement</option>
+                  </select>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Le message sera envoyé individuellement à chaque étudiant du groupe.
+                  </p>
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Sujet</label>
                 <input type="text" required
