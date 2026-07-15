@@ -67,6 +67,26 @@ export default function GestionUtilisateurs() {
     }
   }
 
+  const basculerBlocage = async (u) => {
+    const bloquer = !u.bloque
+    if (bloquer && !confirm(`Bloquer le compte de ${u.prenom || ''} ${u.nom || u.username} ?\nCette personne ne pourra plus se connecter.`)) return
+    try {
+      const res = await fetch(`${API_URL}/api/users/${u.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ bloque: bloquer })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setUsers(prev => prev.map(x => x.id === u.id ? { ...x, bloque: bloquer } : x))
+      } else {
+        alert(data.message || 'Erreur lors du blocage')
+      }
+    } catch {
+      alert('Erreur serveur lors du blocage')
+    }
+  }
+
   const commencerEdition = (u) => {
     setEditingId(u.id)
     setEditForm({ nom: u.nom || '', prenom: u.prenom || '', modalite: u.modalite || '', password: '', role: u.role || '' })
@@ -308,8 +328,14 @@ export default function GestionUtilisateurs() {
                               {initiale}
                             </div>
                             <div>
-                              <p className="font-semibold text-gray-800">
+                              <p className="font-semibold text-gray-800 flex items-center gap-2">
                                 {u.prenom || ''} {u.nom || '—'}
+                                {u.bloque && (
+                                  <span className="px-2 py-0.5 rounded-full text-xs font-bold"
+                                    style={{ background: 'rgba(201,76,123,0.12)', color: '#C94C7B' }}>
+                                    🚫 Bloqué
+                                  </span>
+                                )}
                               </p>
                               {/* Modalité sous le nom pour les étudiants */}
                               {u.modalite && modaliteConfig[u.modalite] && (
@@ -368,6 +394,14 @@ export default function GestionUtilisateurs() {
                               className="px-3 py-1 rounded-lg text-xs font-semibold transition"
                               style={{ background: 'rgba(76,123,201,0.1)', color: '#4C7BC9' }}>
                               Modifier
+                            </button>
+                            <button
+                              onClick={() => basculerBlocage(u)}
+                              className="px-3 py-1 rounded-lg text-xs font-semibold transition"
+                              style={u.bloque
+                                ? { background: 'rgba(76,201,168,0.12)', color: '#4CC9A8' }
+                                : { background: 'rgba(230,150,40,0.12)', color: '#C97B1A' }}>
+                              {u.bloque ? 'Débloquer' : 'Bloquer'}
                             </button>
                             <button
                               onClick={() => supprimerUtilisateur(u.id)}

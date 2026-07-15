@@ -47,6 +47,10 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Mot de passe incorrect' })
     }
 
+    if (user.bloque) {
+      return res.status(403).json({ message: 'Ce compte a été bloqué. Contactez l\'administration.' })
+    }
+
     const token = jwt.sign(
       {
         id: user.id,

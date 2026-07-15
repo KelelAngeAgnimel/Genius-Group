@@ -139,7 +139,7 @@ router.get('/all', verifyToken, async (req, res) => {
 
   const { data, error } = await supabase
     .from('users')
-    .select('id, matricule, username, nom, prenom, role, concours, modalite, created_at')
+    .select('id, matricule, username, nom, prenom, role, concours, modalite, bloque, created_at')
     .order('created_at', { ascending: true })
 
   if (error) return res.status(500).json({ message: error.message })
@@ -166,7 +166,7 @@ router.patch('/:id', verifyToken, async (req, res) => {
     return res.status(403).json({ message: 'Accès refusé' })
   }
 
-  const { nom, prenom, role, concours, password, modalite } = req.body
+  const { nom, prenom, role, concours, password, modalite, bloque } = req.body
   const updates = {}
   if (nom) updates.nom = nom
   if (prenom) updates.prenom = prenom
@@ -174,6 +174,7 @@ router.patch('/:id', verifyToken, async (req, res) => {
   if (concours) updates.concours = concours
   if (modalite) updates.modalite = modalite
   if (password) updates.password = await bcrypt.hash(password, 10)
+  if (typeof bloque === 'boolean') updates.bloque = bloque
 
   const { data, error } = await supabase
     .from('users')
