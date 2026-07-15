@@ -44,10 +44,16 @@ function buildBreadcrumbs(pathname) {
   return crumbs
 }
 
-export default function Breadcrumb({ retourLabel, retourPath, suivantLabel, suivantPath }) {
+export default function Breadcrumb({ retourLabel, retourPath, onRetour, suivantLabel, suivantPath }) {
   const navigate = useNavigate()
   const location = useLocation()
   const crumbs = buildBreadcrumbs(location.pathname)
+
+  const handleRetour = () => {
+    if (onRetour) return onRetour()
+    if (retourPath) return navigate(retourPath)
+    navigate(-1)
+  }
 
   return (
     <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
@@ -56,7 +62,7 @@ export default function Breadcrumb({ retourLabel, retourPath, suivantLabel, suiv
       <div className="flex items-center gap-2 flex-wrap">
         {/* Bouton retour navigateur ou retour personnalisé */}
         <button
-          onClick={() => retourPath ? navigate(retourPath) : navigate(-1)}
+          onClick={handleRetour}
           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition"
           style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.2)' }}>
           ← {retourLabel || 'Retour'}
