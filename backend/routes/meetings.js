@@ -10,11 +10,23 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 
 // Détermine quels concours un rôle donné peut voir
 function concoursAutorises(role) {
-  if (role === 'admin' || role === 'professeur' || role === 'etudiant_both') {
+  // Personnel : voit tout
+  if (role === 'admin' || role === 'professeur') {
     return ['inphb', 'esatic', 'both']
   }
-  if (role === 'etudiant_inphb') return ['inphb', 'both']
-  if (role === 'etudiant_esatic') return ['esatic', 'both']
+  // Étudiants inscrits aux deux concours (ou aux trois) : voient tout
+  if (role === 'etudiant_both' || role === 'etudiant_all') {
+    return ['inphb', 'esatic', 'both']
+  }
+  // INP-HB (seul ou avec CME) : cours INP-HB + cours communs
+  if (role === 'etudiant_inphb' || role === 'etudiant_inphb_cme') {
+    return ['inphb', 'both']
+  }
+  // ESATIC (seul ou avec CME) : cours ESATIC + cours communs
+  if (role === 'etudiant_esatic' || role === 'etudiant_esatic_cme') {
+    return ['esatic', 'both']
+  }
+  // Par défaut : au moins les cours communs
   return ['both']
 }
 
