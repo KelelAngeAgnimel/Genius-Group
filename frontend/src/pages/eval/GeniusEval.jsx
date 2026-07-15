@@ -489,6 +489,28 @@ function VueProf({ token }) {
     } catch (err) { console.error(err) }
   }
 
+  const renommer = async (q) => {
+    const saisie = window.prompt('Nouveau titre du quiz :', q.titre)
+    if (saisie === null) return
+    const titre = saisie.trim()
+    if (!titre || titre === q.titre) return
+    try {
+      const res = await fetch(`${API_URL}/api/quiz/${q.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ titre })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.quiz) {
+        setQuizzes(prev => prev.map(x => x.id === q.id ? { ...x, titre: data.quiz.titre } : x))
+      } else {
+        alert(data.error || "Impossible de renommer. Vérifie que le serveur (Render) est à jour.")
+      }
+    } catch {
+      alert('Erreur réseau lors du renommage.')
+    }
+  }
+
   const basculerVisibilite = async (q) => {
     try {
       const res = await fetch(`${API_URL}/api/quiz/${q.id}/visibilite`, {
@@ -556,6 +578,10 @@ function VueProf({ token }) {
                   <button onClick={() => voirResultats(q.id)} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
                     style={{ background: `${COULEURS.bleu}1A`, color: COULEURS.bleu, border: `1px solid ${COULEURS.bleu}4D` }}>
                     Résultats
+                  </button>
+                  <button onClick={() => renommer(q)} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                    style={{ background: `${COULEURS.or}1A`, color: '#b8891e', border: `1px solid ${COULEURS.or}66` }}>
+                    Renommer
                   </button>
                   <button onClick={() => basculerVisibilite(q)} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
                     style={q.publie === false

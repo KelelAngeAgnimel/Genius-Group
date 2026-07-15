@@ -386,6 +386,46 @@ router.patch('/:id/visibilite', verifyToken, async (req, res) => {
   }
 })
 
+// ── PATCH /api/quiz/:id — renommer un quiz ───────────────────────
+router.patch('/:id', verifyToken, async (req, res) => {
+  if (!['professeur', 'admin'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Accès refusé' })
+  }
+  try {
+    const { data: quiz, error: quizErr } = await supabase
+      .from('quizzes')
+      .select('id, created_by')
+      .eq('id', req.params.id)
+      .single()
+
+    if (quizErr || !quiz) return res.status(404).json({ error: 'Quiz non trouvé' })
+    if (req.user.role !== 'admin' && quiz.created_by !== req.user.id) {
+      return res.status(403).json({ error: 'Accès refusé' })
+    }
+
+    const updates = {}
+    if (typeof req.body.titre === 'string' && req.body.titre.trim()) {
+      updates.titre = req.body.titre.trim()
+    }
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'Aucune modification fournie' })
+    }
+
+    const { data, error } = await supabase
+      .from('quizzes')
+      .update(updates)
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) return res.status(500).json({ error: error.message })
+    res.json({ quiz: data })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
 // ── GET /api/quiz/:id — détail d'un quiz ─────────────────────────
 router.get('/:id', verifyToken, async (req, res) => {
   try {
