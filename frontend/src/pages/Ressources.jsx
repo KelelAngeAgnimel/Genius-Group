@@ -8,6 +8,18 @@ const ROLES_INPHB  = ['etudiant_inphb', 'etudiant_both', 'etudiant_inphb_cme', '
 const ROLES_ESATIC = ['etudiant_esatic', 'etudiant_both', 'etudiant_esatic_cme', 'etudiant_all', 'professeur', 'admin']
 const ROLES_CME    = ['etudiant_cme', 'etudiant_inphb_cme', 'etudiant_esatic_cme', 'etudiant_all', 'professeur', 'admin']
 
+// Une ressource correspond-elle à l'école affichée ?
+// Inclusif : une ressource "tous"/"all" ou combinée apparaît sous chaque école concernée.
+function correspondEcole(concours, sigle) {
+  const c = (concours || '').toString().trim().toLowerCase()
+  const s = (sigle || '').toString().trim().toLowerCase()
+  if (c === 'tous' || c === 'all') return true
+  if (s.includes('inp'))    return c.includes('inp')
+  if (s.includes('esatic')) return c.includes('esatic')
+  if (s.includes('cme'))    return c.includes('cme')
+  return c === s
+}
+
 const ecoles = [
   {
     sigle: 'INP-HB',
@@ -229,7 +241,7 @@ export default function Ressources() {
       const res = await fetch(`${API_URL}/api/ressources`, { headers: { Authorization: `Bearer ${token}` } })
       const data = await res.json()
       if (data.ressources) {
-        setRessources(data.ressources.filter(r => r.concours === ecoleSelectionnee || r.concours === 'tous'))
+        setRessources(data.ressources.filter(r => correspondEcole(r.concours, ecoleSelectionnee)))
       } else {
         setErreur('Erreur lors du chargement')
       }

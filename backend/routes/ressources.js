@@ -19,17 +19,26 @@ const upload = multer({
   }
 })
 
-// Rôles par concours
+// Rôles par concours (un étudiant "all"/"both" fait plusieurs concours)
 const ROLES_INPHB  = ['etudiant_inphb', 'etudiant_both', 'etudiant_inphb_cme', 'etudiant_all']
 const ROLES_ESATIC = ['etudiant_esatic', 'etudiant_both', 'etudiant_esatic_cme', 'etudiant_all']
 const ROLES_CME    = ['etudiant_cme', 'etudiant_inphb_cme', 'etudiant_esatic_cme', 'etudiant_all']
 
 function peutAcceder(role, concours) {
   if (role === 'admin' || role === 'professeur') return true
-  if (concours === 'tous') return true
-  if (concours === 'INP-HB') return ROLES_INPHB.includes(role)
-  if (concours === 'ESATIC') return ROLES_ESATIC.includes(role)
-  if (concours === 'CME') return ROLES_CME.includes(role)
+
+  // Normalisation : insensible à la casse, tolère 'INP-HB', 'inphb', 'inp-hb + esatic', 'all', 'tous'...
+  const c = (concours || '').toString().trim().toLowerCase()
+  if (c === 'tous' || c === 'all') return true
+
+  // Une ressource peut cibler plusieurs concours à la fois (valeur combinée)
+  const cibleINPHB  = c.includes('inp')
+  const cibleESATIC = c.includes('esatic')
+  const cibleCME    = c.includes('cme')
+
+  if (cibleINPHB  && ROLES_INPHB.includes(role))  return true
+  if (cibleESATIC && ROLES_ESATIC.includes(role)) return true
+  if (cibleCME    && ROLES_CME.includes(role))    return true
   return false
 }
 
