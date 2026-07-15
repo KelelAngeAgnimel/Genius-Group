@@ -491,13 +491,21 @@ function VueProf({ token }) {
 
   const basculerVisibilite = async (q) => {
     try {
-      await fetch(`${API_URL}/api/quiz/${q.id}/visibilite`, {
+      const res = await fetch(`${API_URL}/api/quiz/${q.id}/visibilite`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ publie: !q.publie })
       })
-      charger()
-    } catch (err) { console.error(err) }
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.quiz) {
+        // Mise à jour immédiate du bouton à partir de la réponse du serveur
+        setQuizzes(prev => prev.map(x => x.id === q.id ? { ...x, publie: data.quiz.publie } : x))
+      } else {
+        alert(data.error || "Impossible de changer la visibilité. Vérifie que le serveur (Render) est bien à jour.")
+      }
+    } catch {
+      alert('Erreur réseau lors du changement de visibilité.')
+    }
   }
 
   return (
@@ -553,7 +561,7 @@ function VueProf({ token }) {
                     style={q.publie === false
                       ? { background: `${COULEURS.vert}1A`, color: COULEURS.vert, border: `1px solid ${COULEURS.vert}4D` }
                       : { background: 'rgba(230,150,40,0.12)', color: '#C97B1A', border: '1px solid rgba(230,150,40,0.3)' }}>
-                    {q.publie === false ? 'Afficher' : 'Masquer'}
+                    {q.publie === false ? 'Démasquer' : 'Masquer'}
                   </button>
                   <button onClick={() => supprimer(q.id)} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
                     style={{ background: `${COULEURS.rose}1A`, color: COULEURS.rose, border: `1px solid ${COULEURS.rose}4D` }}>

@@ -351,6 +351,41 @@ router.post('/', verifyToken, async (req, res) => {
   }
 })
 
+// ── PATCH /api/quiz/:id/visibilite — masquer / afficher un quiz ──
+router.patch('/:id/visibilite', verifyToken, async (req, res) => {
+  if (!['professeur', 'admin'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Accès refusé' })
+  }
+  try {
+    const { data: quiz, error: quizErr } = await supabase
+      .from('quizzes')
+      .select('id, created_by, publie')
+      .eq('id', req.params.id)
+      .single()
+
+    if (quizErr || !quiz) return res.status(404).json({ error: 'Quiz non trouvé' })
+    if (req.user.role !== 'admin' && quiz.created_by !== req.user.id) {
+      return res.status(403).json({ error: 'Accès refusé' })
+    }
+
+    // Si publie est fourni on l'applique, sinon on bascule l'état actuel
+    const nouveauPublie = typeof req.body.publie === 'boolean' ? req.body.publie : !quiz.publie
+
+    const { data, error } = await supabase
+      .from('quizzes')
+      .update({ publie: nouveauPublie })
+      .eq('id', req.params.id)
+      .select()
+      .single()
+
+    if (error) return res.status(500).json({ error: error.message })
+    res.json({ quiz: data })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
 // ── GET /api/quiz/:id — détail d'un quiz ─────────────────────────
 router.get('/:id', verifyToken, async (req, res) => {
   try {
@@ -372,6 +407,12 @@ router.get('/:id', verifyToken, async (req, res) => {
     let questions = questionsData
 
     if (!['professeur', 'admin'].includes(req.user.role)) {
+      // Un quiz masqué (non publié) n'est pas accessible aux élèves,
+      // même par lien direct.
+      if (!quiz.publie) {
+        return res.status(403).json({ error: 'Ce quiz n\'est pas disponible pour le moment' })
+      }
+
       const { data: tentatives } = await supabase
         .from('quiz_resultats')
         .select('*')
