@@ -266,8 +266,12 @@ export default function Ressources() {
       {/* EN-TÊTE */}
       <div className="mb-6">
         <Breadcrumb
-          retourLabel={matiereSelectionnee ? ecoleActive?.sigle : ecoleActive ? 'Bibliothèque' : undefined}
-          retourPath={matiereSelectionnee ? undefined : ecoleActive ? '/ressources' : undefined}
+          retourLabel={matiereSelectionnee ? ecoleActive?.sigle : ecoleActive ? 'Tous les documents' : undefined}
+          onRetour={
+            matiereSelectionnee ? () => setMatiereSelectionnee(null)
+            : ecoleActive ? () => { setEcoleSelectionnee(null); setMatiereSelectionnee(null) }
+            : undefined
+          }
           suivantLabel={!ecoleActive ? 'Mon Planning' : null}
           suivantPath={!ecoleActive ? '/planning/emploi-du-temps' : null}
         />
