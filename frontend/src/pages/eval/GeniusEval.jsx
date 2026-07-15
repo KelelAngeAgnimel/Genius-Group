@@ -13,6 +13,21 @@ const MATIERES_PAR_CONCOURS = {
 
 const COULEURS = { or: '#C9A84C', bleu: '#4C7BC9', vert: '#4CC9A8', rose: '#C94C7B', navy: '#071020' }
 
+// Décrit qui verra le quiz apparaître, selon le concours et la modalité ciblés
+function audienceQuiz(concours, modalite) {
+  const c = concours || 'all'
+  const m = modalite || 'les_deux'
+  const cLabel =
+    c === 'inphb'  ? 'INP-HB (+ INP-HB·ESATIC·CME)' :
+    c === 'esatic' ? 'ESATIC (+ INP-HB·ESATIC·CME)' :
+    'Tous les concours'
+  const mLabel =
+    m === 'en_ligne'   ? 'En ligne' :
+    m === 'presentiel' ? 'Présentiel' :
+    'En ligne & Présentiel'
+  return `${cLabel} · ${mLabel}`
+}
+
 function formatChrono(secondes) {
   const m = Math.floor(secondes / 60)
   const s = secondes % 60
@@ -474,6 +489,17 @@ function VueProf({ token }) {
     } catch (err) { console.error(err) }
   }
 
+  const basculerVisibilite = async (q) => {
+    try {
+      await fetch(`${API_URL}/api/quiz/${q.id}/visibilite`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ publie: !q.publie })
+      })
+      charger()
+    } catch (err) { console.error(err) }
+  }
+
   return (
     <div>
       <div className="flex gap-2 mb-5">
@@ -503,9 +529,18 @@ function VueProf({ token }) {
               <div key={i} className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs tracking-widest uppercase" style={{ color: COULEURS.or }}>{q.matiere}</span>
-                  {q.ai_genere && <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: `${COULEURS.bleu}1A`, color: COULEURS.bleu }}>IA</span>}
+                  <div className="flex items-center gap-1.5">
+                    {q.publie === false && (
+                      <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: `${COULEURS.rose}1A`, color: COULEURS.rose }}>🚫 Masqué</span>
+                    )}
+                    {q.ai_genere && <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: `${COULEURS.bleu}1A`, color: COULEURS.bleu }}>IA</span>}
+                  </div>
                 </div>
                 <p className="font-bold text-sm" style={{ color: COULEURS.navy }}>{q.titre}</p>
+                <p className="text-xs mt-1 flex items-start gap-1" style={{ color: COULEURS.bleu }}>
+                  <span>👥</span>
+                  <span>Visible par : {audienceQuiz(q.concours, q.modalite)}</span>
+                </p>
                 <p className="text-xs text-gray-400 mt-1">
                   {q.nb_questions} questions · {q.nb_tentatives} tentative{q.nb_tentatives !== '1' ? 's' : ''}{q.moyenne_pct ? ` · moy. ${q.moyenne_pct}%` : ''}
                 </p>
@@ -513,6 +548,12 @@ function VueProf({ token }) {
                   <button onClick={() => voirResultats(q.id)} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
                     style={{ background: `${COULEURS.bleu}1A`, color: COULEURS.bleu, border: `1px solid ${COULEURS.bleu}4D` }}>
                     Résultats
+                  </button>
+                  <button onClick={() => basculerVisibilite(q)} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                    style={q.publie === false
+                      ? { background: `${COULEURS.vert}1A`, color: COULEURS.vert, border: `1px solid ${COULEURS.vert}4D` }
+                      : { background: 'rgba(230,150,40,0.12)', color: '#C97B1A', border: '1px solid rgba(230,150,40,0.3)' }}>
+                    {q.publie === false ? 'Afficher' : 'Masquer'}
                   </button>
                   <button onClick={() => supprimer(q.id)} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
                     style={{ background: `${COULEURS.rose}1A`, color: COULEURS.rose, border: `1px solid ${COULEURS.rose}4D` }}>
@@ -705,6 +746,9 @@ function VueProf({ token }) {
           <div className="rounded-2xl p-5 mb-4" style={{ background: `linear-gradient(135deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${COULEURS.or}4D` }}>
             <p className="text-xs tracking-widest uppercase" style={{ color: COULEURS.or }}>{resultats.quiz.matiere}</p>
             <p className="font-bold text-white text-lg">{resultats.quiz.titre}</p>
+            <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
+              👥 Visible par : {audienceQuiz(resultats.quiz.concours, resultats.quiz.modalite)}
+            </p>
           </div>
           <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
             <p className="font-bold text-sm mb-4" style={{ color: COULEURS.navy }}>Résultats des étudiants ({resultats.resultats.length})</p>
