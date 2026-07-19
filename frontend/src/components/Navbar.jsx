@@ -161,7 +161,7 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link to="/accueil" className="flex items-center gap-2 flex-shrink-0">
-          <img src="/logo.png" alt="Genius Group"
+          <img src="/photo/logo.png" alt="Genius Group"
             className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
             style={{ border: '1px solid rgba(201,168,76,0.3)' }} />
           <div className="hidden sm:block">
