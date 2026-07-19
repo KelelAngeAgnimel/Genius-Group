@@ -49,14 +49,15 @@ router.get('/', verifyToken, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('ressources')
-      .select('id, titre, description, type, matiere, concours, visible, created_at, professeur:professeur_id(username, prenom, nom)')
+      .select('id, titre, description, type, matiere, concours, visible, est_evaluation, created_at, professeur:professeur_id(username, prenom, nom)')
       .eq('visible', true)
       .order('created_at', { ascending: false })
 
     if (error) return res.status(500).json({ message: error.message })
 
-    // Filtrer selon le concours — ne jamais exposer l'URL du fichier
-    const filtrees = data.filter(r => peutAcceder(req.user.role, r.concours))
+    // Filtrer selon le concours — ne jamais exposer l'URL du fichier.
+    // Les évaluations sont exclues de la Bibliothèque : elles vivent dans la page « Évaluation ».
+    const filtrees = data.filter(r => !r.est_evaluation && peutAcceder(req.user.role, r.concours))
     res.json({ ressources: filtrees })
   } catch (err) {
     console.error(err)
@@ -74,12 +75,65 @@ router.get('/toutes', verifyToken, async (req, res) => {
     }
     const { data, error } = await supabase
       .from('ressources')
-      .select('id, titre, description, type, matiere, concours, visible, created_at, professeur:professeur_id(username, prenom, nom)')
+      .select('id, titre, description, type, matiere, concours, visible, est_evaluation, professeur_id, created_at, professeur:professeur_id(username, prenom, nom)')
       .order('created_at', { ascending: false })
 
     if (error) return res.status(500).json({ message: error.message })
+    // Les évaluations sont gérées à part (page « Évaluation »), on ne les mélange pas ici.
+    res.json({ ressources: data.filter(r => !r.est_evaluation) })
+  } catch (err) {
+    res.status(500).json({ message: 'Erreur serveur' })
+  }
+})
+
+// ══════════════════════════════════════════
+// GET — Évaluations visibles par l'élève (page Évaluation)
+// Filtrées par le concours que l'élève prépare
+// ══════════════════════════════════════════
+router.get('/evaluations', verifyToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('ressources')
+      .select('id, titre, description, type, matiere, concours, visible, est_evaluation, created_at, professeur:professeur_id(username, prenom, nom)')
+      .eq('visible', true)
+      .eq('est_evaluation', true)
+      .order('created_at', { ascending: false })
+
+    if (error) return res.status(500).json({ message: error.message })
+
+    const filtrees = data.filter(r => peutAcceder(req.user.role, r.concours))
+    res.json({ ressources: filtrees })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: 'Erreur serveur' })
+  }
+})
+
+// ══════════════════════════════════════════
+// GET — Gestion des évaluations (prof/admin)
+// Le prof ne voit QUE ses propres évaluations ; l'admin les voit toutes.
+// ══════════════════════════════════════════
+router.get('/evaluations/gestion', verifyToken, async (req, res) => {
+  try {
+    if (!['professeur', 'admin'].includes(req.user.role)) {
+      return res.status(403).json({ message: 'Accès refusé' })
+    }
+    let query = supabase
+      .from('ressources')
+      .select('id, titre, description, type, matiere, concours, visible, est_evaluation, professeur_id, created_at, professeur:professeur_id(username, prenom, nom)')
+      .eq('est_evaluation', true)
+      .order('created_at', { ascending: false })
+
+    // Restriction : un professeur ne voit jamais l'ensemble des évaluations comme l'admin.
+    if (req.user.role !== 'admin') {
+      query = query.eq('professeur_id', req.user.id)
+    }
+
+    const { data, error } = await query
+    if (error) return res.status(500).json({ message: error.message })
     res.json({ ressources: data })
   } catch (err) {
+    console.error(err)
     res.status(500).json({ message: 'Erreur serveur' })
   }
 })
@@ -173,6 +227,9 @@ router.post('/upload', verifyToken, (req, res, next) => {
       return res.status(400).json({ message: 'titre, matière et concours sont requis' })
     }
 
+    // FormData transmet des chaînes : on convertit proprement en booléen
+    const est_evaluation = req.body.est_evaluation === 'true' || req.body.est_evaluation === true
+
     // Chemin unique dans Supabase Storage
     const ext = req.file.originalname.split('.').pop()
     const storagePath = `${concours}/${Date.now()}-${titre.replace(/[^a-zA-Z0-9]/g, '_')}.${ext}`
@@ -202,9 +259,10 @@ router.post('/upload', verifyToken, (req, res, next) => {
         url: null,
         drive_file_id: null,
         professeur_id,
-        visible: true
+        visible: true,
+        est_evaluation
       }])
-      .select('id, titre, type, matiere, concours, visible, created_at')
+      .select('id, titre, type, matiere, concours, visible, est_evaluation, created_at')
       .single()
 
     if (error) {
@@ -228,12 +286,23 @@ router.patch('/:id/visibilite', verifyToken, async (req, res) => {
     if (!['professeur', 'admin'].includes(req.user.role)) {
       return res.status(403).json({ message: 'Accès refusé' })
     }
+
+    // Un professeur ne peut agir que sur ses propres évaluations
+    const { data: existante } = await supabase
+      .from('ressources')
+      .select('professeur_id, est_evaluation')
+      .eq('id', req.params.id)
+      .single()
+    if (existante?.est_evaluation && req.user.role !== 'admin' && existante.professeur_id !== req.user.id) {
+      return res.status(403).json({ message: 'Vous ne pouvez modifier que vos propres évaluations' })
+    }
+
     const { visible } = req.body
     const { data, error } = await supabase
       .from('ressources')
       .update({ visible })
       .eq('id', req.params.id)
-      .select('id, titre, visible')
+      .select('id, titre, visible, est_evaluation')
       .single()
 
     if (error) return res.status(500).json({ message: error.message })
@@ -254,9 +323,14 @@ router.delete('/:id', verifyToken, async (req, res) => {
 
     const { data: ressource } = await supabase
       .from('ressources')
-      .select('storage_path')
+      .select('storage_path, professeur_id, est_evaluation')
       .eq('id', req.params.id)
       .single()
+
+    // Un professeur ne peut supprimer que ses propres évaluations
+    if (ressource?.est_evaluation && req.user.role !== 'admin' && ressource.professeur_id !== req.user.id) {
+      return res.status(403).json({ message: 'Vous ne pouvez supprimer que vos propres évaluations' })
+    }
 
     // Supprimer le fichier de Supabase Storage
     if (ressource?.storage_path) {

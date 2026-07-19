@@ -848,7 +848,7 @@ export default function GeniusEval() {
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
       <div className="mb-6">
         <p className="text-xs tracking-widest uppercase mb-1" style={{ color: COULEURS.or }}>Outils</p>
-        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: COULEURS.navy }}>Genius Eval</h1>
+        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: COULEURS.navy }}>Quiz</h1>
         <p className="text-gray-400 text-sm mt-1">
           {isProfOrAdmin ? 'Créez et suivez des QCM auto-corrigés' : 'Vos quiz auto-corrigés'}
         </p>

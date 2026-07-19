@@ -41,7 +41,7 @@ export default function EspaceProfesseur() {
   // Formulaire upload
   const [form, setForm] = useState({
     titre: '', description: '', type: 'pdf',
-    matiere: '', concours: 'INP-HB', lien: ''
+    matiere: '', concours: 'INP-HB', lien: '', est_evaluation: false
   })
   const [fichier, setFichier] = useState(null)
 
@@ -126,8 +126,10 @@ export default function EspaceProfesseur() {
       const data = await res.json()
 
       if (data.success) {
-        setSucces('Ressource publiee avec succes !')
-        setForm({ titre: '', description: '', type: 'pdf', matiere: '', concours: 'INP-HB', lien: '' })
+        setSucces(form.est_evaluation
+          ? 'Évaluation publiee avec succes ! Elle est disponible dans Outils → Évaluation.'
+          : 'Ressource publiee avec succes !')
+        setForm({ titre: '', description: '', type: 'pdf', matiere: '', concours: 'INP-HB', lien: '', est_evaluation: false })
         setFichier(null)
         chargerRessources()
       } else {
@@ -495,6 +497,40 @@ export default function EspaceProfesseur() {
               </div>
             </div>
 
+            {/* Étape 5 — Est-ce une évaluation ? */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">
+                5. Type de publication
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { val: false, titre: 'Ressource', sous: 'Apparaît dans la Bibliothèque', couleur: '#C9A84C', icone: '📄' },
+                  { val: true, titre: 'Évaluation', sous: 'Apparaît dans Outils → Évaluation', couleur: '#C94C7B', icone: '📝' },
+                ].map(opt => {
+                  const actif = form.est_evaluation === opt.val
+                  return (
+                    <button key={String(opt.val)} type="button"
+                      onClick={() => setForm({ ...form, est_evaluation: opt.val })}
+                      className="p-3 rounded-xl text-left transition"
+                      style={{
+                        background: actif ? `${opt.couleur}12` : '#f8f7f4',
+                        border: `1px solid ${actif ? opt.couleur : '#f0ece0'}`
+                      }}>
+                      <p className="text-sm font-bold flex items-center gap-1.5" style={{ color: actif ? opt.couleur : '#374151' }}>
+                        <span>{opt.icone}</span> {opt.titre}
+                      </p>
+                      <p className="text-xs mt-0.5" style={{ color: actif ? opt.couleur : '#9ca3af' }}>{opt.sous}</p>
+                    </button>
+                  )
+                })}
+              </div>
+              {form.est_evaluation && (
+                <p className="text-xs mt-2" style={{ color: '#C94C7B' }}>
+                  Cette évaluation sera visible uniquement par les élèves du concours sélectionné, dans la page Évaluation.
+                </p>
+              )}
+            </div>
+
             <button type="submit" disabled={loading || !form.matiere || !form.titre || !fichier}
               className="py-3 rounded-xl text-sm font-bold tracking-widest transition"
               style={{
@@ -504,7 +540,7 @@ export default function EspaceProfesseur() {
                 border: '1px solid rgba(201,168,76,0.4)',
                 cursor: (!form.matiere || !form.titre || !fichier || loading) ? 'not-allowed' : 'pointer'
               }}>
-              {loading ? 'Publication en cours...' : 'Publier la ressource'}
+              {loading ? 'Publication en cours...' : (form.est_evaluation ? 'Publier l\'évaluation' : 'Publier la ressource')}
             </button>
           </form>
         </div>

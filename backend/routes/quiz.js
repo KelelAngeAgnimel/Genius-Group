@@ -608,9 +608,8 @@ router.get('/:id/resultats', verifyToken, async (req, res) => {
       .single()
 
     if (quizErr || !quiz) return res.status(404).json({ error: 'Quiz non trouvé' })
-    if (req.user.role !== 'admin' && quiz.created_by !== req.user.id) {
-      return res.status(403).json({ error: 'Accès refusé' })
-    }
+    // Pour les RÉSULTATS, un professeur voit la même chose qu'un admin
+    // (la restriction « ses propres quiz » ne s'applique qu'au contenu/à la gestion).
 
     const { data: resultats, error: resErr } = await supabase
       .from('quiz_resultats')
