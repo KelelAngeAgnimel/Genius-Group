@@ -28,6 +28,38 @@ const roleLabel = {
   etudiant_all: 'INP-HB + ESATIC + CME',
 }
 
+// ══════════════════════════════════════════════════════════════
+// Concours reellement prepares par un etudiant selon son role.
+// Un profil multi-concours (etudiant_all, etudiant_both, ...) doit
+// apparaitre dans TOUTES les listes correspondantes, sinon il devient
+// invisible au moment de publier une note.
+// ══════════════════════════════════════════════════════════════
+const concoursDeRole = (role) => {
+  const r = (role || '').toLowerCase()
+  if (r === 'etudiant_all')  return ['INP-HB', 'ESATIC', 'CME']
+  if (r === 'etudiant_both') return ['INP-HB', 'ESATIC']
+  const liste = []
+  if (r.includes('inphb'))  liste.push('INP-HB')
+  if (r.includes('esatic')) liste.push('ESATIC')
+  if (r.includes('cme'))    liste.push('CME')
+  return liste
+}
+
+// L'etudiant prepare-t-il ce concours ? ('tous' = aucun filtre)
+const suitLeConcours = (role, concours) =>
+  !concours || concours === 'tous' || concoursDeRole(role).includes(concours)
+
+// Identifiant affichable : matricule en priorite, sinon username
+const identifiant = (e) => e.matricule || e.username || ''
+
+// Nom lisible, avec repli sur l'identifiant si le nom n'est pas renseigne
+const nomComplet = (e) =>
+  [e.prenom, e.nom].filter(Boolean).join(' ').trim() || identifiant(e) || 'Etudiant sans nom'
+
+// Libelle unique dans les listes deroulantes : identifiant + nom
+const libelleEtudiant = (e) =>
+  `${identifiant(e)} — ${nomComplet(e)}`
+
 export default function EspaceProfesseur() {
   const { user, token } = useAuth()
   const [onglet, setOnglet] = useState('ressources')
@@ -58,6 +90,7 @@ export default function EspaceProfesseur() {
   const [noteForm, setNoteForm] = useState({
     etudiant_id: '', matiere: '', concours: 'INP-HB', note: '', periode: 'Mar 2026'
   })
+  const [rechercheEtu, setRechercheEtu] = useState('')   // recherche nom / matricule
   const [notesClasse, setNotesClasse] = useState([])
   const [filtreNotesConcours, setFiltreNotesConcours] = useState('INP-HB')
   const [filtreNotesPeriode, setFiltreNotesPeriode] = useState('Mar 2026')
@@ -81,9 +114,22 @@ export default function EspaceProfesseur() {
   }
 
   const chargerEtudiants = async () => {
-    const res = await fetch(`${API_URL}/api/users/all`, { headers })
-    const data = await res.json()
-    if (data.users) setEtudiants(data.users.filter(u => u.role.startsWith('etudiant')))
+    try {
+      const res = await fetch(`${API_URL}/api/users/all`, { headers })
+      const data = await res.json()
+      if (!data.users) {
+        setErreur(data.message || 'Impossible de charger la liste des etudiants')
+        return
+      }
+      // (u.role || '') : un role vide ne doit pas faire planter le filtre
+      // et donc vider toute la liste des etudiants.
+      const liste = data.users
+        .filter(u => (u.role || '').startsWith('etudiant'))
+        .sort((a, b) => identifiant(a).localeCompare(identifiant(b), 'fr', { numeric: true }))
+      setEtudiants(liste)
+    } catch {
+      setErreur('Impossible de charger la liste des etudiants')
+    }
   }
 
   const chargerMessages = async () => {
@@ -219,6 +265,7 @@ export default function EspaceProfesseur() {
       if (data.success) {
         setSucces('Note publiee avec succes !')
         setNoteForm({ etudiant_id: '', matiere: '', concours: 'INP-HB', note: '', periode: 'Mar 2026' })
+        setRechercheEtu('')
         chargerNotesClasse()
       } else {
         setErreur(data.message || 'Erreur lors de la publication')
@@ -230,19 +277,9 @@ export default function EspaceProfesseur() {
     }
   }
 
-  // Un étudiant appartient-il au groupe de concours donné ?
-  // (un étudiant "all" fait aussi INP-HB et ESATIC)
-  const appartientAuGroupe = (role, groupe) => {
-    const r = role || ''
-    if (groupe === 'inphb')  return r.includes('inphb') || r === 'etudiant_both' || r === 'etudiant_all'
-    if (groupe === 'esatic') return r.includes('esatic') || r === 'etudiant_both' || r === 'etudiant_all'
-    if (groupe === 'all')    return r === 'etudiant_all'
-    return true // 'tous'
-  }
-
   // Liste des étudiants filtrée (onglet "Mes étudiants")
   const etudiantsFiltres = etudiants.filter(e =>
-    appartientAuGroupe(e.role, filtreEtuConcours) &&
+    suitLeConcours(e.role, filtreEtuConcours) &&
     (filtreEtuModalite === 'tous' || e.modalite === filtreEtuModalite)
   )
 
@@ -254,13 +291,30 @@ export default function EspaceProfesseur() {
     { key: 'messages', label: 'Envoyer un message' },
   ]
 
-  // Etudiants filtrés selon le concours sélectionné pour les notes
-  const etudiantsPourNotes = etudiants.filter(e =>
-    noteForm.concours === 'tous' ||
-    e.role === `etudiant_${noteForm.concours.toLowerCase().replace('-', '')}` ||
-    e.role === 'etudiant_both' ||
-    e.role === 'etudiant_all'
-  )
+  // ══════════════════════════════════════════════════════════════
+  // Etudiants proposes pour la saisie d'une note.
+  // On garde TOUS ceux qui preparent le concours choisi, profils
+  // multi-concours compris, puis on applique la recherche libre
+  // (nom, prenom ou matricule : ex "26GEN0007" ou "kouakou").
+  // ══════════════════════════════════════════════════════════════
+  const rechercheNormalisee = rechercheEtu.trim().toLowerCase()
+  const etudiantsPourNotes = etudiants
+    .filter(e => suitLeConcours(e.role, noteForm.concours))
+    .filter(e => !rechercheNormalisee ||
+      `${nomComplet(e)} ${identifiant(e)} ${e.username || ''}`
+        .toLowerCase()
+        .includes(rechercheNormalisee)
+    )
+
+  // Si l'etudiant selectionne sort de la liste (changement de concours
+  // ou de recherche), on remet le champ a zero pour ne jamais publier
+  // une note sur un etudiant qui n'est plus affiche.
+  useEffect(() => {
+    if (noteForm.etudiant_id &&
+        !etudiantsPourNotes.some(e => String(e.id) === String(noteForm.etudiant_id))) {
+      setNoteForm(f => ({ ...f, etudiant_id: '' }))
+    }
+  }, [noteForm.concours, rechercheEtu, etudiants])
 
   // Organiser les notes par étudiant pour l'affichage
   const notesParEtudiant = notesClasse.reduce((acc, note) => {
@@ -566,28 +620,48 @@ export default function EspaceProfesseur() {
                   style={{ borderColor: '#f0ece0' }}>
                   <option value="INP-HB">INP-HB</option>
                   <option value="ESATIC">ESATIC</option>
+                  <option value="CME">CME</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Etudiant</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-gray-600">Etudiant</label>
+                  <span className="text-xs" style={{ color: '#C9A84C' }}>
+                    {etudiantsPourNotes.length} etudiant{etudiantsPourNotes.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+
+                <input type="text"
+                  value={rechercheEtu}
+                  onChange={e => setRechercheEtu(e.target.value)}
+                  placeholder="Rechercher par nom ou matricule (ex : 26GEN0007)"
+                  className="w-full border rounded-xl px-4 py-2 text-sm text-gray-800 mb-2 focus:outline-none"
+                  style={{ borderColor: '#f0ece0' }}
+                  onFocus={e => e.target.style.borderColor = '#C9A84C'}
+                  onBlur={e => e.target.style.borderColor = '#f0ece0'}
+                />
+
                 <select required
                   value={noteForm.etudiant_id}
                   onChange={e => setNoteForm({ ...noteForm, etudiant_id: e.target.value })}
                   className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
                   style={{ borderColor: '#f0ece0' }}>
                   <option value="">Choisir un etudiant</option>
-                  {etudiants
-                    .filter(e =>
-                      e.role === `etudiant_${noteForm.concours.toLowerCase().replace('-', '')}` ||
-                      e.role === 'etudiant_both'
-                    )
-                    .map((e, i) => (
-                      <option key={i} value={e.id}>
-                        {e.prenom || ''} {e.nom || e.username} — {e.matricule}
-                      </option>
-                    ))}
+                  {etudiantsPourNotes.map(e => (
+                    <option key={e.id} value={e.id}>
+                      {libelleEtudiant(e)} ({roleLabel[e.role] || e.role})
+                    </option>
+                  ))}
                 </select>
+
+                {etudiantsPourNotes.length === 0 && (
+                  <p className="text-xs mt-1" style={{ color: '#C94C7B' }}>
+                    {rechercheEtu
+                      ? 'Aucun etudiant ne correspond a cette recherche.'
+                      : `Aucun etudiant inscrit au concours ${noteForm.concours}.`}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -654,7 +728,7 @@ export default function EspaceProfesseur() {
 
             {/* Filtres */}
             <div className="flex gap-2 mb-4 flex-wrap">
-              {['INP-HB', 'ESATIC'].map((c, i) => (
+              {['INP-HB', 'ESATIC', 'CME'].map((c, i) => (
                 <button key={i}
                   onClick={() => setFiltreNotesConcours(c)}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold transition"
@@ -702,7 +776,7 @@ export default function EspaceProfesseur() {
                       </div>
                       <div>
                         <p className="text-xs font-bold text-gray-800">
-                          {item.etudiant?.prenom || ''} {item.etudiant?.nom || item.etudiant?.username}
+                          {nomComplet(item.etudiant || {})}
                         </p>
                         <p className="text-xs text-gray-400">{item.etudiant?.matricule}</p>
                       </div>
@@ -747,9 +821,9 @@ export default function EspaceProfesseur() {
                 className="w-full border rounded-xl px-3 py-2 text-sm bg-white"
                 style={{ borderColor: '#f0ece0' }}>
                 <option value="tous">Tous les concours</option>
-                <option value="inphb">INP-HB</option>
-                <option value="esatic">ESATIC</option>
-                <option value="all">INP-HB + ESATIC + CME</option>
+                <option value="INP-HB">INP-HB</option>
+                <option value="ESATIC">ESATIC</option>
+                <option value="CME">CME</option>
               </select>
             </div>
             <div className="flex-1">
@@ -780,7 +854,7 @@ export default function EspaceProfesseur() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-800">
-                    {etudiant.prenom || ''} {etudiant.nom || ''}
+                    {nomComplet(etudiant)}
                   </p>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     <span className="text-xs font-bold" style={{ color: '#C9A84C' }}>
@@ -850,9 +924,9 @@ export default function EspaceProfesseur() {
                     className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
                     style={{ borderColor: '#f0ece0' }}>
                     <option value="">Choisir un etudiant</option>
-                    {etudiants.map((e, i) => (
-                      <option key={i} value={e.id}>
-                        {e.prenom || ''} {e.nom || e.username} — {roleLabel[e.role]}
+                    {etudiants.map(e => (
+                      <option key={e.id} value={e.id}>
+                        {libelleEtudiant(e)} ({roleLabel[e.role] || e.role})
                       </option>
                     ))}
                   </select>
