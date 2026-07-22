@@ -620,7 +620,6 @@ export default function EspaceProfesseur() {
                   style={{ borderColor: '#f0ece0' }}>
                   <option value="INP-HB">INP-HB</option>
                   <option value="ESATIC">ESATIC</option>
-                  <option value="CME">CME</option>
                 </select>
               </div>
 
@@ -728,7 +727,7 @@ export default function EspaceProfesseur() {
 
             {/* Filtres */}
             <div className="flex gap-2 mb-4 flex-wrap">
-              {['INP-HB', 'ESATIC', 'CME'].map((c, i) => (
+              {['INP-HB', 'ESATIC'].map((c, i) => (
                 <button key={i}
                   onClick={() => setFiltreNotesConcours(c)}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold transition"
@@ -823,7 +822,7 @@ export default function EspaceProfesseur() {
                 <option value="tous">Tous les concours</option>
                 <option value="INP-HB">INP-HB</option>
                 <option value="ESATIC">ESATIC</option>
-                <option value="CME">CME</option>
+                <option value="CME">INP-HB + ESATIC + CME</option>
               </select>
             </div>
             <div className="flex-1">
