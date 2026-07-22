@@ -306,6 +306,21 @@ export default function EspaceProfesseur() {
         .includes(rechercheNormalisee)
     )
 
+  // ══════════════════════════════════════════════════════════════
+  // Repartition des etudiants entre les deux concours notables.
+  // Un etudiant inscrit aux deux (ou aux trois) est compte dans les
+  // deux listes : c'est normal, il aura une note dans chaque concours.
+  // Les "orphelins" ne preparent ni INP-HB ni ESATIC : ils ne peuvent
+  // apparaitre nulle part, il faut corriger leur role dans l'admin.
+  // ══════════════════════════════════════════════════════════════
+  const CONCOURS_NOTABLES = ['INP-HB', 'ESATIC']
+  const nbParConcours = Object.fromEntries(
+    CONCOURS_NOTABLES.map(c => [c, etudiants.filter(e => suitLeConcours(e.role, c)).length])
+  )
+  const etudiantsOrphelins = etudiants.filter(
+    e => !CONCOURS_NOTABLES.some(c => suitLeConcours(e.role, c))
+  )
+
   // Si l'etudiant selectionne sort de la liste (changement de concours
   // ou de recherche), on remet le champ a zero pour ne jamais publier
   // une note sur un etudiant qui n'est plus affiche.
@@ -606,9 +621,49 @@ export default function EspaceProfesseur() {
 
           {/* Formulaire saisie note */}
           <div className="bg-white rounded-2xl p-6" style={{ border: '1px solid #f0ece0' }}>
-            <h2 className="font-bold text-base mb-5" style={{ color: '#071020' }}>
+            <h2 className="font-bold text-base mb-3" style={{ color: '#071020' }}>
               Publier une note
             </h2>
+
+            {/* Recapitulatif : explique l'ecart avec le total de l'admin */}
+            <div className="rounded-xl px-3 py-2 mb-4 text-xs"
+              style={{ background: '#f8f7f4', border: '1px solid #f0ece0', color: '#6b7280' }}>
+              <span className="font-semibold" style={{ color: '#071020' }}>
+                {etudiants.length} etudiants inscrits
+              </span>
+              {' — '}
+              {CONCOURS_NOTABLES.map((c, i) => (
+                <span key={c}>
+                  {i > 0 && ' · '}
+                  <span className="font-semibold" style={{ color: '#C9A84C' }}>{nbParConcours[c]}</span>
+                  {` en ${c}`}
+                </span>
+              ))}
+              <br />
+              Un etudiant inscrit aux deux concours apparait dans les deux listes.
+            </div>
+
+            {/* Alerte : etudiants rattaches a aucun concours notable */}
+            {etudiantsOrphelins.length > 0 && (
+              <div className="rounded-xl px-3 py-2 mb-4 text-xs"
+                style={{ background: 'rgba(201,76,123,0.08)', border: '1px solid rgba(201,76,123,0.3)', color: '#C94C7B' }}>
+                <p className="font-bold mb-1">
+                  {etudiantsOrphelins.length} etudiant{etudiantsOrphelins.length > 1 ? 's' : ''} sans concours notable
+                </p>
+                <p className="mb-1" style={{ color: '#6b7280' }}>
+                  Ces etudiants n'apparaissent dans aucune liste. Corrigez leur role
+                  dans Administration &gt; Gestion des utilisateurs.
+                </p>
+                <div className="flex flex-col gap-0.5 overflow-y-auto" style={{ maxHeight: '90px' }}>
+                  {etudiantsOrphelins.map(e => (
+                    <span key={e.id} style={{ color: '#6b7280' }}>
+                      {libelleEtudiant(e)} — role : {e.role || '(vide)'}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <form onSubmit={publierNote} className="flex flex-col gap-4">
 
               <div>
