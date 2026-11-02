@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import api from '../../api'
 import { ouvrirFichierProtege } from '../../lib/fichiers'
+import Loader from '../../components/Loader'
+import EmptyState from '../../components/EmptyState'
 
 // recharts est chargé à la demande (module séparé)
 const RadarCompetences = lazy(() => import('../../components/Graphiques').then(m => ({ default: m.RadarCompetences })))
@@ -67,7 +69,7 @@ export default function MesCompetences() {
       </div>
 
       {erreur && <p className="text-sm mb-4" style={{ color: '#C94C7B' }}>{erreur}</p>}
-      {!donnees && !erreur && <p className="text-sm text-gray-400">Chargement…</p>}
+      {!donnees && !erreur && <Loader texte="Chargement…" />}
 
       {donnees && donnees.competences.length === 0 && (
         <p className="text-sm text-gray-500">Aucune compétence n’est encore suivie pour votre concours.</p>
@@ -114,7 +116,7 @@ export default function MesCompetences() {
           <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
             <h2 className="font-bold mb-3" style={{ color: '#071020' }}>Exercices recommandés</h2>
             {donnees.exercices.length === 0 ? (
-              <p className="text-sm text-gray-400">Aucun exercice pour le moment.</p>
+              <EmptyState icone="✏️" titre="Aucun exercice pour le moment" />
             ) : (
               <ul className="flex flex-col gap-3">
                 {donnees.exercices.map(e => (

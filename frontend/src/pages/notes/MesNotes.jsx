@@ -2,6 +2,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import api from '../../api'
+import Loader from '../../components/Loader'
 
 // Deux blocs fixes, un par concours, avec leurs matières officielles.
 // Ce sont ces mêmes matières qui sont proposées lors de la création d'un quiz
@@ -97,7 +98,7 @@ export default function MesNotes() {
 
       {loading ? (
         <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
-          <p className="text-xs text-gray-400 text-center py-8">Chargement...</p>
+          <Loader texte="Chargement…" />
         </div>
       ) : (
         <div className="flex flex-col gap-5">

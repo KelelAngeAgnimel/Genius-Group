@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import api from '../../../api'
 import { LIMITES, TYPES_ACCEPTES, compresserImage, formaterTaille, ouvrirFichierProtege } from '../../../lib/fichiers'
+import Loader from '../../../components/Loader'
+import EmptyState from '../../../components/EmptyState'
 
 const VIOLET = '#7B4CC9'
 const ONGLETS = [
@@ -291,9 +293,9 @@ export default function VueEleveEnsea() {
 
       {erreur && <p className="text-sm mb-4" style={{ color: '#C94C7B' }}>{erreur}</p>}
       {loading ? (
-        <p className="text-sm text-gray-400">Chargement…</p>
+        <Loader texte="Chargement…" />
       ) : visibles.length === 0 ? (
-        <p className="text-sm text-gray-400">Aucune évaluation dans cette catégorie.</p>
+        <EmptyState icone="📝" titre="Aucune évaluation dans cette catégorie" />
       ) : (
         <div className="flex flex-col gap-4">
           {visibles.map(e => <CarteEvaluation key={e.id} evaluation={e} maintenant={maintenant} onChange={charger} />)}

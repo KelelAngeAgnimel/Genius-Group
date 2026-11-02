@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import api from '../../api'
 import { useConcours } from '../../hooks/useConcours'
+import Loader from '../../components/Loader'
+import EmptyState from '../../components/EmptyState'
 
 const VIOLET = '#7B4CC9'
 const CHAMP = 'w-full text-sm rounded-xl px-3 py-2 outline-none'
@@ -202,8 +204,8 @@ export default function Seances() {
           )}
           {creation && <FormulaireSeance onCree={() => { setCreation(false); charger() }} onAnnuler={() => setCreation(false)} />}
 
-          {loading ? <p className="text-sm text-gray-400">Chargement…</p>
-            : seances.length === 0 ? <p className="text-sm text-gray-400">Aucune séance pour le moment.</p>
+          {loading ? <Loader texte="Chargement…" />
+            : seances.length === 0 ? <EmptyState icone="📅" titre="Aucune séance pour le moment" />
             : (
               <div className="flex flex-col gap-3">
                 {seances.map(s => {

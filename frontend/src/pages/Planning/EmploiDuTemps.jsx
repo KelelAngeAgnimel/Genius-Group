@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../../api'
+import Loader from '../../components/Loader'
+import EmptyState from '../../components/EmptyState'
 
 const heures = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00']
 
@@ -246,7 +248,7 @@ export default function EmploiDuTemps() {
 
           {loading ? (
             <div className="bg-white rounded-2xl p-10 text-center" style={{ border: '1px solid #f0ece0' }}>
-              <p className="text-gray-400 text-sm">Chargement du planning...</p>
+              <Loader texte="Chargement du planning…" />
             </div>
           ) : vue === 'semaine' ? (
             <div className="bg-white rounded-2xl overflow-hidden" style={{ border: '1px solid #f0ece0' }}>
@@ -330,7 +332,7 @@ export default function EmploiDuTemps() {
             <div className="flex flex-col gap-3">
               {evenementsFiltres.length === 0 && (
                 <div className="bg-white rounded-2xl p-10 text-center" style={{ border: '1px solid #f0ece0' }}>
-                  <p className="text-gray-400 text-sm">Aucun cours prévu pour le moment.</p>
+                  <EmptyState icone="📅" titre="Aucun cours prévu pour le moment" />
                 </div>
               )}
               {jours.map(jour => {

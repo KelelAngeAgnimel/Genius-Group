@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../../api'
 import { CODES_CONCOURS, libelleConcours } from '../../lib/concours'
 import { lireCsv, telechargerCsv } from '../../lib/csv'
+import Loader from '../../components/Loader'
 import { useConfirm } from '../../hooks/useUi'
 
 const VIOLET = '#7B4CC9'
@@ -169,6 +170,7 @@ export default function GestionCompetences() {
   const [edition, setEdition] = useState(null)   // { id, libelle, ordre, url, matiere }
   const [ajout, setAjout] = useState({ matiere: '', code: '', libelle: '', ordre: 0, url: '' })
   const [erreur, setErreur] = useState('')
+  const [chargement, setChargement] = useState(true)
 
   const [version, setVersion] = useState(0)
   const charger = () => setVersion(v => v + 1)

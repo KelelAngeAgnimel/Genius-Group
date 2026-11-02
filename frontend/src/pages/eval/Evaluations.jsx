@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api'
 import { useToast, useConfirm } from '../../hooks/useUi'
+import Loader from '../../components/Loader'
+import EmptyState from '../../components/EmptyState'
 
 const COULEURS = { or: '#C9A84C', bleu: '#4C7BC9', vert: '#4CC9A8', rose: '#C94C7B', navy: '#071020', violet: '#7B4CC9' }
 
@@ -217,7 +219,7 @@ function VueEtudiant() {
       )}
 
       {loading ? (
-        <p className="text-xs text-gray-400 text-center py-10">Chargement...</p>
+        <Loader texte="Chargement…" />
       ) : erreur ? (
         <p className="text-xs text-center py-10" style={{ color: COULEURS.rose }}>{erreur}</p>
       ) : liste.length === 0 ? (
@@ -315,13 +317,13 @@ function VueProf({ role }) {
       </div>
 
       {loading ? (
-        <p className="text-xs text-gray-400 text-center py-10">Chargement...</p>
+        <Loader texte="Chargement…" />
       ) : erreur ? (
         <p className="text-xs text-center py-10" style={{ color: COULEURS.rose }}>{erreur}</p>
       ) : evaluations.length === 0 ? (
         <div className="rounded-2xl p-8 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
           <p className="text-3xl mb-2">📭</p>
-          <p className="text-sm text-gray-400">Aucune évaluation publiée pour le moment</p>
+          <EmptyState icone="📝" titre="Aucune évaluation publiée pour le moment" />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import api from '../../api'
 import { useConfirm } from '../../hooks/useUi'
+import Loader from '../../components/Loader'
+import EmptyState from '../../components/EmptyState'
 
 const jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
@@ -357,9 +359,9 @@ export default function GestionPlanning() {
 
       {/* LISTE */}
       {loading ? (
-        <p className="text-gray-400 text-sm">Chargement du planning...</p>
+        <Loader texte="Chargement du planning…" />
       ) : coursAffiches.length === 0 ? (
-        <p className="text-gray-400 text-sm">Aucun cours pour le moment.</p>
+        <EmptyState icone="📅" titre="Aucun cours pour le moment" />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

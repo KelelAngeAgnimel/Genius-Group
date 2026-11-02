@@ -4,6 +4,8 @@ import api from '../../api'
 import { Link } from 'react-router-dom'
 import { useConcours } from '../../hooks/useConcours'
 import { useToast, useConfirm } from '../../hooks/useUi'
+import Loader from '../../components/Loader'
+import EmptyState from '../../components/EmptyState'
 
 
 // Matières par concours — doivent correspondre exactement aux matières dans la table notes
@@ -115,7 +117,7 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
 
   const choisir = (qid, idx) => setReponses(prev => ({ ...prev, [qid]: idx }))
 
-  if (loading) return <p className="text-xs text-gray-400 text-center py-10">Chargement du quiz...</p>
+  if (loading) return <Loader texte="Chargement du quiz…" />
   if (!data) return <p className="text-xs text-gray-400 text-center py-10">Quiz introuvable</p>
 
   const toutesRepondues = data.questions.length > 0 && data.questions.every(q => reponses[q.id] !== undefined)
@@ -315,11 +317,11 @@ function VueEtudiant() {
   return (
     <div>
       {loading ? (
-        <p className="text-xs text-gray-400 text-center py-10">Chargement des quiz...</p>
+        <Loader texte="Chargement des quiz…" />
       ) : quizzes.length === 0 ? (
         <div className="rounded-2xl p-8 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
           <p className="text-3xl mb-2">📭</p>
-          <p className="text-sm text-gray-400">Aucun quiz disponible pour le moment</p>
+          <EmptyState icone="❓" titre="Aucun quiz disponible pour le moment" />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -532,11 +534,11 @@ function VueProf() {
       </div>
 
       {vue === 'liste' && (
-        loading ? <p className="text-xs text-gray-400 text-center py-10">Chargement...</p> :
+        loading ? <Loader texte="Chargement…" /> :
         quizzes.length === 0 ? (
           <div className="rounded-2xl p-8 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
             <p className="text-3xl mb-2">📭</p>
-            <p className="text-sm text-gray-400">Aucun quiz créé pour le moment</p>
+            <EmptyState icone="❓" titre="Aucun quiz créé pour le moment" />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

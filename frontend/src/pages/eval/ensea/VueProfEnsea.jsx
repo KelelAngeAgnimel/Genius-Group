@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import api from '../../../api'
 import { ouvrirFichierProtege } from '../../../lib/fichiers'
+import Loader from '../../../components/Loader'
+import EmptyState from '../../../components/EmptyState'
 
 const VIOLET = '#7B4CC9'
 const MATIERES = ['Français', 'Mathématiques'] // docs/pole-educatif.md
@@ -193,8 +195,8 @@ function ListeCopies({ evaluation, onRetour, onChange }) {
       </div>
 
       {erreur && <p className="text-sm mb-3" style={{ color: '#C94C7B' }}>{erreur}</p>}
-      {loading ? <p className="text-sm text-gray-400">Chargement…</p>
-        : copies.length === 0 ? <p className="text-sm text-gray-400">Aucune copie.</p>
+      {loading ? <Loader texte="Chargement…" />
+        : copies.length === 0 ? <EmptyState icone="📄" titre="Aucune copie" />
         : (
           <div className="flex flex-col gap-3">
             {copies.map(c => (
@@ -266,8 +268,8 @@ export default function VueProfEnsea() {
       {creation && <FormulaireEvaluation onCree={() => { setCreation(false); charger() }} onAnnuler={() => setCreation(false)} />}
 
       {erreur && <p className="text-sm mb-3" style={{ color: '#C94C7B' }}>{erreur}</p>}
-      {loading ? <p className="text-sm text-gray-400">Chargement…</p>
-        : evaluations.length === 0 ? <p className="text-sm text-gray-400">Aucune évaluation pour le moment.</p>
+      {loading ? <Loader texte="Chargement…" />
+        : evaluations.length === 0 ? <EmptyState icone="📝" titre="Aucune évaluation pour le moment" />
         : (
           <div className="flex flex-col gap-3">
             {evaluations.map(e => (

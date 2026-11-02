@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../../api'
 import { useConcours } from '../../hooks/useConcours'
 import { ouvrirFichierProtege } from '../../lib/fichiers'
+import Loader from '../../components/Loader'
 
 const VIOLET = '#7B4CC9'
 const CHAMP = 'text-sm rounded-xl px-3 py-2 outline-none'
@@ -41,7 +42,7 @@ function ListeDifficultes() {
     setVersion(v => v + 1)
   }
 
-  if (!donnees && !erreur) return <p className="text-sm text-gray-400">Chargement…</p>
+  if (!donnees && !erreur) return <Loader texte="Chargement…" />
   const { parametres, difficultes } = donnees ?? { parametres: null, difficultes: [] }
 
   return (

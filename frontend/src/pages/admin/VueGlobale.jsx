@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import api from '../../api'
 import { couleurConcours } from '../../lib/concours'
+import Loader from '../../components/Loader'
 
 const Histogramme = lazy(() => import('../../components/Graphiques').then(m => ({ default: m.Histogramme })))
 
@@ -22,7 +23,7 @@ export default function VueGlobale() {
   }, [])
 
   if (erreur) return <p className="text-sm" style={{ color: '#C94C7B' }}>{erreur}</p>
-  if (!concours) return <p className="text-sm text-gray-400">Chargement…</p>
+  if (!concours) return <Loader texte="Chargement…" />
 
   const avecEleves = concours.filter(c => c.nb_eleves > 0 || c.nb_notes > 0)
   const moyennes = avecEleves.filter(c => c.moyenne !== null).map(c => ({ nom: c.nom, valeur: c.moyenne }))
@@ -53,7 +54,7 @@ export default function VueGlobale() {
         <div className="bg-white rounded-2xl p-4" style={{ border: '1px solid #f0ece0' }}>
           <h3 className="font-bold text-sm mb-2" style={{ color: '#071020' }}>Moyenne par concours (/20)</h3>
           {moyennes.length === 0 ? <p className="text-xs text-gray-400 py-8 text-center">Pas encore de notes.</p> : (
-            <Suspense fallback={<p className="text-xs text-gray-400 py-8 text-center">Chargement du graphique…</p>}>
+            <Suspense fallback={<Loader texte="Chargement du graphique…" />}>
               <Histogramme data={moyennes} max={20} />
             </Suspense>
           )}
@@ -61,7 +62,7 @@ export default function VueGlobale() {
         <div className="bg-white rounded-2xl p-4" style={{ border: '1px solid #f0ece0' }}>
           <h3 className="font-bold text-sm mb-2" style={{ color: '#071020' }}>Taux de remplissage des auto-évaluations (%)</h3>
           {taux.length === 0 ? <p className="text-xs text-gray-400 py-8 text-center">Aucune séance terminée avec des compétences.</p> : (
-            <Suspense fallback={<p className="text-xs text-gray-400 py-8 text-center">Chargement du graphique…</p>}>
+            <Suspense fallback={<Loader texte="Chargement du graphique…" />}>
               <Histogramme data={taux} max={100} unite=" %" couleur="#4CC9A8" />
             </Suspense>
           )}

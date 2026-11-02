@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import api from '../../api'
 import { CODES_CONCOURS, libelleConcours } from '../../lib/concours'
 import { telechargerCsv } from '../../lib/csv'
+import EmptyState from '../../components/EmptyState'
 
 const VIOLET = '#7B4CC9'
 const SELECT = 'text-sm rounded-xl px-3 py-2 outline-none bg-white'
@@ -158,7 +159,7 @@ export default function GrilleNotes() {
       </form>
 
       {erreur && <p className="text-sm mb-3" style={{ color: '#C94C7B' }}>{erreur}</p>}
-      {donnees && lignes.length === 0 && <p className="text-sm text-gray-400">Aucun élève inscrit à ce concours.</p>}
+      {donnees && lignes.length === 0 && <EmptyState icone="🎓" titre="Aucun élève inscrit à ce concours" />}
 
       {lignes.length > 0 && (
         <div className="bg-white rounded-2xl overflow-x-auto" style={{ border: '1px solid #f0ece0' }}>

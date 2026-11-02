@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import api from '../../api'
 import { libelleUtilisateur } from '../../lib/concours'
 import { ouvrirFichierProtege } from '../../lib/fichiers'
+import Loader from '../../components/Loader'
 
 // ========================
 // RADAR CHART FIFA-STYLE
@@ -239,7 +240,7 @@ function VueEtudiant({ user }) {
           )}
         </div>
         {loading ? (
-          <p className="text-xs text-gray-400 text-center py-6">Chargement...</p>
+          <Loader texte="Chargement…" />
         ) : exercices.length === 0 ? (
           <p className="text-xs text-gray-400 text-center py-6">Aucun exercice assigné pour le moment</p>
         ) : (
@@ -366,7 +367,7 @@ function VueProfesseur({ user }) {
           <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Sélection</p>
           <p className="font-bold text-sm mb-4" style={{ color: '#071020' }}>Choisir un étudiant</p>
           {loading ? (
-            <p className="text-xs text-gray-400 text-center py-4">Chargement...</p>
+            <Loader texte="Chargement…" />
           ) : (
             <div className="flex flex-col gap-2 overflow-y-auto" style={{ maxHeight: '400px' }}>
               {etudiants.map((e, i) => (

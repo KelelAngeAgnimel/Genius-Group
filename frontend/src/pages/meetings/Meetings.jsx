@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api'
 import { useConfirm } from '../../hooks/useUi'
+import Loader from '../../components/Loader'
 
 const COULEURS = { or: '#C9A84C', navy: '#071020', vert: '#4CC9A8', rose: '#C94C7B', bleu: '#4C7BC9' }
 
@@ -206,7 +207,7 @@ export default function Meetings() {
       )}
 
       {loading ? (
-        <p className="text-gray-400 text-sm text-center py-10">Chargement des cours...</p>
+        <Loader texte="Chargement des cours…" />
       ) : coursAffiches.length === 0 ? (
         <div className="rounded-2xl p-10 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
           <p className="text-4xl mb-3">📭</p>

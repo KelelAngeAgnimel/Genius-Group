@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import api from '../../api'
 import { libelleConcours } from '../../lib/concours'
+import Loader from '../../components/Loader'
+import EmptyState from '../../components/EmptyState'
 
 // recharts est chargé à la demande (module séparé)
 const CourbeNotes = lazy(() => import('../../components/Graphiques').then(m => ({ default: m.CourbeNotes })))
@@ -27,8 +29,8 @@ export default function TableauNotesEleve() {
   }, [])
 
   if (erreur) return <p className="text-sm" style={{ color: '#C94C7B' }}>{erreur}</p>
-  if (!donnees) return <p className="text-sm text-gray-400">Chargement…</p>
-  if (donnees.matieres.length === 0) return <p className="text-sm text-gray-400">Aucune note pour le moment.</p>
+  if (!donnees) return <Loader texte="Chargement…" />
+  if (donnees.matieres.length === 0) return <EmptyState icone="📊" titre="Aucune note pour le moment" />
 
   return (
     <div className="mb-8">
