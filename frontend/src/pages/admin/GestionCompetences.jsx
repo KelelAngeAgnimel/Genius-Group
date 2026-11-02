@@ -3,6 +3,7 @@ import api from '../../api'
 import { CODES_CONCOURS, libelleConcours } from '../../lib/concours'
 import { lireCsv, telechargerCsv } from '../../lib/csv'
 import Loader from '../../components/Loader'
+import EmptyState from '../../components/EmptyState'
 import { useConfirm } from '../../hooks/useUi'
 
 const VIOLET = '#7B4CC9'
@@ -171,14 +172,19 @@ export default function GestionCompetences() {
   const [ajout, setAjout] = useState({ matiere: '', code: '', libelle: '', ordre: 0, url: '' })
   const [erreur, setErreur] = useState('')
   const [chargement, setChargement] = useState(true)
-
   const [version, setVersion] = useState(0)
   const charger = () => setVersion(v => v + 1)
 
   useEffect(() => {
     let actif = true
     api.get('/api/competences', { params: { concours, inactives: 1 } })
-      .then(res => { if (actif && res.ok) setCompetences(res.data.competences) })
+      .then(res => {
+        if (!actif) return
+        if (res.ok) setCompetences(res.data.competences)
+        else setErreur(res.data?.message || 'Chargement impossible')
+        setChargement(false)
+      })
+      .catch(() => { if (actif) { setErreur('Erreur de connexion au serveur'); setChargement(false) } })
     return () => { actif = false }
   }, [concours, version])
 
@@ -272,7 +278,8 @@ export default function GestionCompetences() {
                 </tr>
               )
             })}
-            {competences.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-gray-400">Aucune compétence pour ce concours.</td></tr>}
+            {chargement && <tr><td colSpan={6}><Loader texte="Chargement des compétences…" /></td></tr>}
+            {!chargement && competences.length === 0 && <tr><td colSpan={6}><EmptyState icone="🎯" titre="Aucune compétence pour ce concours" texte="Ajoutez-en une ci-dessus ou importez un fichier CSV." /></td></tr>}
           </tbody>
         </table>
       </div>
