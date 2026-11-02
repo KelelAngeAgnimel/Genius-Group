@@ -1,5 +1,6 @@
 import {
-  ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine
+  ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts'
 
 // Tous les graphiques (recharts) dans un seul module : chargé à la demande via React.lazy
@@ -35,6 +36,22 @@ export function Histogramme({ data, max = 20, unite = '', couleur = VIOLET }) {
         <Tooltip formatter={(v) => [`${v}${unite}`, '']} />
         <Bar dataKey="valeur" fill={couleur} radius={[6, 6, 0, 0]} />
       </BarChart>
+    </ResponsiveContainer>
+  )
+}
+
+// Radar des compétences : data = [{ nom, score, seuil }] (score sur 100 ; seuil = limite de renforcement)
+export function RadarCompetences({ data, couleur = VIOLET }) {
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <RadarChart data={data} outerRadius="75%">
+        <PolarGrid stroke="#e5e7eb" />
+        <PolarAngleAxis dataKey="nom" tick={{ fontSize: 11 }} />
+        <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 10 }} />
+        <Radar name="Seuil" dataKey="seuil" stroke="#C94C7B" strokeDasharray="4 4" fill="none" />
+        <Radar name="Mon score" dataKey="score" stroke={couleur} fill={couleur} fillOpacity={0.35} />
+        <Tooltip formatter={(v, nom) => [`${v} / 100`, nom]} />
+      </RadarChart>
     </ResponsiveContainer>
   )
 }

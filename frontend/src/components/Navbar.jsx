@@ -88,6 +88,8 @@ const menuItems = [
       { label: 'Évaluation', icon: 'fileText', path: '/outils/evaluations' },
       { label: 'Évaluations ENSEA', icon: 'clipboard', path: '/outils/evaluations-ensea', id: 'ensea' },
       { label: 'Séances', icon: 'calendarDays', path: '/outils/seances', id: 'seances' },
+      { label: 'Mes compétences', icon: 'target', path: '/outils/competences', id: 'competences' },
+      { label: 'Élèves en difficulté', icon: 'trendingUp', path: '/outils/difficultes', id: 'difficultes' },
     ]
   },
   {
@@ -129,7 +131,7 @@ export default function Navbar() {
   const menus = menuItems.map(m => ({
     ...m,
     dropdown: m.dropdown.filter(sub =>
-      sub.id === 'quiz' ? peutVoirQuiz : sub.id === 'ensea' ? (aConcours('ensea') || estPersonnel) : sub.id === 'seances' ? estPersonnel : true)
+      sub.id === 'quiz' ? peutVoirQuiz : sub.id === 'ensea' ? (aConcours('ensea') || estPersonnel) : sub.id === 'seances' || sub.id === 'difficultes' ? estPersonnel : sub.id === 'competences' ? (aConcours('ensea') && !estPersonnel) : true)
   }))
   const navigate = useNavigate()
   const location = useLocation()
