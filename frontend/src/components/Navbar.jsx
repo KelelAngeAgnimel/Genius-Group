@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { libelleUtilisateur } from '../lib/concours'
+import { useConcours } from '../hooks/useConcours'
 
 // ── Icônes SVG monochromes (héritent de la couleur du texte via currentColor) ──
 const ICONS = {
@@ -73,6 +74,7 @@ const menuItems = [
       { label: 'INP-HB', icon: 'cap', path: '/ressources' },
       { label: 'ESATIC', icon: 'cap', path: '/ressources' },
       { label: 'CME', icon: 'cap', path: '/ressources' },
+      { label: 'ENSEA', icon: 'cap', path: '/ressources' },
     ]
   },
   {
@@ -82,8 +84,9 @@ const menuItems = [
     dropdown: [
       { label: 'Cours à Distance', icon: 'video', path: '/outils/teams' },
       { label: 'Notes', icon: 'clipboard', path: '/outils/notes' },
-      { label: 'Quiz', icon: 'checkSquare', path: '/outils/genius-eval' },
+      { label: 'Quiz', icon: 'checkSquare', path: '/outils/genius-eval', id: 'quiz' },
       { label: 'Évaluation', icon: 'fileText', path: '/outils/evaluations' },
+      { label: 'Évaluations ENSEA', icon: 'clipboard', path: '/outils/evaluations-ensea', id: 'ensea' },
     ]
   },
   {
@@ -120,6 +123,13 @@ function DropdownMenu({ items, onClose }) {
 
 export default function Navbar() {
   const { user, logout } = useAuth()
+  const { peutVoirQuiz, aConcours, estPersonnel } = useConcours()
+  // Quiz masqué si aucun concours de l'élève n'a de quiz automatiques ; « Évaluations ENSEA » pour les ENSEA et le personnel
+  const menus = menuItems.map(m => ({
+    ...m,
+    dropdown: m.dropdown.filter(sub =>
+      sub.id === 'quiz' ? peutVoirQuiz : sub.id === 'ensea' ? (aConcours('ensea') || estPersonnel) : true)
+  }))
   const navigate = useNavigate()
   const location = useLocation()
   const [openMenu, setOpenMenu] = useState(null)
@@ -158,7 +168,7 @@ export default function Navbar() {
 
         {/* Menu desktop */}
         <div className="hidden md:flex items-center gap-1">
-          {menuItems.map((item) => (
+          {menus.map((item) => (
             <div key={item.label} className="relative">
               <button
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all"
@@ -238,7 +248,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden px-4 pb-4 overflow-y-auto max-h-96"
           style={{ background: '#071020', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
-          {menuItems.map((item) => (
+          {menus.map((item) => (
             <div key={item.label}>
               <button
                 className="w-full flex items-center justify-between py-3 text-sm font-semibold"

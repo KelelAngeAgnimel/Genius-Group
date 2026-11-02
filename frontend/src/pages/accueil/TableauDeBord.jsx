@@ -311,6 +311,11 @@ function CarteCompetencesFIFA({ config, notes }) {
 // DÉCOMPTE DYNAMIQUE VERS LE CONCOURS
 // ══════════════════════════════════════════
 function DecompteConcours({ dateConcours, nomConcours, couleurConcours }) {
+  if (!dateConcours) return null
+  return <DecompteAvecDate dateConcours={dateConcours} nomConcours={nomConcours} couleurConcours={couleurConcours} />
+}
+
+function DecompteAvecDate({ dateConcours, nomConcours, couleurConcours }) {
   const calcJours = () => {
     const auj = new Date(); auj.setHours(0, 0, 0, 0)
     const cible = new Date(dateConcours); cible.setHours(0, 0, 0, 0)
@@ -394,6 +399,17 @@ const CONCOURS_CONFIG = [
     site: '#',
     dateConcours: '2026-08-10',
     nomConcours: 'Épreuves CME'
+  },
+  {
+    sigle: 'ENSEA',
+    codeConcours: 'ensea',
+    nom: 'École Nationale Supérieure de Statistique et d’Économie Appliquée',
+    logo: '/ensea-logo.png',
+    matieres: ['Français', 'Mathématiques'],
+    couleur: '#7B4CC9',
+    site: 'https://ensea.ed.ci',
+    dateConcours: null, // date non fournie par le pôle éducatif : le décompte n'est pas affiché
+    nomConcours: 'Épreuves ENSEA'
   },
 ]
 

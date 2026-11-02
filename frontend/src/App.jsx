@@ -26,6 +26,7 @@ import Meetings from './pages/meetings/Meetings'
 import MesNotes from './pages/notes/MesNotes'
 import GeniusEval from './pages/eval/GeniusEval'
 import Evaluations from './pages/eval/Evaluations'
+import EvaluationsEnsea from './pages/eval/EvaluationsEnsea'
 import FaqGenerale from './pages/aides/FaqGenerales'
 import FaqConcours from './pages/aides/FaqConcours'
 import Contacts from './pages/aides/Contacts'
@@ -79,6 +80,7 @@ export default function App() {
           <Route path="notes" element={<MesNotes />} />
           <Route path="genius-eval" element={<GeniusEval />} />
           <Route path="evaluations" element={<Evaluations />} />
+          <Route path="evaluations-ensea" element={<EvaluationsEnsea />} />
         </Route>
 
         <Route path="/aides" element={

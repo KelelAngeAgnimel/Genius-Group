@@ -31,6 +31,16 @@ const cartes = [
     tags: ['Concours CME', 'Résultats', 'Inscriptions', 'Actualités'],
     code: 'cme'
   },
+  {
+    sigle: 'ENSEA',
+    nom: 'École Nationale Supérieure de Statistique et d’Économie Appliquée',
+    logo: '/ensea-logo.png',
+    site: 'https://ensea.ed.ci',
+    couleur: '#7B4CC9',
+    bande: 'linear-gradient(90deg, rgba(123,76,201,0.2), #7B4CC9, #a37be0, #7B4CC9, rgba(123,76,201,0.2))',
+    tags: ['Concours', 'Résultats', 'Inscriptions', 'Actualités'],
+    code: 'ensea'
+  },
 ]
 
 export default function Actualites() {

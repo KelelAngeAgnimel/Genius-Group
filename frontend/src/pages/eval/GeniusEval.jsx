@@ -1,6 +1,8 @@
 import { useAuth } from '../../context/AuthContext'
 import { useState, useEffect, useRef } from 'react'
 import api from '../../api'
+import { Link } from 'react-router-dom'
+import { useConcours } from '../../hooks/useConcours'
 
 
 // Matières par concours — doivent correspondre exactement aux matières dans la table notes
@@ -352,6 +354,9 @@ function VueEtudiant() {
 // VUE PROF / ADMIN
 // ========================
 function VueProf() {
+  // Un professeur rattaché uniquement à des concours sans génération automatique (ENSEA) ne la voit pas
+  const { concours: mesConcours, generationAutoTests, estProfesseur } = useConcours()
+  const generationPossible = !(estProfesseur && mesConcours.length > 0 && !mesConcours.some(generationAutoTests))
   const [vue, setVue] = useState('liste')
   const [quizzes, setQuizzes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -395,7 +400,7 @@ function VueProf() {
     setGenerating(true)
     setErreur('')
     try {
-      const res = await api.post('/api/quiz/generer-ia', { matiere: form.matiere, niveau: form.niveau, theme: iaForm.theme, nombre_questions: iaForm.nombre_questions })
+      const res = await api.post('/api/quiz/generer-ia', { matiere: form.matiere, niveau: form.niveau, theme: iaForm.theme, nombre_questions: iaForm.nombre_questions, concours: form.concours })
       const d = res.data
       if (res.ok && d.questions) setQuestions(d.questions)
       else setErreur(d.error || 'Erreur lors de la génération')
@@ -418,6 +423,7 @@ function VueProf() {
     try {
       const formData = new FormData()
       formData.append('fichier', fichier)
+      formData.append('concours', form.concours)
 
       const res = await api.post('/api/quiz/importer-pdf')
       const d = res.data
@@ -669,6 +675,8 @@ function VueProf() {
             </div>
           </div>
 
+          {generationPossible ? (
+            <>
           <div className="rounded-2xl p-5" style={{ background: `linear-gradient(135deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${COULEURS.bleu}4D` }}>
             <p className="font-bold text-sm text-white mb-1">🤖 Génération assistée par IA</p>
             <p className="text-xs text-gray-400 mb-3">Remplit automatiquement les questions ci-dessous — modifiable ensuite.</p>
@@ -710,6 +718,11 @@ function VueProf() {
               />
             </label>
           </div>
+
+            </>
+          ) : (
+            <p className="text-xs text-gray-400">La génération automatique de tests n’est pas disponible pour vos concours : saisissez les questions manuellement.</p>
+          )}
 
           <div className="flex flex-col gap-3">
             {questions.map((q, i) => (
@@ -818,7 +831,19 @@ function VueProf() {
 // ========================
 export default function GeniusEval() {
   const { user } = useAuth()
+  const { peutVoirQuiz } = useConcours()
   const isProfOrAdmin = ['professeur', 'admin'].includes(user?.role)
+
+  // Élève dont aucun concours n'a de quiz automatiques (ENSEA seul) : renvoi vers les évaluations ENSEA
+  if (!peutVoirQuiz) {
+    return (
+      <div className="p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
+        <h1 className="text-2xl font-bold mb-2" style={{ color: COULEURS.navy }}>Quiz</h1>
+        <p className="text-sm text-gray-500 mb-4">Les quiz automatiques ne sont pas proposés pour votre concours.</p>
+        <Link to="/outils/evaluations-ensea" className="text-sm font-semibold underline" style={{ color: COULEURS.or }}>Accéder aux Évaluations ENSEA</Link>
+      </div>
+    )
+  }
 
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>

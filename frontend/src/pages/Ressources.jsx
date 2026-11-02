@@ -13,6 +13,7 @@ function correspondEcole(concours, sigle) {
   if (s.includes('inp'))    return c.includes('inp')
   if (s.includes('esatic')) return c.includes('esatic')
   if (s.includes('cme'))    return c.includes('cme')
+  if (s.includes('ensea'))  return c.includes('ensea')
   return c === s
 }
 
@@ -43,6 +44,15 @@ const ecoles = [
     matieres: ['Culture Générale', 'Culture Scientifique', 'Anglais', 'Français'],
     code: 'cme',
     description: 'Documents et annales pour le concours CME'
+  },
+  {
+    sigle: 'ENSEA',
+    nom: 'École Nationale Supérieure de Statistique et d’Économie Appliquée',
+    logo: '/ensea-logo.png', // à déposer dans frontend/public ; à défaut, le sigle est affiché
+    couleur: '#7B4CC9',
+    matieres: ['Français', 'Mathématiques'],
+    code: 'ensea',
+    description: 'Documents et annales pour le concours ENSEA'
   },
 ]
 
