@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import request from 'supertest'
 import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
 import { resetDb } from './helpers/supabaseMock.js'
+import { bearer } from './helpers/tokens.js'
 
 vi.mock('../supabase.js', async () => ({ default: (await import('./helpers/supabaseMock.js')).supabaseMock }))
 
@@ -19,6 +21,32 @@ describe('POST /api/auth/login', () => {
     expect(res.body.token).toBeTruthy()
     expect(res.body.user.id).toBe(1)
     expect(res.body.user.password).toBeUndefined()
+  })
+
+  it('renvoie la liste des concours dans la réponse et le JWT (inscriptions)', async () => {
+    resetDb({
+      users: [{ ...eleve, role: 'etudiant' }],
+      inscriptions: [{ user_id: 1, concours_code: 'ensea' }, { user_id: 1, concours_code: 'inphb' }]
+    })
+    const res = await request(app).post('/api/auth/login').send({ matricule: 'E001', password: 'Secret123' })
+    expect(res.status).toBe(200)
+    expect(res.body.user.role).toBe('etudiant')
+    expect(res.body.user.concours.sort()).toEqual(['ensea', 'inphb'])
+    expect(jwt.decode(res.body.token).concours.sort()).toEqual(['ensea', 'inphb'])
+  })
+
+  it('ancien rôle combiné (avant migration) : concours déduits, rôle normalisé', async () => {
+    resetDb({ users: [{ ...eleve, role: 'etudiant_all' }] })
+    const res = await request(app).post('/api/auth/login').send({ matricule: 'E001', password: 'Secret123' })
+    expect(res.body.user.role).toBe('etudiant')
+    expect(res.body.user.concours.sort()).toEqual(['cme', 'esatic', 'inphb'])
+  })
+
+  it('GET /api/users/me renvoie les concours', async () => {
+    resetDb({ users: [{ ...eleve, role: 'etudiant' }], inscriptions: [{ user_id: 1, concours_code: 'ensea' }] })
+    const res = await request(app).get('/api/users/me').set(bearer(1))
+    expect(res.status).toBe(200)
+    expect(res.body.concours).toEqual(['ensea'])
   })
 
   it('refuse un mauvais mot de passe (401)', async () => {
