@@ -2,6 +2,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 import api from '../../api'
+import { concoursDe } from '../../lib/concours'
 
 // =====================
 // DASHBOARD ADMIN
@@ -369,7 +370,6 @@ const CONCOURS_CONFIG = [
     matieres: ['Culture Scientifique', 'Culture Générale', 'Culture Littéraire'],
     couleur: '#C9A84C',
     site: 'https://inphb.ci',
-    roles: ['etudiant_inphb', 'etudiant_both', 'etudiant_inphb_cme', 'etudiant_all'],
     dateConcours: '2026-08-05',
     nomConcours: 'Épreuves INP-HB'
   },
@@ -381,7 +381,6 @@ const CONCOURS_CONFIG = [
     matieres: ['Mathématiques', 'Physique', 'Anglais', 'Français'],
     couleur: '#4C7BC9',
     site: 'https://esatic.ci',
-    roles: ['etudiant_esatic', 'etudiant_both', 'etudiant_esatic_cme', 'etudiant_all'],
     dateConcours: '2026-08-04',
     nomConcours: 'Épreuves ESATIC'
   },
@@ -393,7 +392,6 @@ const CONCOURS_CONFIG = [
     matieres: ['Culture Générale', 'Culture Scientifique', 'Anglais', 'Français'],
     couleur: '#4CC9A8',
     site: '#',
-    roles: ['etudiant_cme', 'etudiant_inphb_cme', 'etudiant_esatic_cme', 'etudiant_all'],
     dateConcours: '2026-08-10',
     nomConcours: 'Épreuves CME'
   },
@@ -463,8 +461,8 @@ function DashboardEtudiant({ user, navigate }) {
     if (!msg.lu) marquerLu(msg.id)
   }
 
-  // Concours visibles selon le rôle
-  const concoursVisibles = CONCOURS_CONFIG.filter(c => c.roles.includes(user?.role))
+  // Concours visibles : ceux auxquels l'élève est inscrit
+  const concoursVisibles = CONCOURS_CONFIG.filter(c => concoursDe(user).includes(c.codeConcours))
   const concoursPrincipal = concoursVisibles[0]
   const messagesNonLus = messages.filter(m => !m.lu).length
 

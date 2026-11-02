@@ -1,26 +1,19 @@
 import { useEffect, useState } from 'react'
 import api from '../../api'
+import SelecteurConcours from '../../components/SelecteurConcours'
+import { CODES_CONCOURS, concoursDe, libelleConcours, libelleUtilisateur, couleurConcours, roleDeBase } from '../../lib/concours'
 
-// Rôles réellement utilisés dans l'application (alignés avec CreerUtilisateur.jsx)
+// Rôles de l'application ; les concours sont gérés séparément (inscriptions)
 const roleConfig = {
-  admin:           { label: 'Admin',                    couleur: '#C94C7B' },
-  professeur:      { label: 'Professeur',                couleur: '#4CC9A8' },
-  etudiant_inphb:  { label: 'INP-HB',                    couleur: '#C9A84C' },
-  etudiant_esatic: { label: 'ESATIC',                    couleur: '#4C7BC9' },
-  etudiant_all:    { label: 'INP-HB + ESATIC + CME',     couleur: '#7B4CC9' },
+  admin:      { label: 'Admin',      couleur: '#C94C7B' },
+  professeur: { label: 'Professeur', couleur: '#4CC9A8' },
+  etudiant:   { label: 'Étudiant',   couleur: '#C9A84C' },
 }
 
 const modaliteConfig = {
   en_ligne:   { label: 'En ligne',   icone: '💻', couleur: '#4C7BC9' },
   presentiel: { label: 'Présentiel', icone: '🏫', couleur: '#C9A84C' },
 }
-
-// Rôles étudiants proposés à la modification
-const ROLES_ETUDIANT = [
-  { value: 'etudiant_inphb',  label: 'INP-HB' },
-  { value: 'etudiant_esatic', label: 'ESATIC' },
-  { value: 'etudiant_all',    label: 'INP-HB + ESATIC + CME' },
-]
 
 export default function GestionUtilisateurs() {
   const [users, setUsers] = useState([])
@@ -32,7 +25,7 @@ export default function GestionUtilisateurs() {
 
   // Édition en ligne
   const [editingId, setEditingId] = useState(null)
-  const [editForm, setEditForm] = useState({ nom: '', prenom: '', modalite: '', password: '', role: '' })
+  const [editForm, setEditForm] = useState({ nom: '', prenom: '', modalite: '', password: '', concours: [] })
   const [enregistrement, setEnregistrement] = useState(false)
 
   useEffect(() => { chargerUtilisateurs() }, [])
@@ -78,12 +71,12 @@ export default function GestionUtilisateurs() {
 
   const commencerEdition = (u) => {
     setEditingId(u.id)
-    setEditForm({ nom: u.nom || '', prenom: u.prenom || '', modalite: u.modalite || '', password: '', role: u.role || '' })
+    setEditForm({ nom: u.nom || '', prenom: u.prenom || '', modalite: u.modalite || '', password: '', concours: concoursDe(u) })
   }
 
   const annulerEdition = () => {
     setEditingId(null)
-    setEditForm({ nom: '', prenom: '', modalite: '', password: '', role: '' })
+    setEditForm({ nom: '', prenom: '', modalite: '', password: '', concours: [] })
   }
 
   const enregistrerEdition = async (id) => {
@@ -92,7 +85,7 @@ export default function GestionUtilisateurs() {
       const res = await api.patch(`/api/users/${id}`, {
           nom: editForm.nom,
           prenom: editForm.prenom,
-          ...(editForm.role ? { role: editForm.role } : {}),
+          concours: editForm.concours,
           ...(editForm.modalite ? { modalite: editForm.modalite } : {}),
           ...(editForm.password ? { password: editForm.password } : {})
         })
@@ -117,7 +110,7 @@ export default function GestionUtilisateurs() {
       u.prenom?.toLowerCase().includes(recherche.toLowerCase())
     const matchRole =
       filtreRole === 'tous' ||
-      (filtreRole === 'etudiants' ? u.role?.startsWith('etudiant') : u.role === filtreRole)
+      (filtreRole.startsWith('concours:') ? concoursDe(u).includes(filtreRole.slice(9)) : roleDeBase(u.role) === filtreRole)
     const matchModalite = filtreModalite === 'tous' || u.modalite === filtreModalite
     return matchRecherche && matchRole && matchModalite
   })
@@ -129,7 +122,7 @@ export default function GestionUtilisateurs() {
   const base = filtreActif ? usersFiltres : users
   const nbAdmins    = base.filter(u => u.role === 'admin').length
   const nbProfs     = base.filter(u => u.role === 'professeur').length
-  const nbEtudiants = base.filter(u => u.role?.startsWith('etudiant')).length
+  const nbEtudiants = base.filter(u => roleDeBase(u.role) === 'etudiant').length
 
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
@@ -182,9 +175,11 @@ export default function GestionUtilisateurs() {
           className="border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none bg-white"
           style={{ borderColor: '#f0ece0' }}>
           <option value="tous">Tous les rôles</option>
-          <option value="etudiants">Étudiants (tous)</option>
           {Object.entries(roleConfig).map(([key, val]) => (
             <option key={key} value={key}>{val.label}</option>
+          ))}
+          {CODES_CONCOURS.map(code => (
+            <option key={code} value={`concours:${code}`}>Concours {libelleConcours(code)}</option>
           ))}
         </select>
         <select
@@ -236,10 +231,13 @@ export default function GestionUtilisateurs() {
                   </tr>
                 )}
                 {usersFiltres.map((u) => {
-                  const role = roleConfig[u.role] || { label: u.role, couleur: '#9ca3af' }
+                  const base = roleConfig[roleDeBase(u.role)] || { label: u.role, couleur: '#9ca3af' }
+                  // Élève / professeur : on affiche ses concours (couleur du premier)
+                  const role = roleDeBase(u.role) === 'admin' ? base
+                    : { label: libelleUtilisateur(u), couleur: concoursDe(u).length ? couleurConcours(concoursDe(u)[0]) : base.couleur }
                   const initiale = (u.prenom || u.username)?.[0]?.toUpperCase()
                   const enEdition = editingId === u.id
-                  const estEtudiant = u.role?.startsWith('etudiant')
+                  const estEtudiant = roleDeBase(u.role) === 'etudiant'
 
                   return (
                     <tr key={u.id}
@@ -273,16 +271,9 @@ export default function GestionUtilisateurs() {
                                   style={{ borderColor: '#C9A84C' }}
                                 />
                               </div>
-                              {estEtudiant && (
-                                <select
-                                  value={editForm.role}
-                                  onChange={e => setEditForm({ ...editForm, role: e.target.value })}
-                                  className="border rounded-lg px-2 py-1 text-xs bg-white focus:outline-none"
-                                  style={{ borderColor: '#C9A84C' }}>
-                                  {ROLES_ETUDIANT.map(r => (
-                                    <option key={r.value} value={r.value}>{r.label}</option>
-                                  ))}
-                                </select>
+                              {(estEtudiant || roleDeBase(u.role) === 'professeur') && (
+                                <SelecteurConcours compact value={editForm.concours}
+                                  onChange={concours => setEditForm({ ...editForm, concours })} />
                               )}
                               {estEtudiant && (
                                 <select

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api'
+import { concoursDe, libelleConcours, libelleUtilisateur } from '../../lib/concours'
 
 const matieresConcours = {
   'INP-HB': ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire'],
@@ -18,36 +19,11 @@ const typeColor = {
   exercice: '#C94C7B'
 }
 
-const roleLabel = {
-  etudiant_inphb: 'INP-HB',
-  etudiant_esatic: 'ESATIC',
-  etudiant_both: 'INP-HB + ESATIC',
-  etudiant_cme: 'CME',
-  etudiant_inphb_cme: 'INP-HB + CME',
-  etudiant_esatic_cme: 'ESATIC + CME',
-  etudiant_all: 'INP-HB + ESATIC + CME',
-}
 
-// ══════════════════════════════════════════════════════════════
-// Concours reellement prepares par un etudiant selon son role.
-// Un profil multi-concours (etudiant_all, etudiant_both, ...) doit
-// apparaitre dans TOUTES les listes correspondantes, sinon il devient
-// invisible au moment de publier une note.
-// ══════════════════════════════════════════════════════════════
-const concoursDeRole = (role) => {
-  const r = (role || '').toLowerCase()
-  if (r === 'etudiant_all')  return ['INP-HB', 'ESATIC', 'CME']
-  if (r === 'etudiant_both') return ['INP-HB', 'ESATIC']
-  const liste = []
-  if (r.includes('inphb'))  liste.push('INP-HB')
-  if (r.includes('esatic')) liste.push('ESATIC')
-  if (r.includes('cme'))    liste.push('CME')
-  return liste
-}
-
-// L'etudiant prepare-t-il ce concours ? ('tous' = aucun filtre)
-const suitLeConcours = (role, concours) =>
-  !concours || concours === 'tous' || concoursDeRole(role).includes(concours)
+// L'etudiant prepare-t-il ce concours (libelle « INP-HB », « ESATIC »…) ? ('tous' = aucun filtre)
+// Un eleve inscrit a plusieurs concours apparait dans TOUTES les listes correspondantes.
+const suitLeConcours = (etudiant, concours) =>
+  !concours || concours === 'tous' || concoursDe(etudiant).map(libelleConcours).includes(concours)
 
 // Identifiant affichable : matricule en priorite, sinon username
 const identifiant = (e) => e.matricule || e.username || ''
@@ -255,7 +231,7 @@ export default function EspaceProfesseur() {
 
   // Liste des étudiants filtrée (onglet "Mes étudiants")
   const etudiantsFiltres = etudiants.filter(e =>
-    suitLeConcours(e.role, filtreEtuConcours) &&
+    suitLeConcours(e, filtreEtuConcours) &&
     (filtreEtuModalite === 'tous' || e.modalite === filtreEtuModalite)
   )
 
@@ -275,7 +251,7 @@ export default function EspaceProfesseur() {
   // ══════════════════════════════════════════════════════════════
   const rechercheNormalisee = rechercheEtu.trim().toLowerCase()
   const etudiantsPourNotes = etudiants
-    .filter(e => suitLeConcours(e.role, noteForm.concours))
+    .filter(e => suitLeConcours(e, noteForm.concours))
     .filter(e => !rechercheNormalisee ||
       `${nomComplet(e)} ${identifiant(e)} ${e.username || ''}`
         .toLowerCase()
@@ -291,10 +267,10 @@ export default function EspaceProfesseur() {
   // ══════════════════════════════════════════════════════════════
   const CONCOURS_NOTABLES = ['INP-HB', 'ESATIC']
   const nbParConcours = Object.fromEntries(
-    CONCOURS_NOTABLES.map(c => [c, etudiants.filter(e => suitLeConcours(e.role, c)).length])
+    CONCOURS_NOTABLES.map(c => [c, etudiants.filter(e => suitLeConcours(e, c)).length])
   )
   const etudiantsOrphelins = etudiants.filter(
-    e => !CONCOURS_NOTABLES.some(c => suitLeConcours(e.role, c))
+    e => !CONCOURS_NOTABLES.some(c => suitLeConcours(e, c))
   )
 
   // Si l'etudiant selectionne sort de la liste (changement de concours
@@ -680,7 +656,7 @@ export default function EspaceProfesseur() {
                   <option value="">Choisir un etudiant</option>
                   {etudiantsPourNotes.map(e => (
                     <option key={e.id} value={e.id}>
-                      {libelleEtudiant(e)} ({roleLabel[e.role] || e.role})
+                      {libelleEtudiant(e)} ({libelleUtilisateur(e)})
                     </option>
                   ))}
                 </select>
@@ -898,7 +874,7 @@ export default function EspaceProfesseur() {
                 </div>
                 <span className="text-xs font-semibold px-2 py-1 rounded-lg flex-shrink-0"
                   style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
-                  {roleLabel[etudiant.role] || etudiant.role}
+                  {libelleUtilisateur(etudiant)}
                 </span>
                 <button
                   onClick={() => {
@@ -956,7 +932,7 @@ export default function EspaceProfesseur() {
                     <option value="">Choisir un etudiant</option>
                     {etudiants.map(e => (
                       <option key={e.id} value={e.id}>
-                        {libelleEtudiant(e)} ({roleLabel[e.role] || e.role})
+                        {libelleEtudiant(e)} ({libelleUtilisateur(e)})
                       </option>
                     ))}
                   </select>

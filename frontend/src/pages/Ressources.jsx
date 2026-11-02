@@ -1,12 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useConcours } from '../hooks/useConcours'
 import api from '../api'
 import Breadcrumb from '../components/Breadcrumb'
-
-const ROLES_INPHB  = ['etudiant_inphb', 'etudiant_both', 'etudiant_inphb_cme', 'etudiant_all', 'professeur', 'admin']
-const ROLES_ESATIC = ['etudiant_esatic', 'etudiant_both', 'etudiant_esatic_cme', 'etudiant_all', 'professeur', 'admin']
-const ROLES_CME    = ['etudiant_cme', 'etudiant_inphb_cme', 'etudiant_esatic_cme', 'etudiant_all', 'professeur', 'admin']
 
 // Une ressource correspond-elle à l'école affichée ?
 // Inclusif : une ressource "tous"/"all" ou combinée apparaît sous chaque école concernée.
@@ -27,7 +23,7 @@ const ecoles = [
     logo: 'https://inphb.edu.ci/wp-content/uploads/2020/03/INPHB.png',
     couleur: '#C9A84C',
     matieres: ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire'],
-    roles: ROLES_INPHB,
+    code: 'inphb',
     description: 'Documents et annales pour le concours INP-HB'
   },
   {
@@ -36,7 +32,7 @@ const ecoles = [
     logo: 'https://esatic.ci/wp-content/uploads/2024/07/esatic_logo.jpg',
     couleur: '#4C7BC9',
     matieres: ['Mathématiques', 'Physique', 'Anglais', 'Français'],
-    roles: ROLES_ESATIC,
+    code: 'esatic',
     description: 'Documents et annales pour le concours ESATIC'
   },
   {
@@ -45,7 +41,7 @@ const ecoles = [
     logo: '/cme-logo.png',
     couleur: '#4CC9A8',
     matieres: ['Culture Générale', 'Culture Scientifique', 'Anglais', 'Français'],
-    roles: ROLES_CME,
+    code: 'cme',
     description: 'Documents et annales pour le concours CME'
   },
 ]
@@ -218,7 +214,6 @@ function LecteurPDF({ ressource, onFermer }) {
 // PAGE PRINCIPALE
 // ══════════════════════════════════════════
 export default function Ressources() {
-  const { user } = useAuth()
   const navigate = useNavigate()
   const [ecoleSelectionnee, setEcoleSelectionnee] = useState(null)
   const [matiereSelectionnee, setMatiereSelectionnee] = useState(null)
@@ -228,7 +223,8 @@ export default function Ressources() {
   const [ressourceOuverte, setRessourceOuverte] = useState(null)
 
   const ecoleActive = ecoles.find(e => e.sigle === ecoleSelectionnee)
-  const peutAcceder = (ecole) => ecole.roles.includes(user?.role)
+  const { peutAcceder: peutVoirContenu } = useConcours()
+  const peutAcceder = (ecole) => peutVoirContenu(ecole.code)
 
   useEffect(() => {
     if (ecoleSelectionnee) chargerRessources()

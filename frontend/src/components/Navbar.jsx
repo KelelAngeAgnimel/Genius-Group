@@ -1,21 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-
-function getRoleLabel(role) {
-  const labels = {
-    admin: 'Admin',
-    professeur: 'Professeur',
-    etudiant_inphb: 'INP-HB',
-    etudiant_esatic: 'ESATIC',
-    etudiant_both: 'INP-HB + ESATIC',
-    etudiant_cme: 'CME',
-    etudiant_inphb_cme: 'INP-HB + CME',
-    etudiant_esatic_cme: 'ESATIC + CME',
-    etudiant_all: 'INP-HB + ESATIC + CME',
-  }
-  return labels[role] || role
-}
+import { libelleUtilisateur } from '../lib/concours'
 
 // ── Icônes SVG monochromes (héritent de la couleur du texte via currentColor) ──
 const ICONS = {
@@ -226,7 +212,7 @@ export default function Navbar() {
               background: isAdmin ? 'rgba(201,76,123,0.1)' : isProfOrAdmin ? 'rgba(76,201,168,0.1)' : 'rgba(201,168,76,0.1)',
               color: isAdmin ? '#C94C7B' : isProfOrAdmin ? '#4CC9A8' : '#C9A84C'
             }}>
-            {getRoleLabel(user?.role)}
+            {libelleUtilisateur(user)}
           </span>
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
@@ -299,7 +285,7 @@ export default function Navbar() {
               <span className="text-xs text-gray-500">{user?.username}</span>
               <span className="text-xs px-2 py-0.5 rounded-full"
                 style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
-                {getRoleLabel(user?.role)}
+                {libelleUtilisateur(user)}
               </span>
             </div>
             <button onClick={handleLogout}

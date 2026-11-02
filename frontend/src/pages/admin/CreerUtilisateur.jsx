@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import api from '../../api'
+import SelecteurConcours from '../../components/SelecteurConcours'
 
 const rolesDisponibles = [
-  { value: 'etudiant_inphb', label: 'Etudiant INP-HB', couleur: '#C9A84C', description: 'Prépare uniquement le concours INP-HB' },
-  { value: 'etudiant_esatic', label: 'Etudiant ESATIC', couleur: '#4C7BC9', description: 'Prépare uniquement le concours ESATIC' },
-  { value: 'etudiant_all', label: 'Etudiant INP-HB + ESATIC + CME', couleur: '#4CC9A8', description: 'Prépare les trois concours — INP-HB, ESATIC et CME' },
+  { value: 'etudiant', label: 'Étudiant', couleur: '#C9A84C', description: 'Prépare un ou plusieurs concours (à cocher ci-dessous)' },
   { value: 'professeur', label: 'Professeur', couleur: '#7B4CC9', description: 'Peut publier des ressources et envoyer des messages' },
   { value: 'admin', label: 'Administrateur', couleur: '#C94C7B', description: 'Accès complet à toutes les fonctionnalités' },
 ]
@@ -15,8 +14,8 @@ export default function CreerUtilisateur() {
     password: '',
     nom: '',
     prenom: '',
-    role: 'etudiant_inphb',
-    concours: 'aucun',
+    role: 'etudiant',
+    concours: [],
     modalite: ''
   })
   const [loading, setLoading] = useState(false)
@@ -25,7 +24,7 @@ export default function CreerUtilisateur() {
   const [utilisateurCree, setUtilisateurCree] = useState(null)
 
   const roleActif = rolesDisponibles.find(r => r.value === form.role)
-  const estEtudiant = form.role?.startsWith('etudiant')
+  const estEtudiant = form.role === 'etudiant'
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -36,6 +35,12 @@ export default function CreerUtilisateur() {
 
     if (!estEtudiant && !form.username) {
       setErreur('L\'identifiant de connexion est requis pour les professeurs et administrateurs')
+      setLoading(false)
+      return
+    }
+
+    if (estEtudiant && form.concours.length === 0) {
+      setErreur('Cochez au moins un concours pour cet étudiant')
       setLoading(false)
       return
     }
@@ -52,7 +57,7 @@ export default function CreerUtilisateur() {
       if (res.ok) {
         setSucces('Compte créé avec succès !')
         setUtilisateurCree(data.user)
-        setForm({ username: '', password: '', nom: '', prenom: '', role: 'etudiant_inphb', concours: 'aucun', modalite: '' })
+        setForm({ username: '', password: '', nom: '', prenom: '', role: 'etudiant', concours: [], modalite: '' })
       } else {
         setErreur(data.message || 'Erreur lors de la création')
       }
@@ -197,6 +202,21 @@ export default function CreerUtilisateur() {
                 ))}
               </div>
             </div>
+
+            {/* CONCOURS — étudiants (au moins un) et professeurs (optionnel) */}
+            {(estEtudiant || form.role === 'professeur') && (
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-2">
+                  Concours {estEtudiant && <span className="text-red-400">*</span>}
+                </label>
+                <p className="text-xs text-gray-400 mb-3">
+                  {estEtudiant
+                    ? "L'étudiant n'accède qu'aux contenus des concours cochés."
+                    : "Aucun concours coché : le professeur voit tous les concours. Cocher des concours le limite à leurs élèves."}
+                </p>
+                <SelecteurConcours value={form.concours} onChange={concours => setForm({ ...form, concours })} />
+              </div>
+            )}
 
             {/* MODALITÉ — uniquement pour les étudiants */}
             {estEtudiant && (

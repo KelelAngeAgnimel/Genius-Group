@@ -1,4 +1,4 @@
-import { useAuth } from '../../context/AuthContext'
+import { useConcours } from '../../hooks/useConcours'
 
 const cartes = [
   {
@@ -9,7 +9,7 @@ const cartes = [
     couleur: '#C9A84C',
     bande: 'linear-gradient(90deg, rgba(201,168,76,0.2), #C9A84C, #e8c76a, #C9A84C, rgba(201,168,76,0.2))',
     tags: ['Concours CPGE', 'Résultats', 'Admissions', 'Actualités'],
-    roles: ['etudiant_inphb', 'etudiant_both', 'etudiant_inphb_cme', 'etudiant_all', 'admin', 'professeur']
+    code: 'inphb'
   },
   {
     sigle: 'ESATIC',
@@ -19,7 +19,7 @@ const cartes = [
     couleur: '#4C7BC9',
     bande: 'linear-gradient(90deg, rgba(76,123,201,0.2), #4C7BC9, #6b9de0, #4C7BC9, rgba(76,123,201,0.2))',
     tags: ['Concours', 'Résultats', 'Inscriptions', 'Actualités'],
-    roles: ['etudiant_esatic', 'etudiant_both', 'etudiant_esatic_cme', 'etudiant_all', 'admin', 'professeur']
+    code: 'esatic'
   },
   {
     sigle: 'CME',
@@ -29,14 +29,14 @@ const cartes = [
     couleur: '#4CC9A8',
     bande: 'linear-gradient(90deg, rgba(76,201,168,0.2), #4CC9A8, #7de8cf, #4CC9A8, rgba(76,201,168,0.2))',
     tags: ['Concours CME', 'Résultats', 'Inscriptions', 'Actualités'],
-    roles: ['etudiant_cme', 'etudiant_inphb_cme', 'etudiant_esatic_cme', 'etudiant_all', 'admin', 'professeur']
+    code: 'cme'
   },
 ]
 
 export default function Actualites() {
-  const { user } = useAuth()
 
-  const cartesVisibles = cartes.filter(c => c.roles.includes(user?.role))
+  const { peutAcceder } = useConcours()
+  const cartesVisibles = cartes.filter(c => peutAcceder(c.code))
 
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>

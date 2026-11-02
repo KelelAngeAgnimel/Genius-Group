@@ -1,6 +1,7 @@
 import { useAuth } from '../../context/AuthContext'
 import { useState, useEffect, useRef } from 'react'
 import api from '../../api'
+import { libelleUtilisateur } from '../../lib/concours'
 
 // ========================
 // RADAR CHART FIFA-STYLE
@@ -137,7 +138,7 @@ function VueEtudiant({ user }) {
         </div>
         <div className="flex-1">
           <p className="font-bold text-white text-lg">{user?.prenom} {user?.nom || user?.username}</p>
-          <p className="text-xs text-gray-400">{user?.matricule} — {user?.role?.replace('etudiant_', '').toUpperCase()}</p>
+          <p className="text-xs text-gray-400">{user?.matricule} — {libelleUtilisateur(user)}</p>
         </div>
         <div className="text-center">
           <p className="text-3xl font-bold" style={{ color: getCouleurNote(moyenneGlobale) }}>
@@ -376,7 +377,7 @@ function VueProfesseur({ user }) {
                     <p className="text-xs font-bold truncate" style={{ color: '#071020' }}>
                       {e.prenom || ''} {e.nom || e.username}
                     </p>
-                    <p className="text-xs text-gray-400">{e.role?.replace('etudiant_', '').toUpperCase()}</p>
+                    <p className="text-xs text-gray-400">{libelleUtilisateur(e)}</p>
                   </div>
                   {etudiantSelectionne?.id === e.id && (
                     <div className="w-2 h-2 rounded-full" style={{ background: '#C9A84C' }} />
