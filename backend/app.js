@@ -14,6 +14,10 @@ import quizRoutes from './routes/quiz.js'
 import planningRoutes from './routes/planning.js'
 import concoursRoutes from './routes/concours.js'
 import evaluationsRoutes from './routes/evaluations.js'
+import competencesRoutes from './routes/competences.js'
+import seancesRoutes from './routes/seances.js'
+import autoEvalRoutes from './routes/auto-eval.js'
+import tableauxRoutes from './routes/tableaux.js'
 
 const app = express()
 
@@ -47,6 +51,10 @@ app.use('/api/quiz', quizRoutes)
 app.use('/api/planning', planningRoutes)
 app.use('/api/concours', concoursRoutes)
 app.use('/api/evaluations', evaluationsRoutes)
+app.use('/api/competences', competencesRoutes)
+app.use('/api/seances', seancesRoutes)
+app.use('/api/auto-eval', autoEvalRoutes)
+app.use('/api/tableaux', tableauxRoutes)
 
 app.get('/', (req, res) => res.send('API Portail Bacheliers 🚀'))
 

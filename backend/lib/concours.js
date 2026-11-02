@@ -91,8 +91,15 @@ export const concoursContenuSchema = z.string().trim().toLowerCase()
 
 // Options par défaut des concours (la table `concours.options` les surcharge).
 // ENSEA : pas de génération automatique de tests (cf. docs/pole-educatif.md).
+// Auto-évaluation post-séance : bloquante, 48 h pour répondre, rappel à 24 h (valeurs « à valider »)
 export const OPTIONS_PAR_DEFAUT = {
-  ensea: { generation_auto_tests: false }
+  ensea: {
+    generation_auto_tests: false,
+    autoeval_bloquante: true,
+    autoeval_delai_heures: 48,
+    autoeval_rappel_heures: 24,
+    classement_visible: false
+  }
 }
 
 const genAutoPermise = (optionsParCode, code) =>

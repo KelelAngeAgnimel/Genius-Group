@@ -4,6 +4,7 @@ import supabase from '../supabase.js'
 import { verifyToken, requireRole } from '../middleware/authMiddleware.js'
 import { validate } from '../middleware/validate.js'
 import { peutAcceder, peutPublierPour, concoursContenuSchema } from '../lib/concours.js'
+import { concoursVerrouilles, estVerrouille } from '../lib/autoeval.js'
 
 const router = express.Router()
 
@@ -52,7 +53,11 @@ router.get('/', verifyToken, async (req, res) => {
     .order('created_at', { ascending: false })
 
   if (error) throw error
-  res.json((data || []).filter(c => peutAcceder(req.user, c.concours)))
+  const visibles = (data || []).filter(c => peutAcceder(req.user, c.concours))
+
+  // Auto-évaluation en retard (ENSEA) : le lien du cours est masqué jusqu'à ce qu'elle soit remplie
+  const verrouilles = await concoursVerrouilles(req.user)
+  res.json(visibles.map(cours => (estVerrouille(verrouilles, cours.concours) ? { ...cours, lien: null, verrouille: true } : cours)))
 })
 
 // POST /api/meetings — créer un cours (professeur / admin)

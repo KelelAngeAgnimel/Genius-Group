@@ -5,6 +5,7 @@ import supabase from '../supabase.js'
 import { verifyToken } from '../middleware/authMiddleware.js'
 import { validate } from '../middleware/validate.js'
 import { peutAcceder, peutPublierPour } from '../lib/concours.js'
+import { contenuVerrouille, MESSAGE_VERROUILLE } from '../lib/autoeval.js'
 
 const router = express.Router()
 
@@ -147,6 +148,9 @@ router.get('/ouvrir/:id', verifyToken, async (req, res) => {
     }
     if (!peutAcceder(req.user, ressource.concours)) {
       return res.status(403).json({ message: 'Accès refusé pour votre concours' })
+    }
+    if (await contenuVerrouille(req.user, ressource.concours)) {
+      return res.status(403).json({ message: MESSAGE_VERROUILLE, code: 'autoeval_requise' })
     }
     if (!ressource.storage_path) {
       return res.status(404).json({ message: 'Fichier non trouvé' })
