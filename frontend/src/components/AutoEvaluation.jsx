@@ -41,7 +41,7 @@ function CarteSeance({ element, onFait }) {
   return (
     <div className="rounded-2xl p-4" style={{ background: '#f8f7f4', border: '1px solid #f0ece0' }}>
       <p className="font-bold text-sm" style={{ color: '#071020' }}>{seance.titre}</p>
-      <p className="text-xs text-gray-400 mb-3">Séance du {formaterDate(seance.debut)}</p>
+      <p className="text-xs text-gray-500 mb-3">Séance du {formaterDate(seance.debut)}</p>
       <p className="text-xs text-gray-500 mb-3">Dans quelle mesure maîtrisez-vous chaque point abordé ? (0 = pas du tout, 5 = parfaitement)</p>
 
       <div className="flex flex-col gap-3">
@@ -57,7 +57,7 @@ function CarteSeance({ element, onFait }) {
 
       <textarea value={commentaire} onChange={e => setCommentaire(e.target.value)} rows={2} maxLength={1000}
         placeholder="Un commentaire pour votre professeur ? (facultatif)"
-        className="w-full text-sm rounded-xl px-3 py-2 mt-3 outline-none bg-white" style={{ border: '1px solid #e8e4da' }} />
+        className="w-full text-sm rounded-xl px-3 py-2 mt-3 outline-none bg-white" style={{ border: '1px solid #e8e4da' }} aria-label="Un commentaire pour votre professeur ? (facultatif)" />
 
       {erreur && <p className="text-xs mt-2" style={{ color: '#C94C7B' }}>{erreur}</p>}
       <button type="button" onClick={envoyer} disabled={!complet || envoi}
@@ -122,13 +122,13 @@ export default function AutoEvaluation() {
                     Le délai est dépassé : l’accès aux cours et aux ressources ENSEA est suspendu jusqu’à ce que vous l’ayez remplie.
                   </p>
                 ) : (
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     {etat.rappel ? 'Pensez à la remplir : l’accès aux cours sera suspendu passé le délai.' : 'Quelques secondes suffisent.'}
                   </p>
                 )}
               </div>
               {!etat.verrouille && (
-                <button type="button" onClick={fermer} className="text-xs font-semibold text-gray-400 shrink-0">Plus tard</button>
+                <button type="button" onClick={fermer} className="text-xs font-semibold text-gray-500 shrink-0">Plus tard</button>
               )}
             </div>
             <div className="flex flex-col gap-4">

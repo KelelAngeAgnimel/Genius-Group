@@ -61,7 +61,7 @@ function FormulaireSeance({ onCree, onAnnuler }) {
   return (
     <form onSubmit={soumettre} className="bg-white rounded-2xl p-5 mb-6 flex flex-col gap-3" style={{ border: '1px solid #f0ece0' }}>
       <h3 className="font-bold text-sm" style={{ color: '#071020' }}>Nouvelle séance ENSEA</h3>
-      <input value={form.titre} onChange={e => setForm({ ...form, titre: e.target.value })} placeholder="Titre (ex. Limites et continuité)" maxLength={200} className={CHAMP} style={STYLE} />
+      <input value={form.titre} onChange={e => setForm({ ...form, titre: e.target.value })} placeholder="Titre (ex. Limites et continuité)" maxLength={200} className={CHAMP} style={STYLE} aria-label="Titre (ex. Limites et continuité)" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <label className="text-xs text-gray-500">Début
           <input type="datetime-local" value={form.debut} onChange={e => setForm({ ...form, debut: e.target.value })} className={CHAMP + ' mt-1'} style={STYLE} />
@@ -76,7 +76,7 @@ function FormulaireSeance({ onCree, onAnnuler }) {
           </select>
         </label>
       </div>
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-500">
         À la fin de la séance, les élèves ENSEA devront auto-évaluer les compétences cochées ci-dessous.
       </p>
       {matieres.map(matiere => (
@@ -137,7 +137,7 @@ function SuiviSeance({ seance, onRetour }) {
     <div>
       <button type="button" onClick={onRetour} className="text-xs font-semibold mb-3" style={{ color: VIOLET }}>← Retour aux séances</button>
       <h2 className="font-bold text-lg" style={{ color: '#071020' }}>{seance.titre}</h2>
-      <p className="text-xs text-gray-400 mb-4">Terminée le {formaterDate(seance.fin)}</p>
+      <p className="text-xs text-gray-500 mb-4">Terminée le {formaterDate(seance.fin)}</p>
       {erreur && <p className="text-sm mb-3" style={{ color: '#C94C7B' }}>{erreur}</p>}
       <div className="flex flex-col gap-2">
         {eleves.map(e => {
@@ -146,7 +146,7 @@ function SuiviSeance({ seance, onRetour }) {
             <div key={e.id} className="bg-white rounded-xl p-3 flex items-center justify-between gap-2" style={{ border: '1px solid #f0ece0' }}>
               <div>
                 <p className="text-sm font-semibold" style={{ color: '#071020' }}>{nom(e)}</p>
-                <p className="text-xs text-gray-400">{e.matricule}</p>
+                <p className="text-xs text-gray-500">{e.matricule}</p>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs font-bold" style={{ color: t.couleur }}>{t.texte}</span>
@@ -159,7 +159,7 @@ function SuiviSeance({ seance, onRetour }) {
             </div>
           )
         })}
-        {eleves.length === 0 && <p className="text-sm text-gray-400">Aucun élève.</p>}
+        {eleves.length === 0 && <p className="text-sm text-gray-500">Aucun élève.</p>}
       </div>
     </div>
   )
@@ -192,7 +192,7 @@ export default function Seances() {
       <div className="mb-6">
         <p className="text-xs tracking-widest uppercase mb-1" style={{ color: VIOLET }}>Outils</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Séances et auto-évaluations</h1>
-        <p className="text-gray-400 text-sm mt-1">Associez chaque séance aux compétences abordées et suivez les auto-évaluations des élèves.</p>
+        <p className="text-gray-500 text-sm mt-1">Associez chaque séance aux compétences abordées et suivez les auto-évaluations des élèves.</p>
       </div>
 
       {ouverte ? <SuiviSeance seance={ouverte} onRetour={() => { setOuverte(null); charger() }} /> : (
@@ -215,7 +215,7 @@ export default function Seances() {
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
                           <p className="font-bold" style={{ color: '#071020' }}>{s.titre}</p>
-                          <p className="text-xs text-gray-400 mt-1">{formaterDate(s.debut)} → {formaterDate(s.fin)}{terminee ? '' : ' · à venir'}</p>
+                          <p className="text-xs text-gray-500 mt-1">{formaterDate(s.debut)} → {formaterDate(s.fin)}{terminee ? '' : ' · à venir'}</p>
                           <div className="flex flex-wrap gap-1.5 mt-2">
                             {s.competences.map(c => <span key={c.code} className="text-xs px-2 py-0.5 rounded-full" style={{ background: `${VIOLET}15`, color: VIOLET }}>{c.code}</span>)}
                           </div>

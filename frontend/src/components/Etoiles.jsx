@@ -15,7 +15,7 @@ export default function Etoiles({ value, onChange, disabled = false }) {
           className="text-2xl leading-none transition disabled:opacity-50"
           style={{ color: value !== null && value >= n ? '#C9A84C' : '#e5e7eb' }}>★</button>
       ))}
-      <span className="text-xs text-gray-400 ml-2 w-8">{value === null ? '—' : `${value}/5`}</span>
+      <span className="text-xs text-gray-500 ml-2 w-8">{value === null ? '—' : `${value}/5`}</span>
     </div>
   )
 }

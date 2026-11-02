@@ -45,7 +45,7 @@ export default function VueGlobale() {
               <dt>Séances terminées</dt><dd className="text-right font-semibold">{c.nb_seances_terminees}</dd>
               <dt>Auto-évaluations</dt><dd className="text-right font-semibold">{c.taux_autoeval !== null ? `${c.taux_autoeval} %` : '—'}</dd>
             </dl>
-            {c.autoeval_bloquante && <p className="text-xs mt-2 text-gray-400">Auto-évaluation bloquante</p>}
+            {c.autoeval_bloquante && <p className="text-xs mt-2 text-gray-500">Auto-évaluation bloquante</p>}
           </div>
         ))}
       </div>
@@ -53,7 +53,7 @@ export default function VueGlobale() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <div className="bg-white rounded-2xl p-4" style={{ border: '1px solid #f0ece0' }}>
           <h3 className="font-bold text-sm mb-2" style={{ color: '#071020' }}>Moyenne par concours (/20)</h3>
-          {moyennes.length === 0 ? <p className="text-xs text-gray-400 py-8 text-center">Pas encore de notes.</p> : (
+          {moyennes.length === 0 ? <p className="text-xs text-gray-500 py-8 text-center">Pas encore de notes.</p> : (
             <Suspense fallback={<Loader texte="Chargement du graphique…" />}>
               <Histogramme data={moyennes} max={20} />
             </Suspense>
@@ -61,7 +61,7 @@ export default function VueGlobale() {
         </div>
         <div className="bg-white rounded-2xl p-4" style={{ border: '1px solid #f0ece0' }}>
           <h3 className="font-bold text-sm mb-2" style={{ color: '#071020' }}>Taux de remplissage des auto-évaluations (%)</h3>
-          {taux.length === 0 ? <p className="text-xs text-gray-400 py-8 text-center">Aucune séance terminée avec des compétences.</p> : (
+          {taux.length === 0 ? <p className="text-xs text-gray-500 py-8 text-center">Aucune séance terminée avec des compétences.</p> : (
             <Suspense fallback={<Loader texte="Chargement du graphique…" />}>
               <Histogramme data={taux} max={100} unite=" %" couleur="#4CC9A8" />
             </Suspense>
@@ -75,7 +75,7 @@ export default function VueGlobale() {
           <ul className="flex flex-col gap-1 text-sm">
             {c.seances.map(s => (
               <li key={s.id} className="flex justify-between text-gray-600">
-                <span>{s.titre} <span className="text-xs text-gray-400">· {new Date(s.fin).toLocaleDateString('fr-FR')}</span></span>
+                <span>{s.titre} <span className="text-xs text-gray-500">· {new Date(s.fin).toLocaleDateString('fr-FR')}</span></span>
                 <span className="font-semibold">{s.nb_complets} / {s.nb_eleves}</span>
               </li>
             ))}

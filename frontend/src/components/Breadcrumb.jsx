@@ -70,7 +70,7 @@ export default function Breadcrumb({ retourLabel, retourPath, onRetour, suivantL
         </button>
 
         {/* Fil d'Ariane */}
-        <div className="flex items-center gap-1 text-xs text-gray-400">
+        <div className="flex items-center gap-1 text-xs text-gray-500">
           {crumbs.map((crumb, i) => (
             <span key={i} className="flex items-center gap-1">
               {i > 0 && <span className="text-gray-600">/</span>}

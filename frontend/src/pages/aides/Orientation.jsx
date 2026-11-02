@@ -279,13 +279,13 @@ export default function Orientation() {
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           Conseils d'orientation
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           Informations officielles sur les concours INP-HB et ESATIC
         </p>
 
         {/* Fil d'ariane */}
         {ecoleActive && (
-          <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
+          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
             <button onClick={() => setEcoleSelectionnee(null)}
               className="hover:underline" style={{ color: '#C9A84C' }}>
               Orientation
@@ -325,7 +325,7 @@ export default function Orientation() {
               <div className="px-6 py-4 flex items-center justify-between">
                 <div>
                   <p className="text-white font-bold text-sm">{ecole.sigle}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{ecole.nom}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{ecole.nom}</p>
                 </div>
                 <span className="text-xs font-semibold px-3 py-1 rounded-lg"
                   style={{ background: `${ecole.couleur}20`, color: ecole.couleur }}>
@@ -445,7 +445,7 @@ export default function Orientation() {
                               </span>
                               <span className="text-xs font-semibold text-gray-700">{p.nom}</span>
                             </div>
-                            <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
+                            <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
                               {parcourOuvert === `${fi}-${pi}` ? '▲' : '▼'}
                             </span>
                           </button>
@@ -516,10 +516,10 @@ export default function Orientation() {
                     <table className="w-full text-xs">
                       <thead>
                         <tr style={{ borderBottom: '2px solid #f0ece0' }}>
-                          <th className="text-left py-2 pr-3 font-semibold text-gray-400 uppercase tracking-widest">Phase</th>
-                          <th className="text-left py-2 pr-3 font-semibold text-gray-400 uppercase tracking-widest">Date</th>
-                          <th className="text-left py-2 pr-3 font-semibold text-gray-400 uppercase tracking-widest">Activité</th>
-                          <th className="text-left py-2 font-semibold text-gray-400 uppercase tracking-widest hidden md:table-cell">Détail</th>
+                          <th className="text-left py-2 pr-3 font-semibold text-gray-500 uppercase tracking-widest">Phase</th>
+                          <th className="text-left py-2 pr-3 font-semibold text-gray-500 uppercase tracking-widest">Date</th>
+                          <th className="text-left py-2 pr-3 font-semibold text-gray-500 uppercase tracking-widest">Activité</th>
+                          <th className="text-left py-2 font-semibold text-gray-500 uppercase tracking-widest hidden md:table-cell">Détail</th>
                         </tr>
                       </thead>
                       <tbody>

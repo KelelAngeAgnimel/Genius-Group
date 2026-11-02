@@ -33,7 +33,7 @@ export default function Forum() {
           onChange={(e) => setNouveau(e.target.value)}
           placeholder="Pose une question au forum..."
           className="flex-1 border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
-        />
+          aria-label="Pose une question au forum..." />
         <button
           onClick={publier}
           className="bg-purple-700 text-white px-5 py-2 rounded-xl hover:bg-purple-800 font-semibold"
@@ -47,9 +47,9 @@ export default function Forum() {
           <div key={i} className="border border-purple-100 rounded-xl p-4 hover:shadow transition">
             <div className="flex justify-between mb-1">
               <span className="font-bold text-purple-800">{p.auteur}</span>
-              <span className="text-xs text-gray-400">{p.date}</span>
+              <span className="text-xs text-gray-500">{p.date}</span>
             </div>
-            <p className="text-xs text-gray-400 mb-2">{p.matricule}</p>
+            <p className="text-xs text-gray-500 mb-2">{p.matricule}</p>
             <p className="text-gray-700 text-sm">{p.texte}</p>
             <p className="text-xs text-purple-500 mt-2">👍 {p.likes}</p>
           </div>

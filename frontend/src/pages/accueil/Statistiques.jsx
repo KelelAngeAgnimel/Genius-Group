@@ -82,7 +82,7 @@ export default function Statistiques() {
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           3 Semaines de Préparation
         </h1>
-        <p className="text-gray-400 text-sm mt-1">Méthode Genius — {user?.prenom} {user?.nom}</p>
+        <p className="text-gray-500 text-sm mt-1">Méthode Genius — {user?.prenom} {user?.nom}</p>
       </div>
 
       {/* RÉSULTATS D'ADMISSIBILITÉ */}
@@ -184,7 +184,7 @@ export default function Statistiques() {
 
       {/* Pied de page */}
       <div className="text-center mt-6">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-500">
           Connecté en tant que <span className="font-semibold" style={{ color: '#C9A84C' }}>{user?.prenom} {user?.nom}</span>
           {user?.matricule && <> — {user.matricule}</>}
         </p>

@@ -63,24 +63,24 @@ function OptionsConcours({ code }) {
         </label>
         <div className="flex items-center gap-2">
           Délai
-          <input type="number" min="1" max="720" value={options.autoeval_delai_heures} className={CHAMP + ' w-20'} style={STYLE}
+          <input aria-label="Délai de l’auto-évaluation en heures" type="number" min="1" max="720" value={options.autoeval_delai_heures} className={CHAMP + ' w-20'} style={STYLE}
             onChange={e => maj('autoeval_delai_heures', Number(e.target.value))} />
           h, rappel à
-          <input type="number" min="0" max="720" value={options.autoeval_rappel_heures} className={CHAMP + ' w-20'} style={STYLE}
+          <input aria-label="Rappel en heures" type="number" min="0" max="720" value={options.autoeval_rappel_heures} className={CHAMP + ' w-20'} style={STYLE}
             onChange={e => maj('autoeval_rappel_heures', Number(e.target.value))} /> h
         </div>
       </div>
-      <h4 className="font-bold text-xs uppercase tracking-wide text-gray-400 mt-5 mb-2">Score de compétence et renforcement</h4>
+      <h4 className="font-bold text-xs uppercase tracking-wide text-gray-500 mt-5 mb-2">Score de compétence et renforcement</h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600">
         <div className="flex items-center gap-2">
           Part de l’auto-évaluation (α)
-          <input type="number" min="0" max="100" value={options.score_alpha_pct} className={CHAMP + ' w-20'} style={STYLE}
+          <input aria-label="Part de l’auto-évaluation en pourcentage" type="number" min="0" max="100" value={options.score_alpha_pct} className={CHAMP + ' w-20'} style={STYLE}
             onChange={e => maj('score_alpha_pct', Number(e.target.value))} /> %
-          <span className="text-xs text-gray-400">(notes : {100 - options.score_alpha_pct} %)</span>
+          <span className="text-xs text-gray-500">(notes : {100 - options.score_alpha_pct} %)</span>
         </div>
         <div className="flex items-center gap-2">
           Seuil de renforcement
-          <input type="number" min="0" max="100" value={options.score_seuil} className={CHAMP + ' w-20'} style={STYLE}
+          <input aria-label="Seuil de renforcement sur 100" type="number" min="0" max="100" value={options.score_seuil} className={CHAMP + ' w-20'} style={STYLE}
             onChange={e => maj('score_seuil', Number(e.target.value))} /> / 100
         </div>
         <label className="flex items-center gap-2 md:col-span-2">
@@ -91,7 +91,7 @@ function OptionsConcours({ code }) {
           </select>
         </label>
       </div>
-      <p className="text-xs text-gray-400 mt-2">Modifier α ou le seuil recalcule les scores du concours (sans envoyer d’exercice).</p>
+      <p className="text-xs text-gray-500 mt-2">Modifier α ou le seuil recalcule les scores du concours (sans envoyer d’exercice).</p>
       <div className="flex items-center gap-3 mt-4">
         <button type="button" onClick={enregistrer} className="text-xs font-bold px-4 py-2 rounded-xl text-white" style={{ background: VIOLET }}>Enregistrer</button>
         {message && <span className="text-xs text-gray-500">{message}</span>}
@@ -129,7 +129,7 @@ function ImportCsv({ code, onFini }) {
   return (
     <div className="rounded-2xl p-5 mb-6" style={{ border: '1px solid #f0ece0', background: 'white' }}>
       <h3 className="font-bold text-sm mb-1" style={{ color: '#071020' }}>Importer un fichier CSV</h3>
-      <p className="text-xs text-gray-400 mb-3">
+      <p className="text-xs text-gray-500 mb-3">
         Colonnes : <code>matiere ; code ; libelle ; ordre ; url</code> (séparateur « ; » ou « , »). Un code déjà présent met la compétence à jour.
         Exemple de code : FR-RES-1, MA-ANA-3.
       </p>
@@ -227,10 +227,10 @@ export default function GestionCompetences() {
       <ImportCsv code={concours} onFini={charger} />
 
       <form onSubmit={ajouter} className="rounded-2xl p-5 mb-6 grid grid-cols-1 md:grid-cols-6 gap-2" style={{ border: '1px solid #f0ece0', background: 'white' }}>
-        <input value={ajout.matiere} onChange={e => setAjout({ ...ajout, matiere: e.target.value })} placeholder="Matière" className={CHAMP} style={STYLE} required />
-        <input value={ajout.code} onChange={e => setAjout({ ...ajout, code: e.target.value })} placeholder="Code (FR-RES-1)" className={CHAMP} style={STYLE} required />
-        <input value={ajout.libelle} onChange={e => setAjout({ ...ajout, libelle: e.target.value })} placeholder="Libellé" className={CHAMP + ' md:col-span-2'} style={STYLE} required />
-        <input type="number" value={ajout.ordre} onChange={e => setAjout({ ...ajout, ordre: e.target.value })} placeholder="Ordre" className={CHAMP} style={STYLE} />
+        <input value={ajout.matiere} onChange={e => setAjout({ ...ajout, matiere: e.target.value })} placeholder="Matière" className={CHAMP} style={STYLE} required aria-label="Matière" />
+        <input value={ajout.code} onChange={e => setAjout({ ...ajout, code: e.target.value })} placeholder="Code (FR-RES-1)" className={CHAMP} style={STYLE} required aria-label="Code (FR-RES-1)" />
+        <input value={ajout.libelle} onChange={e => setAjout({ ...ajout, libelle: e.target.value })} placeholder="Libellé" className={CHAMP + ' md:col-span-2'} style={STYLE} required aria-label="Libellé" />
+        <input type="number" value={ajout.ordre} onChange={e => setAjout({ ...ajout, ordre: e.target.value })} placeholder="Ordre" className={CHAMP} style={STYLE} aria-label="Ordre" />
         <button type="submit" className="text-xs font-bold px-4 py-2 rounded-xl text-white" style={{ background: VIOLET }}>Ajouter</button>
       </form>
 
@@ -239,7 +239,7 @@ export default function GestionCompetences() {
       <div className="bg-white rounded-2xl overflow-x-auto" style={{ border: '1px solid #f0ece0' }}>
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-gray-400">
+            <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
               <th className="p-3">Ordre</th><th className="p-3">Code</th><th className="p-3">Matière</th><th className="p-3">Libellé</th><th className="p-3">Lien</th><th className="p-3" />
             </tr>
           </thead>
@@ -249,23 +249,23 @@ export default function GestionCompetences() {
               return (
                 <tr key={c.id} style={{ borderTop: '1px solid #f8f7f4', opacity: c.actif ? 1 : 0.45 }}>
                   <td className="p-3 w-20">{enEdition
-                    ? <input type="number" value={edition.ordre} onChange={e => setEdition({ ...edition, ordre: e.target.value })} className={CHAMP + ' w-16'} style={STYLE} />
+                    ? <input aria-label="Ordre" type="number" value={edition.ordre} onChange={e => setEdition({ ...edition, ordre: e.target.value })} className={CHAMP + ' w-16'} style={STYLE} />
                     : c.ordre}</td>
                   <td className="p-3 font-semibold" style={{ color: VIOLET }}>{c.code}</td>
                   <td className="p-3">{enEdition
-                    ? <input value={edition.matiere} onChange={e => setEdition({ ...edition, matiere: e.target.value })} className={CHAMP + ' w-36'} style={STYLE} />
+                    ? <input aria-label="Matière" value={edition.matiere} onChange={e => setEdition({ ...edition, matiere: e.target.value })} className={CHAMP + ' w-36'} style={STYLE} />
                     : c.matiere}</td>
                   <td className="p-3">{enEdition
-                    ? <input value={edition.libelle} onChange={e => setEdition({ ...edition, libelle: e.target.value })} className={CHAMP + ' w-full'} style={STYLE} />
+                    ? <input aria-label="Libellé" value={edition.libelle} onChange={e => setEdition({ ...edition, libelle: e.target.value })} className={CHAMP + ' w-full'} style={STYLE} />
                     : c.libelle}</td>
                   <td className="p-3 text-xs">{enEdition
-                    ? <input value={edition.url ?? ''} onChange={e => setEdition({ ...edition, url: e.target.value })} className={CHAMP + ' w-40'} style={STYLE} />
+                    ? <input aria-label="Lien de la leçon" value={edition.url ?? ''} onChange={e => setEdition({ ...edition, url: e.target.value })} className={CHAMP + ' w-40'} style={STYLE} />
                     : (c.url ? <a href={c.url} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: VIOLET }}>Leçon</a> : '—')}</td>
                   <td className="p-3 whitespace-nowrap text-xs font-semibold">
                     {enEdition ? (
                       <>
                         <button type="button" onClick={enregistrer} className="mr-3" style={{ color: '#2a9d7f' }}>Enregistrer</button>
-                        <button type="button" onClick={() => setEdition(null)} className="text-gray-400">Annuler</button>
+                        <button type="button" onClick={() => setEdition(null)} className="text-gray-500">Annuler</button>
                       </>
                     ) : (
                       <>

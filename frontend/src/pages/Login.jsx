@@ -207,7 +207,7 @@ export default function Login() {
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
                 Matricule
               </label>
-              <input
+              <input aria-label="Matricule ou identifiant"
                 type="text"
                 value={matricule}
                 onChange={e => setMatricule(e.target.value)}
@@ -221,7 +221,7 @@ export default function Login() {
                 }}
                 onFocus={e => e.target.style.borderColor = '#C9A84C'}
                 onBlur={e => e.target.style.borderColor = '#e5e7eb'}
-              />
+                aria-label="Matricule" />
             </div>
 
             <div>
@@ -229,7 +229,7 @@ export default function Login() {
                 Mot de passe
               </label>
               <div style={{ position: 'relative' }}>
-                <input
+                <input aria-label="Mot de passe"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}

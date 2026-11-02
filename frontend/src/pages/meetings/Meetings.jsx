@@ -109,7 +109,7 @@ export default function Meetings() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold" style={{ color: COULEURS.navy }}>Cours à distance</h1>
-            <p className="text-gray-400 text-sm mt-1">Rejoignez vos cours en ligne selon votre concours</p>
+            <p className="text-gray-500 text-sm mt-1">Rejoignez vos cours en ligne selon votre concours</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -157,22 +157,22 @@ export default function Meetings() {
               placeholder="Titre du cours *"
               className="text-xs rounded-xl px-3 py-2.5 outline-none"
               style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }}
-            />
+              aria-label="Titre du cours" />
             <input
               value={form.prof}
               onChange={e => handleChange('prof', e.target.value)}
               placeholder="Nom du professeur"
               className="text-xs rounded-xl px-3 py-2.5 outline-none"
               style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }}
-            />
+              aria-label="Nom du professeur" />
             <input
               value={form.heure}
               onChange={e => handleChange('heure', e.target.value)}
               placeholder="Heure (ex : 14:00)"
               className="text-xs rounded-xl px-3 py-2.5 outline-none"
               style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }}
-            />
-            <select
+              aria-label="Heure (ex : 14:00)" />
+            <select aria-label="Concours concerné"
               value={form.concours}
               onChange={e => handleChange('concours', e.target.value)}
               className="text-xs rounded-xl px-3 py-2.5 outline-none"
@@ -187,7 +187,7 @@ export default function Meetings() {
               placeholder="Lien du cours (Google Meet, Zoom, Teams...) *"
               className="text-xs rounded-xl px-3 py-2.5 outline-none sm:col-span-2"
               style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }}
-            />
+              aria-label="Lien du cours (Google Meet, Zoom, Teams...)" />
           </div>
           <div className="flex gap-2">
             <button
@@ -211,7 +211,7 @@ export default function Meetings() {
       ) : coursAffiches.length === 0 ? (
         <div className="rounded-2xl p-10 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
           <p className="text-4xl mb-3">📭</p>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-500">
             {filtreActive ? 'Aucun cours en cours pour le moment.' : 'Aucun cours publié pour le moment.'}
           </p>
         </div>
@@ -241,7 +241,7 @@ export default function Meetings() {
               <div>
                 <p className="font-bold text-sm" style={{ color: COULEURS.navy }}>{c.titre}</p>
                 {(c.prof || c.heure) && (
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     {c.prof && <span>{c.prof}</span>}
                     {c.prof && c.heure && <span> · </span>}
                     {c.heure && <span>{c.heure}</span>}

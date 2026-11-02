@@ -296,7 +296,7 @@ function RessourcesContenu() {
           {ecoleActive && !matiereSelectionnee && `Documents ${ecoleActive.sigle}`}
           {matiereSelectionnee && matiereSelectionnee}
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           {!ecoleActive && 'Sélectionnez votre concours pour accéder aux documents'}
           {ecoleActive && !matiereSelectionnee && `Choisissez une matière — ${ecoleActive.matieres.length} matières disponibles`}
           {matiereSelectionnee && `${ressourcesFiltrees.length} document(s) disponible(s)`}
@@ -400,7 +400,7 @@ function RessourcesContenu() {
                   <div className="p-5">
                     <p className="font-bold text-sm mb-2" style={{ color: '#071020' }}>{matiere}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-400">{loading ? '...' : `${count} document(s)`}</span>
+                      <span className="text-xs text-gray-500">{loading ? '...' : `${count} document(s)`}</span>
                       <span className="text-xs font-semibold px-2 py-1 rounded-lg"
                         style={{ background: `${ecoleActive.couleur}15`, color: ecoleActive.couleur }}>
                         Consulter →
@@ -442,7 +442,7 @@ function RessourcesContenu() {
                 <div className="bg-white rounded-2xl p-10 text-center" style={{ border: '1px solid #f0ece0' }}>
                   <p className="text-3xl mb-3">📭</p>
                   <p className="text-sm font-semibold text-gray-500">Aucun document disponible</p>
-                  <p className="text-xs text-gray-400 mt-1">Votre enseignant n'a pas encore publié de contenu ici.</p>
+                  <p className="text-xs text-gray-500 mt-1">Votre enseignant n'a pas encore publié de contenu ici.</p>
                 </div>
               )}
               {ressourcesFiltrees.map((ressource, i) => {
@@ -465,11 +465,11 @@ function RessourcesContenu() {
                           {config.label}
                         </span>
                         {ressource.professeur && (
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-gray-500">
                             Par {ressource.professeur.prenom || ressource.professeur.username}
                           </span>
                         )}
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-gray-500">
                           {new Date(ressource.created_at).toLocaleDateString('fr-FR')}
                         </span>
                       </div>

@@ -305,7 +305,7 @@ export default function EspaceProfesseur() {
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           Bonjour, {user?.prenom || user?.username}
         </h1>
-        <p className="text-gray-400 text-sm mt-1">Gérez vos ressources, notes et etudiants</p>
+        <p className="text-gray-500 text-sm mt-1">Gérez vos ressources, notes et etudiants</p>
       </div>
 
       {/* STATS */}
@@ -318,7 +318,7 @@ export default function EspaceProfesseur() {
         ].map((s, i) => (
           <div key={i} className="bg-white rounded-2xl p-4"
             style={{ border: '1px solid #f0ece0' }}>
-            <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">{s.label}</p>
             <p className="text-3xl font-bold" style={{ color: s.couleur }}>{s.valeur}</p>
           </div>
         ))}
@@ -357,7 +357,7 @@ export default function EspaceProfesseur() {
       {onglet === 'ressources' && (
         <div className="flex flex-col gap-3">
           {ressources.length === 0 && (
-            <div className="text-center py-12 text-gray-400 text-sm bg-white rounded-2xl"
+            <div className="text-center py-12 text-gray-500 text-sm bg-white rounded-2xl"
               style={{ border: '1px solid #f0ece0' }}>
               Aucune ressource publiee pour l'instant
             </div>
@@ -376,7 +376,7 @@ export default function EspaceProfesseur() {
                     style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
                     {r.concours}
                   </span>
-                  <span className="text-xs text-gray-400">{r.matiere}</span>
+                  <span className="text-xs text-gray-500">{r.matiere}</span>
                   <span className="text-xs font-semibold"
                     style={{ color: r.visible ? '#4CC9A8' : '#9ca3af' }}>
                     {r.visible ? 'Visible' : 'Masquee'}
@@ -409,7 +409,7 @@ export default function EspaceProfesseur() {
           <h2 className="font-bold text-base mb-1" style={{ color: '#071020' }}>
             Publier une nouvelle ressource
           </h2>
-          <p className="text-xs text-gray-400 mb-5">
+          <p className="text-xs text-gray-500 mb-5">
             Le document sera immédiatement visible par les élèves du concours sélectionné dans la section Ressources.
           </p>
           <form onSubmit={handleUpload} className="flex flex-col gap-4">
@@ -476,7 +476,7 @@ export default function EspaceProfesseur() {
                   style={{ borderColor: '#f0ece0' }}
                   onFocus={e => e.target.style.borderColor = '#C9A84C'}
                   onBlur={e => e.target.style.borderColor = '#f0ece0'}
-                />
+                  aria-label="3. Titre du document" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Description (optionnel)</label>
@@ -488,7 +488,7 @@ export default function EspaceProfesseur() {
                   style={{ borderColor: '#f0ece0' }}
                   onFocus={e => e.target.style.borderColor = '#C9A84C'}
                   onBlur={e => e.target.style.borderColor = '#f0ece0'}
-                />
+                  aria-label="Description (optionnel)" />
               </div>
             </div>
 
@@ -505,7 +505,7 @@ export default function EspaceProfesseur() {
                   {fichier ? (
                     <div>
                       <p className="text-sm font-bold" style={{ color: '#C9A84C' }}>✓ {fichier.name}</p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-gray-500 mt-1">
                         {(fichier.size / 1024 / 1024).toFixed(2)} Mo · Cliquer pour changer
                       </p>
                     </div>
@@ -513,7 +513,7 @@ export default function EspaceProfesseur() {
                     <div>
                       <p className="text-2xl mb-2">📄</p>
                       <p className="text-sm font-semibold text-gray-500">Cliquer pour choisir un PDF</p>
-                      <p className="text-xs text-gray-400 mt-1">Taille maximale : 50 Mo</p>
+                      <p className="text-xs text-gray-500 mt-1">Taille maximale : 50 Mo</p>
                     </div>
                   )}
                 </label>
@@ -626,7 +626,7 @@ export default function EspaceProfesseur() {
                   value={noteForm.concours}
                   onChange={e => setNoteForm({ ...noteForm, concours: e.target.value, matiere: '' })}
                   className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
-                  style={{ borderColor: '#f0ece0' }}>
+                  style={{ borderColor: '#f0ece0' }} aria-label="Concours">
                   <option value="INP-HB">INP-HB</option>
                   <option value="ESATIC">ESATIC</option>
                 </select>
@@ -648,9 +648,9 @@ export default function EspaceProfesseur() {
                   style={{ borderColor: '#f0ece0' }}
                   onFocus={e => e.target.style.borderColor = '#C9A84C'}
                   onBlur={e => e.target.style.borderColor = '#f0ece0'}
-                />
+                  aria-label="Rechercher par nom ou matricule (ex : 26GEN0007)" />
 
-                <select required
+                <select aria-label="Élève" required
                   value={noteForm.etudiant_id}
                   onChange={e => setNoteForm({ ...noteForm, etudiant_id: e.target.value })}
                   className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
@@ -678,7 +678,7 @@ export default function EspaceProfesseur() {
                   value={noteForm.matiere}
                   onChange={e => setNoteForm({ ...noteForm, matiere: e.target.value })}
                   className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
-                  style={{ borderColor: '#f0ece0' }}>
+                  style={{ borderColor: '#f0ece0' }} aria-label="Matiere">
                   <option value="">Choisir une matiere</option>
                   {(matieresConcours[noteForm.concours] || []).map((m, i) => (
                     <option key={i} value={m}>{m}</option>
@@ -700,7 +700,7 @@ export default function EspaceProfesseur() {
                     style={{ borderColor: '#f0ece0' }}
                     onFocus={e => e.target.style.borderColor = '#C9A84C'}
                     onBlur={e => e.target.style.borderColor = '#f0ece0'}
-                  />
+                    aria-label="Note (sur 20)" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1">Période</label>
@@ -708,7 +708,7 @@ export default function EspaceProfesseur() {
                     value={noteForm.periode}
                     onChange={e => setNoteForm({ ...noteForm, periode: e.target.value })}
                     className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
-                    style={{ borderColor: '#f0ece0' }}>
+                    style={{ borderColor: '#f0ece0' }} aria-label="Période">
                     {periodes.map((p, i) => (
                       <option key={i} value={p}>{p}</option>
                     ))}
@@ -748,7 +748,7 @@ export default function EspaceProfesseur() {
                   {c}
                 </button>
               ))}
-              <select
+              <select aria-label="Période"
                 value={filtreNotesPeriode}
                 onChange={e => setFiltreNotesPeriode(e.target.value)}
                 className="ml-auto border rounded-lg px-3 py-1.5 text-xs text-gray-700"
@@ -768,7 +768,7 @@ export default function EspaceProfesseur() {
 
             {!loading && Object.keys(notesParEtudiant).length === 0 && (
               <div className="text-center py-8">
-                <p className="text-xs text-gray-400">Aucune note pour cette periode</p>
+                <p className="text-xs text-gray-500">Aucune note pour cette periode</p>
               </div>
             )}
 
@@ -827,7 +827,7 @@ export default function EspaceProfesseur() {
                 value={filtreEtuConcours}
                 onChange={e => setFiltreEtuConcours(e.target.value)}
                 className="w-full border rounded-xl px-3 py-2 text-sm bg-white"
-                style={{ borderColor: '#f0ece0' }}>
+                style={{ borderColor: '#f0ece0' }} aria-label="Concours">
                 <option value="tous">Tous les concours</option>
                 <option value="INP-HB">INP-HB</option>
                 <option value="ESATIC">ESATIC</option>
@@ -840,7 +840,7 @@ export default function EspaceProfesseur() {
                 value={filtreEtuModalite}
                 onChange={e => setFiltreEtuModalite(e.target.value)}
                 className="w-full border rounded-xl px-3 py-2 text-sm bg-white"
-                style={{ borderColor: '#f0ece0' }}>
+                style={{ borderColor: '#f0ece0' }} aria-label="Modalité">
                 <option value="tous">Toutes les modalités</option>
                 <option value="en_ligne">💻 En ligne</option>
                 <option value="presentiel">🏫 Présentiel</option>
@@ -850,7 +850,7 @@ export default function EspaceProfesseur() {
 
           <div className="flex flex-col gap-2">
             {etudiantsFiltres.length === 0 && (
-              <p className="text-xs text-gray-400 text-center py-8">Aucun étudiant pour ces filtres</p>
+              <p className="text-xs text-gray-500 text-center py-8">Aucun étudiant pour ces filtres</p>
             )}
             {etudiantsFiltres.map((etudiant, i) => (
               <div key={i}
@@ -930,7 +930,7 @@ export default function EspaceProfesseur() {
                     value={msgForm.a_id}
                     onChange={e => setMsgForm({ ...msgForm, a_id: e.target.value })}
                     className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800"
-                    style={{ borderColor: '#f0ece0' }}>
+                    style={{ borderColor: '#f0ece0' }} aria-label="Destinataire">
                     <option value="">Choisir un etudiant</option>
                     {etudiants.map(e => (
                       <option key={e.id} value={e.id}>
@@ -946,13 +946,13 @@ export default function EspaceProfesseur() {
                     value={msgGroupe}
                     onChange={e => setMsgGroupe(e.target.value)}
                     className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800 bg-white"
-                    style={{ borderColor: '#f0ece0' }}>
+                    style={{ borderColor: '#f0ece0' }} aria-label="Groupe destinataire">
                     <option value="tous">Tous les étudiants</option>
                     <option value="inphb">Tous les INP-HB (incl. INP-HB+ESATIC+CME)</option>
                     <option value="esatic">Tous les ESATIC (incl. INP-HB+ESATIC+CME)</option>
                     <option value="all">INP-HB + ESATIC + CME uniquement</option>
                   </select>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     Le message sera envoyé individuellement à chaque étudiant du groupe.
                   </p>
                 </div>
@@ -967,7 +967,7 @@ export default function EspaceProfesseur() {
                   style={{ borderColor: '#f0ece0' }}
                   onFocus={e => e.target.style.borderColor = '#C9A84C'}
                   onBlur={e => e.target.style.borderColor = '#f0ece0'}
-                />
+                  aria-label="Sujet" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Message</label>
@@ -979,7 +979,7 @@ export default function EspaceProfesseur() {
                   style={{ borderColor: '#f0ece0' }}
                   onFocus={e => e.target.style.borderColor = '#C9A84C'}
                   onBlur={e => e.target.style.borderColor = '#f0ece0'}
-                />
+                  aria-label="Message" />
               </div>
               <button type="submit" disabled={loading}
                 className="py-3 rounded-xl text-sm font-bold tracking-widest transition disabled:opacity-50"
@@ -1006,7 +1006,7 @@ export default function EspaceProfesseur() {
                   style={{ background: '#f8f7f4', border: '1px solid #f0ece0' }}>
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-xs font-bold text-gray-800">{msg.sujet}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-500">
                       {new Date(msg.created_at).toLocaleDateString('fr-FR')}
                     </p>
                   </div>

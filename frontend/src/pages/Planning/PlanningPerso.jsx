@@ -177,7 +177,7 @@ function VueEtudiant({ user }) {
               <RadarChart competences={competences} />
             </div>
           ) : (
-            <p className="text-xs text-gray-400 text-center py-10">Pas encore assez de notes pour afficher le radar</p>
+            <p className="text-xs text-gray-500 text-center py-10">Pas encore assez de notes pour afficher le radar</p>
           )}
         </div>
 
@@ -242,7 +242,7 @@ function VueEtudiant({ user }) {
         {loading ? (
           <Loader texte="Chargement…" />
         ) : exercices.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-6">Aucun exercice assigné pour le moment</p>
+          <p className="text-xs text-gray-500 text-center py-6">Aucun exercice assigné pour le moment</p>
         ) : (
           <div className="flex flex-col gap-3">
             {exercices.map((ex, i) => (
@@ -258,7 +258,7 @@ function VueEtudiant({ user }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold" style={{ color: '#071020' }}>{ex.titre}</p>
-                  <p className="text-xs text-gray-400">{ex.matiere} — De : {ex.professeur_nom || 'Professeur'}</p>
+                  <p className="text-xs text-gray-500">{ex.matiere} — De : {ex.professeur_nom || 'Professeur'}</p>
                   {ex.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{ex.description}</p>}
                 </div>
                 {ex.renforcement_id && (
@@ -457,7 +457,7 @@ function VueProfesseur({ user }) {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-400 text-center py-4">Pas encore assez de notes pour cet étudiant</p>
+                  <p className="text-xs text-gray-500 text-center py-4">Pas encore assez de notes pour cet étudiant</p>
                 )}
               </div>
 
@@ -477,14 +477,14 @@ function VueProfesseur({ user }) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                   <div>
-                    <label className="text-xs text-gray-400 mb-1 block">Titre *</label>
+                    <label className="text-xs text-gray-500 mb-1 block">Titre *</label>
                     <input
                       value={envoi.titre}
                       onChange={e => setEnvoi(p => ({ ...p, titre: e.target.value }))}
                       placeholder="Ex: Série d'exercices logique"
                       className="w-full text-xs rounded-xl px-3 py-2 outline-none"
                       style={{ background: '#f8f7f4', border: '1px solid #e8e4da', color: '#071020' }}
-                    />
+                      aria-label="Titre" />
                   </div>
                   <div>
                     <label className="text-xs text-gray-400 mb-1 block">Matière *</label>
@@ -494,7 +494,7 @@ function VueProfesseur({ user }) {
                       placeholder="Ex: Mathématiques"
                       className="w-full text-xs rounded-xl px-3 py-2 outline-none"
                       style={{ background: '#f8f7f4', border: '1px solid #e8e4da', color: '#071020' }}
-                    />
+                      aria-label="Matière" />
                   </div>
                 </div>
                 <div className="mb-3">
@@ -506,7 +506,7 @@ function VueProfesseur({ user }) {
                     rows={2}
                     className="w-full text-xs rounded-xl px-3 py-2 outline-none resize-none"
                     style={{ background: '#f8f7f4', border: '1px solid #e8e4da', color: '#071020' }}
-                  />
+                    aria-label="Description" />
                 </div>
                 <div className="mb-4">
                   <label className="text-xs text-gray-400 mb-1 block">Lien fichier (optionnel)</label>
@@ -516,7 +516,7 @@ function VueProfesseur({ user }) {
                     placeholder="https://..."
                     className="w-full text-xs rounded-xl px-3 py-2 outline-none"
                     style={{ background: '#f8f7f4', border: '1px solid #e8e4da', color: '#071020' }}
-                  />
+                    aria-label="Lien fichier (optionnel)" />
                 </div>
                 <button
                   onClick={envoyerExercice}
@@ -552,7 +552,7 @@ function VueProfesseur({ user }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold truncate" style={{ color: '#071020' }}>{ex.titre}</p>
-                  <p className="text-xs text-gray-400">{ex.matiere} — Pour : {ex.etudiant_nom || 'Étudiant'}</p>
+                  <p className="text-xs text-gray-500">{ex.matiere} — Pour : {ex.etudiant_nom || 'Étudiant'}</p>
                 </div>
                 <span className="text-xs font-semibold flex-shrink-0"
                   style={{ color: ex.statut === 'fait' ? '#4CC9A8' : '#C9A84C' }}>
@@ -583,7 +583,7 @@ export default function PlanningPerso() {
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           {isProfOrAdmin ? 'Gestion & suivi des étudiants' : 'Planning personnalisé'}
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           {isProfOrAdmin
             ? 'Visualisez les compétences et assignez des exercices'
             : 'Vos compétences et exercices personnalisés'}

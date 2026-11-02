@@ -47,7 +47,7 @@ export default function Contacts() {
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           Contacts et équipe
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           Notre équipe est disponible pour vous accompagner
         </p>
       </div>
@@ -136,7 +136,7 @@ export default function Contacts() {
         <h2 className="font-bold text-base mb-1" style={{ color: '#071020' }}>
           Envoyer un message
         </h2>
-        <p className="text-xs text-gray-400 mb-5">
+        <p className="text-xs text-gray-500 mb-5">
           Nous vous répondrons dans les plus brefs délais
         </p>
 
@@ -150,7 +150,7 @@ export default function Contacts() {
               style={{ borderColor: '#f0ece0' }}
               onFocus={e => e.target.style.borderColor = '#C9A84C'}
               onBlur={e => e.target.style.borderColor = '#f0ece0'}
-            />
+              aria-label="Nom complet" />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Email</label>
@@ -161,7 +161,7 @@ export default function Contacts() {
               style={{ borderColor: '#f0ece0' }}
               onFocus={e => e.target.style.borderColor = '#C9A84C'}
               onBlur={e => e.target.style.borderColor = '#f0ece0'}
-            />
+              aria-label="Email" />
           </div>
         </div>
 
@@ -169,7 +169,7 @@ export default function Contacts() {
           <label className="block text-xs font-semibold text-gray-600 mb-1">Sujet</label>
           <select
             className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none"
-            style={{ borderColor: '#f0ece0' }}>
+            style={{ borderColor: '#f0ece0' }} aria-label="Sujet">
             <option>Question pédagogique</option>
             <option>Problème technique</option>
             <option>Concours et inscriptions</option>
@@ -186,7 +186,7 @@ export default function Contacts() {
             style={{ borderColor: '#f0ece0' }}
             onFocus={e => e.target.style.borderColor = '#C9A84C'}
             onBlur={e => e.target.style.borderColor = '#f0ece0'}
-          />
+            aria-label="Message" />
         </div>
 
         <button

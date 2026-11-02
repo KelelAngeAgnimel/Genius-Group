@@ -190,7 +190,7 @@ export default function GestionPlanning() {
               value={form.jour}
               onChange={e => handleChange('jour', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            >
+              aria-label="Jour">
               {jours.map(j => <option key={j} value={j}>{j}</option>)}
             </select>
           </div>
@@ -202,7 +202,7 @@ export default function GestionPlanning() {
               value={form.heure_debut}
               onChange={e => handleChange('heure_debut', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            />
+              aria-label="Heure début" />
           </div>
 
           <div>
@@ -212,7 +212,7 @@ export default function GestionPlanning() {
               value={form.heure_fin}
               onChange={e => handleChange('heure_fin', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            />
+              aria-label="Heure fin" />
           </div>
 
           <div className="md:col-span-2">
@@ -223,7 +223,7 @@ export default function GestionPlanning() {
               onChange={e => handleChange('matiere', e.target.value)}
               placeholder="Ex: Mathématiques"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            />
+              aria-label="Matière / Titre" />
           </div>
 
           <div>
@@ -232,7 +232,7 @@ export default function GestionPlanning() {
               value={form.type}
               onChange={e => handleChange('type', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            >
+              aria-label="Type">
               {Object.entries(typeConfig).map(([key, val]) => (
                 <option key={key} value={key}>{val.label}</option>
               ))}
@@ -247,7 +247,7 @@ export default function GestionPlanning() {
               onChange={e => handleChange('salle', e.target.value)}
               placeholder="Ex: Salle A1"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            />
+              aria-label="Salle" />
           </div>
 
           {/* Concours — champ avancé optionnel */}
@@ -260,7 +260,7 @@ export default function GestionPlanning() {
               value={form.concours}
               onChange={e => handleChange('concours', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            >
+              aria-label="Concours concerné (optionnel)">
               {Object.entries(concoursConfig).map(([key, val]) => (
                 <option key={key} value={key}>{val.label}</option>
               ))}
@@ -301,14 +301,14 @@ export default function GestionPlanning() {
               value={form.professeur_id}
               onChange={e => handleChange('professeur_id', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            >
+              aria-label="Professeur mandaté">
               <option value="">— Aucun professeur assigné —</option>
               {profs.map(p => (
                 <option key={p.id} value={p.id}>{p.prenom} {p.nom}</option>
               ))}
             </select>
             {profs.length === 0 && (
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-500 mt-1">
                 Aucun professeur trouvé. Créez-en un dans "Créer un utilisateur" avec le rôle Professeur.
               </p>
             )}
@@ -366,7 +366,7 @@ export default function GestionPlanning() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-400 uppercase border-b border-gray-200">
+              <tr className="text-left text-xs text-gray-500 uppercase border-b border-gray-200">
                 <th className="py-2 pr-4">Jour</th>
                 <th className="py-2 pr-4">Horaire</th>
                 <th className="py-2 pr-4">Matière</th>

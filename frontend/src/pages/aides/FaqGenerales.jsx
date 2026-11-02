@@ -46,7 +46,7 @@ export default function FaqGenerales() {
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           FAQ
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           Retrouvez les réponses aux questions les plus fréquentes
         </p>
       </div>

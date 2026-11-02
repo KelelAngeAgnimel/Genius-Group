@@ -124,7 +124,7 @@ function SuiviProfesseur() {
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           Suivi de progression
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           {etudiants.length} etudiant{etudiants.length > 1 ? 's' : ''} — Vue enseignant
         </p>
       </div>
@@ -227,7 +227,7 @@ function SuiviProfesseur() {
                                   {note}/20
                                 </span>
                               ) : (
-                                <span className="text-xs text-gray-400 italic">—</span>
+                                <span className="text-xs text-gray-500 italic">—</span>
                               )}
                             </div>
                             {note !== null && (
@@ -307,7 +307,7 @@ function SuiviProfesseur() {
               style={{ borderColor: '#f0ece0' }}
               onFocus={e => e.target.style.borderColor = '#C9A84C'}
               onBlur={e => e.target.style.borderColor = '#f0ece0'}
-            />
+              aria-label="Rechercher un etudiant..." />
             <div className="flex gap-2 flex-wrap">
               {['tous', ...CODES_CONCOURS].map((role, i) => (
                 <button key={i}
@@ -334,7 +334,7 @@ function SuiviProfesseur() {
           {!loading && (
             <div className="flex flex-col gap-3">
               {etudiantsFiltres.length === 0 && (
-                <div className="text-center py-12 text-gray-400 text-sm">
+                <div className="text-center py-12 text-gray-500 text-sm">
                   Aucun etudiant trouve
                 </div>
               )}
@@ -361,7 +361,7 @@ function SuiviProfesseur() {
                             {libelleUtilisateur(etudiant)}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-400 mt-0.5">
+                        <p className="text-xs text-gray-500 mt-0.5">
                           {etudiant.matricule} — {etudiant.username}
                         </p>
                         <div className="flex gap-2 mt-1 flex-wrap">
@@ -486,7 +486,7 @@ function SuiviEtudiant({ user }) {
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           Suivi de progression
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           Sélectionnez un concours pour voir votre progression
         </p>
       </div>
@@ -522,12 +522,12 @@ function SuiviEtudiant({ user }) {
                 <div className="px-6 py-4 flex items-center justify-between">
                   <div>
                     <p className="text-white font-bold text-sm">{ecole.sigle}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{ecole.matieres.length} matières</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{ecole.matieres.length} matières</p>
                   </div>
                   {moyenne ? (
                     <div className="text-right">
                       <p className="text-2xl font-bold" style={{ color: ecole.couleur }}>{moyenne}</p>
-                      <p className="text-xs text-gray-400">/20 moy.</p>
+                      <p className="text-xs text-gray-500">/20 moy.</p>
                     </div>
                   ) : (
                     <span className="text-xs text-gray-500 italic">Aucune note</span>
@@ -572,12 +572,12 @@ function SuiviEtudiant({ user }) {
                 </a>
               </div>
               <div className="sm:ml-auto text-center">
-                <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Moyenne générale</p>
+                <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Moyenne générale</p>
                 <p className="text-5xl font-bold" style={{ color: ecoleActive.couleur }}>
                   {getMoyenneConcours(ecoleActive) || '—'}
                 </p>
                 {getMoyenneConcours(ecoleActive) && (
-                  <p className="text-xs text-gray-400">/20</p>
+                  <p className="text-xs text-gray-500">/20</p>
                 )}
               </div>
             </div>
@@ -607,7 +607,7 @@ function SuiviEtudiant({ user }) {
                           {derniereNote}/20
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-400 italic">Pas encore de note</span>
+                        <span className="text-xs text-gray-500 italic">Pas encore de note</span>
                       )}
                     </div>
 
@@ -629,7 +629,7 @@ function SuiviEtudiant({ user }) {
 
                     {notesMatiere.length > 0 && (
                       <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
                           Historique
                         </p>
                         <div className="flex flex-wrap gap-2">

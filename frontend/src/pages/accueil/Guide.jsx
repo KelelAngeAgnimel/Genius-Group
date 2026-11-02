@@ -132,7 +132,7 @@ export default function Guide() {
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           Guide du portail
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           Tout ce que vous devez savoir sur Genius Group et votre espace personnel
         </p>
       </div>
@@ -265,7 +265,7 @@ export default function Guide() {
                 }}>
                 Section precedente
               </button>
-              <span className="text-xs text-gray-400">{si + 1} / {sections.length}</span>
+              <span className="text-xs text-gray-500">{si + 1} / {sections.length}</span>
               <button
                 onClick={() => { setSectionActive(Math.min(sections.length - 1, si + 1)); setItemOuvert(null) }}
                 disabled={si === sections.length - 1}

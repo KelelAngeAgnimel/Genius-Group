@@ -127,15 +127,15 @@ export default function MesNotes() {
                     <div key={matiere}>
                       <p className="text-xs font-bold mb-2" style={{ color: '#071020' }}>{matiere}</p>
                       {notesMatiere.length === 0 ? (
-                        <p className="text-xs text-gray-400 italic pl-2">Aucune note pour le moment</p>
+                        <p className="text-xs text-gray-500 italic pl-2">Aucune note pour le moment</p>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full text-xs">
                             <thead>
                               <tr style={{ borderBottom: '1px solid #f0ece0' }}>
-                                <th className="text-left py-1.5 px-2 text-gray-400 font-semibold">Évaluation</th>
-                                <th className="text-right py-1.5 px-2 text-gray-400 font-semibold">Note</th>
-                                <th className="text-right py-1.5 px-2 text-gray-400 font-semibold">Appréciation</th>
+                                <th className="text-left py-1.5 px-2 text-gray-500 font-semibold">Évaluation</th>
+                                <th className="text-right py-1.5 px-2 text-gray-500 font-semibold">Note</th>
+                                <th className="text-right py-1.5 px-2 text-gray-500 font-semibold">Appréciation</th>
                               </tr>
                             </thead>
                             <tbody>

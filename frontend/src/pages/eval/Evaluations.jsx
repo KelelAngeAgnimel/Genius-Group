@@ -226,7 +226,7 @@ function VueEtudiant() {
         <div className="rounded-2xl p-10 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
           <p className="text-3xl mb-3">📭</p>
           <p className="text-sm font-semibold text-gray-500">Aucune évaluation disponible</p>
-          <p className="text-xs text-gray-400 mt-1">Vos enseignants n'ont pas encore publié d'évaluation pour vos concours.</p>
+          <p className="text-xs text-gray-500 mt-1">Vos enseignants n'ont pas encore publié d'évaluation pour vos concours.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -245,8 +245,8 @@ function VueEtudiant() {
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: `${COULEURS.or}15`, color: '#b8891e' }}>{ev.matiere}</span>
                   <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: `${COULEURS.bleu}15`, color: COULEURS.bleu }}>{labelConcours(ev.concours)}</span>
-                  {ev.professeur && <span className="text-xs text-gray-400">Par {ev.professeur.prenom || ev.professeur.username}</span>}
-                  <span className="text-xs text-gray-400">{new Date(ev.created_at).toLocaleDateString('fr-FR')}</span>
+                  {ev.professeur && <span className="text-xs text-gray-500">Par {ev.professeur.prenom || ev.professeur.username}</span>}
+                  <span className="text-xs text-gray-500">{new Date(ev.created_at).toLocaleDateString('fr-FR')}</span>
                 </div>
               </div>
               <span className="text-xs font-semibold px-3 py-2 rounded-xl flex-shrink-0"
@@ -342,7 +342,7 @@ function VueProf({ role }) {
                 <span>Visible par : {labelConcours(ev.concours)}</span>
               </p>
               {role === 'admin' && ev.professeur && (
-                <p className="text-xs text-gray-400 mt-1">Publiée par {ev.professeur.prenom || ev.professeur.username}</p>
+                <p className="text-xs text-gray-500 mt-1">Publiée par {ev.professeur.prenom || ev.professeur.username}</p>
               )}
               <div className="flex gap-2 mt-3 flex-wrap">
                 <button onClick={() => setOuverte(ev)} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
@@ -380,7 +380,7 @@ export default function Evaluations() {
       <div className="mb-6">
         <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Outils</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: COULEURS.navy }}>Évaluation</h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           {isProfOrAdmin ? 'Gérez les évaluations publiées' : 'Les évaluations publiées pour vos concours'}
         </p>
       </div>

@@ -37,7 +37,7 @@ function DashboardAdmin({ user, navigate }) {
       <div className="mb-6 md:mb-8">
         <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C94C7B' }}>Tableau de bord</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Bonjour, {user?.prenom || user?.username}</h1>
-        <p className="text-gray-400 text-sm mt-1">Vue administrateur — Genius Group</p>
+        <p className="text-gray-500 text-sm mt-1">Vue administrateur — Genius Group</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {[
@@ -47,7 +47,7 @@ function DashboardAdmin({ user, navigate }) {
           { label: 'Admins', valeur: stats.admins, couleur: '#C94C7B' },
         ].map((s, i) => (
           <div key={i} className="bg-white rounded-2xl p-4 md:p-5" style={{ border: `1px solid ${s.couleur}20` }}>
-            <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">{s.label}</p>
             <p className="text-3xl md:text-4xl font-bold" style={{ color: s.couleur }}>{loading ? '...' : s.valeur}</p>
           </div>
         ))}
@@ -127,7 +127,7 @@ function DashboardProfesseur({ user, navigate }) {
       <div className="mb-6 md:mb-8">
         <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#4CC9A8' }}>Tableau de bord</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Bonjour, {user?.prenom || user?.username}</h1>
-        <p className="text-gray-400 text-sm mt-1">Espace enseignant — Genius Group</p>
+        <p className="text-gray-500 text-sm mt-1">Espace enseignant — Genius Group</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {[
@@ -137,7 +137,7 @@ function DashboardProfesseur({ user, navigate }) {
           { label: 'Messages envoyes', valeur: messages.length, couleur: '#4CC9A8' },
         ].map((s, i) => (
           <div key={i} className="bg-white rounded-2xl p-4 md:p-5" style={{ border: `1px solid ${s.couleur}20` }}>
-            <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">{s.label}</p>
+            <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">{s.label}</p>
             <p className="text-3xl md:text-4xl font-bold" style={{ color: s.couleur }}>{loading ? '...' : s.valeur}</p>
           </div>
         ))}
@@ -339,7 +339,7 @@ function DecompteAvecDate({ dateConcours, nomConcours, couleurConcours }) {
 
   return (
     <div className="rounded-2xl p-4 md:p-5 bg-white" style={{ border: `1px solid ${couleur}30` }}>
-      <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Épreuves écrites</p>
+      <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Épreuves écrites</p>
       <p className="text-sm font-bold" style={{ color: couleur }}>{nomConcours}</p>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 6 }}>
         <span style={{ fontSize: 32, fontWeight: 900, color: couleur, lineHeight: 1 }}>{jours}</span>
@@ -505,7 +505,7 @@ function DashboardEtudiant({ user, navigate }) {
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           Bonjour, {user?.prenom || user?.username} 👋
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
       </div>
@@ -541,7 +541,7 @@ function DashboardEtudiant({ user, navigate }) {
               </p>
             </>
           ) : (
-            <p className="text-sm text-gray-400">Aucun cours planifié</p>
+            <p className="text-sm text-gray-500">Aucun cours planifié</p>
           )}
         </div>
 
@@ -557,8 +557,8 @@ function DashboardEtudiant({ user, navigate }) {
           ))
         ) : (
           <div className="rounded-2xl p-4 md:p-5 bg-white col-span-2 md:col-span-1" style={{ border: '1px solid #f0ece0' }}>
-            <p className="text-xs text-gray-400 uppercase tracking-widest mb-2">Concours</p>
-            <p className="text-sm text-gray-400">Aucun concours assigné</p>
+            <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">Concours</p>
+            <p className="text-sm text-gray-500">Aucun concours assigné</p>
           </div>
         )}
       </div>
@@ -571,7 +571,7 @@ function DashboardEtudiant({ user, navigate }) {
               <h2 className="font-bold text-base md:text-lg" style={{ color: '#071020' }}>
                 Vos compétences par matière
               </h2>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5">
                 Basé sur vos notes réelles · {concoursVisibles.length} concours
               </p>
             </div>
@@ -616,7 +616,7 @@ function DashboardEtudiant({ user, navigate }) {
             </div>
           ) : coursTriees.length === 0 ? (
             <div className="text-center py-6">
-              <p className="text-sm text-gray-400">Aucun cours dans votre planning</p>
+              <p className="text-sm text-gray-500">Aucun cours dans votre planning</p>
               <p className="text-xs text-gray-300 mt-1">L'emploi du temps sera renseigné par votre administration</p>
             </div>
           ) : (
@@ -629,7 +629,7 @@ function DashboardEtudiant({ user, navigate }) {
                     <div className="w-1 h-10 rounded-full flex-shrink-0" style={{ background: couleur }} />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-gray-800 truncate">{cours.matiere}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-gray-500 mt-0.5">
                         {cours.jour} {cours.heure_debut}–{cours.heure_fin}
                         {cours.salle ? ` · ${cours.salle}` : ''}
                       </p>
@@ -666,7 +666,7 @@ function DashboardEtudiant({ user, navigate }) {
             </div>
           ) : messages.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-sm text-gray-400">Aucun message pour le moment</p>
+              <p className="text-sm text-gray-500">Aucun message pour le moment</p>
               <p className="text-xs text-gray-300 mt-1">Vos professeurs vous contacteront ici</p>
             </div>
           ) : (
@@ -699,7 +699,7 @@ function DashboardEtudiant({ user, navigate }) {
                       style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.15)' }}>
                       <p className="text-xs font-bold mb-1" style={{ color: '#C9A84C' }}>{msg.sujet}</p>
                       <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{msg.contenu}</p>
-                      <p className="text-xs text-gray-400 mt-2">
+                      <p className="text-xs text-gray-500 mt-2">
                         De : {msg.expediteur?.prenom || ''} {msg.expediteur?.nom || msg.expediteur?.username} —
                         Le {new Date(msg.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </p>

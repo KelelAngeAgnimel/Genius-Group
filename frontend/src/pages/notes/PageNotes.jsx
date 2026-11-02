@@ -17,7 +17,7 @@ export default function PageNotes() {
           <div>
             <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#7B4CC9' }}>Outils</p>
             <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Notes de la classe</h1>
-            <p className="text-gray-400 text-sm mt-1">Saisissez et suivez les notes par concours, matière et période.</p>
+            <p className="text-gray-500 text-sm mt-1">Saisissez et suivez les notes par concours, matière et période.</p>
           </div>
           {estAdmin && (
             <Link to="/admin/vue-globale" className="text-xs font-bold underline" style={{ color: '#7B4CC9' }}>Voir la vue globale par concours →</Link>
@@ -33,7 +33,7 @@ export default function PageNotes() {
       <div className="mb-6">
         <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Outils</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Mes notes</h1>
-        <p className="text-gray-400 text-sm mt-1">Votre progression, matière par matière.</p>
+        <p className="text-gray-500 text-sm mt-1">Votre progression, matière par matière.</p>
       </div>
       <TableauNotesEleve />
       <MesNotes />

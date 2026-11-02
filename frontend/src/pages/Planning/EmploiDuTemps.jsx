@@ -148,21 +148,21 @@ export default function EmploiDuTemps() {
           <div className="bg-white rounded-2xl p-4" style={{ border: '1px solid #f0ece0' }}>
             <div className="flex items-center justify-between mb-4">
               <button onClick={moisPrecedent}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-50 transition text-sm">
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50 transition text-sm">
                 &lt;
               </button>
               <p className="text-sm font-bold" style={{ color: '#071020' }}>
                 {moisNoms[moisActuel]} {anneeActuelle}
               </p>
               <button onClick={moisSuivant}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-50 transition text-sm">
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50 transition text-sm">
                 &gt;
               </button>
             </div>
 
             <div className="grid grid-cols-7 gap-0.5 mb-2">
               {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((j, i) => (
-                <div key={i} className="text-center text-xs font-semibold text-gray-400 py-1">{j}</div>
+                <div key={i} className="text-center text-xs font-semibold text-gray-500 py-1">{j}</div>
               ))}
             </div>
 
@@ -254,7 +254,7 @@ export default function EmploiDuTemps() {
             <div className="bg-white rounded-2xl overflow-hidden" style={{ border: '1px solid #f0ece0' }}>
 
               {/* Indice de défilement horizontal, visible seulement sur petit écran */}
-              <p className="md:hidden text-xs text-gray-400 px-3 pt-2 pb-1">
+              <p className="md:hidden text-xs text-gray-500 px-3 pt-2 pb-1">
                 ← Fais glisser pour voir tous les jours →
               </p>
 
@@ -286,7 +286,7 @@ export default function EmploiDuTemps() {
                         style={{ gridTemplateColumns: '60px repeat(6, 1fr)', minHeight: '60px' }}>
 
                         {/* Heure */}
-                        <div className="p-2 border-r border-b text-xs text-gray-400 font-medium flex-shrink-0"
+                        <div className="p-2 border-r border-b text-xs text-gray-500 font-medium flex-shrink-0"
                           style={{ borderColor: '#f0ece0' }}>
                           {heure}
                         </div>
@@ -312,9 +312,9 @@ export default function EmploiDuTemps() {
                                   <p className="text-xs font-bold leading-tight" style={{ color: ev.couleur }}>
                                     {ev.titre}
                                   </p>
-                                  <p className="text-xs text-gray-400 mt-0.5">{ev.debut} - {ev.fin}</p>
-                                  {ev.salle && <p className="text-xs text-gray-400">{ev.salle}</p>}
-                                  {ev.prof && <p className="text-xs text-gray-400 italic">{ev.prof}</p>}
+                                  <p className="text-xs text-gray-500 mt-0.5">{ev.debut} - {ev.fin}</p>
+                                  {ev.salle && <p className="text-xs text-gray-500">{ev.salle}</p>}
+                                  {ev.prof && <p className="text-xs text-gray-500 italic">{ev.prof}</p>}
                                 </div>
                               )}
                             </div>
@@ -354,7 +354,7 @@ export default function EmploiDuTemps() {
                             style={{ background: ev.couleur }} />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-bold text-gray-800">{ev.titre}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">
+                            <p className="text-xs text-gray-500 mt-0.5">
                               {ev.debut} - {ev.fin}{ev.salle ? ` — ${ev.salle}` : ''}{ev.prof ? ` — ${ev.prof}` : ''}
                             </p>
                           </div>

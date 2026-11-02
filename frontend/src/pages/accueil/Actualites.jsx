@@ -58,7 +58,7 @@ export default function Actualites() {
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           Sites officiels & Actualités
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           Suivez les dernières actualités de vos concours
         </p>
       </div>
@@ -87,7 +87,7 @@ export default function Actualites() {
 
             <div className="p-5">
               <p className="font-bold text-white text-sm">{carte.sigle}</p>
-              <p className="text-xs text-gray-400 mt-1 leading-relaxed">{carte.nom}</p>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">{carte.nom}</p>
               <div className="flex flex-wrap gap-1.5 mt-3">
                 {carte.tags.map((tag, ti) => (
                   <span key={ti} className="text-xs px-2 py-0.5 rounded-full"
