@@ -273,7 +273,7 @@ export default function GestionPlanning() {
             <label className="block text-xs font-semibold text-gray-500 mb-2">
               Qui peut voir ce cours ? <span className="text-red-400">*</span>
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {Object.entries(modaliteConfig).map(([key, val]) => (
                 <button key={key} type="button"
                   onClick={() => handleChange('modalite', key)}
