@@ -25,3 +25,13 @@ export const iaLimiter = rateLimit({
   keyGenerator: (req) => `user:${req.user?.id ?? ipKeyGenerator(req.ip)}`,
   message: reponse('Trop de requêtes. Patientez une minute.')
 })
+
+// Dépôts de fichiers : 15 envois / 15 min par utilisateur (à placer APRÈS verifyToken)
+export const depotLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 15,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  keyGenerator: (req) => `depot:${req.user?.id ?? ipKeyGenerator(req.ip)}`,
+  message: reponse('Trop d’envois. Réessayez dans quelques minutes.')
+})

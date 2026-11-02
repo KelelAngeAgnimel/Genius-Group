@@ -13,6 +13,7 @@ import meetingsRoutes from './routes/meetings.js'
 import quizRoutes from './routes/quiz.js'     
 import planningRoutes from './routes/planning.js'
 import concoursRoutes from './routes/concours.js'
+import evaluationsRoutes from './routes/evaluations.js'
 
 const app = express()
 
@@ -45,6 +46,7 @@ app.use('/api/meetings', meetingsRoutes)
 app.use('/api/quiz', quizRoutes)
 app.use('/api/planning', planningRoutes)
 app.use('/api/concours', concoursRoutes)
+app.use('/api/evaluations', evaluationsRoutes)
 
 app.get('/', (req, res) => res.send('API Portail Bacheliers 🚀'))
 
