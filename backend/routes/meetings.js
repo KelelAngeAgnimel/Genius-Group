@@ -3,6 +3,7 @@ import { z } from 'zod'
 import supabase from '../supabase.js'
 import { verifyToken, requireRole } from '../middleware/authMiddleware.js'
 import { validate } from '../middleware/validate.js'
+import { peutAcceder, peutPublierPour, concoursContenuSchema } from '../lib/concours.js'
 
 const router = express.Router()
 
@@ -10,7 +11,7 @@ const texte = (max) => z.string().trim().max(max)
 const lienSchema = z.string().trim().max(500).refine(v => {
   try { return new URL(v).protocol === 'https:' } catch { return false }
 }, 'Le lien doit être une URL https valide')
-const concoursSchema = z.enum(['inphb', 'esatic', 'both'])
+const concoursSchema = concoursContenuSchema
 
 const creerSchema = z.object({
   titre: texte(200).min(1),
@@ -31,53 +32,35 @@ const modifierSchema = z.object({
 // Admin : tout. Professeur : uniquement ses propres cours (created_by).
 async function chargerCoursModifiable(req, res) {
   const { data: cours, error } = await supabase
-    .from('meetings').select('id, created_by').eq('id', req.params.id).maybeSingle()
+    .from('meetings').select('id, created_by, concours').eq('id', req.params.id).maybeSingle()
   if (error) throw error
   if (!cours) { res.status(404).json({ error: 'Cours non trouvé' }); return null }
+  if (!peutPublierPour(req.user, cours.concours)) {
+    res.status(403).json({ error: 'Ce cours ne concerne pas vos concours' }); return null
+  }
   if (req.user.role !== 'admin' && String(cours.created_by) !== String(req.user.id)) {
     res.status(403).json({ error: 'Vous ne pouvez modifier que vos propres cours' }); return null
   }
   return cours
 }
 
-// Détermine quels concours un rôle donné peut voir
-function concoursAutorises(role) {
-  // Personnel : voit tout
-  if (role === 'admin' || role === 'professeur') {
-    return ['inphb', 'esatic', 'both']
-  }
-  // Étudiants inscrits aux deux concours (ou aux trois) : voient tout
-  if (role === 'etudiant_both' || role === 'etudiant_all') {
-    return ['inphb', 'esatic', 'both']
-  }
-  // INP-HB (seul ou avec CME) : cours INP-HB + cours communs
-  if (role === 'etudiant_inphb' || role === 'etudiant_inphb_cme') {
-    return ['inphb', 'both']
-  }
-  // ESATIC (seul ou avec CME) : cours ESATIC + cours communs
-  if (role === 'etudiant_esatic' || role === 'etudiant_esatic_cme') {
-    return ['esatic', 'both']
-  }
-  // Par défaut : au moins les cours communs
-  return ['both']
-}
-
-// GET /api/meetings — cours filtrés selon le concours de l'utilisateur
+// GET /api/meetings — cours filtrés selon les concours de l'utilisateur
 router.get('/', verifyToken, async (req, res) => {
-  const concours = concoursAutorises(req.user.role)
   const { data, error } = await supabase
     .from('meetings')
     .select('*')
-    .in('concours', concours)
     .order('created_at', { ascending: false })
 
   if (error) throw error
-  res.json(data)
+  res.json((data || []).filter(c => peutAcceder(req.user, c.concours)))
 })
 
 // POST /api/meetings — créer un cours (professeur / admin)
 router.post('/', verifyToken, requireRole('admin', 'professeur'), validate(creerSchema), async (req, res) => {
   const { titre, prof, heure, lien, concours } = req.body
+  if (!peutPublierPour(req.user, concours || 'both')) {
+    return res.status(403).json({ error: 'Vous ne pouvez publier que pour vos concours' })
+  }
   const { data, error } = await supabase
     .from('meetings')
     .insert([{
@@ -99,7 +82,11 @@ router.post('/', verifyToken, requireRole('admin', 'professeur'), validate(creer
 
 // PATCH /api/meetings/:id — modifier un cours (admin : tout, professeur : les siens)
 router.patch('/:id', verifyToken, requireRole('admin', 'professeur'), validate(modifierSchema), async (req, res) => {
-  if (!(await chargerCoursModifiable(req, res))) return
+  const cours = await chargerCoursModifiable(req, res)
+  if (!cours) return
+  if (req.body.concours !== undefined && !peutPublierPour(req.user, req.body.concours)) {
+    return res.status(403).json({ error: 'Vous ne pouvez publier que pour vos concours' })
+  }
 
   const updates = {}
   for (const k of ['titre', 'prof', 'heure', 'lien', 'concours', 'live']) {

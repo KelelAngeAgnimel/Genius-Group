@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken'
 import supabase from '../supabase.js'
+import { avecConcoursUn } from '../lib/inscriptions.js'
+import { estEtudiant as estEtudiantRole } from '../lib/concours.js'
 
 // Cache mémoire des utilisateurs (60 s) pour éviter une requête Supabase par appel.
 // Il est vidé pour un utilisateur dès que l'admin le modifie ou le supprime.
@@ -18,7 +20,7 @@ async function chargerUtilisateur(id) {
 
   const { data, error } = await supabase
     .from('users')
-    .select('id, matricule, username, role, concours, modalite, bloque')
+    .select('id, matricule, username, role, modalite, bloque')
     .eq('id', id)
     .maybeSingle()
 
@@ -27,8 +29,10 @@ async function chargerUtilisateur(id) {
     cache.delete(cle)
     return null
   }
-  cache.set(cle, { user: data, expire: Date.now() + TTL_MS })
-  return data
+  // Rôle normalisé (etudiant) + liste des concours (inscriptions, sinon ancien rôle)
+  const user = await avecConcoursUn(data)
+  cache.set(cle, { user, expire: Date.now() + TTL_MS })
+  return user
 }
 
 export const verifyToken = async (req, res, next) => {
@@ -57,7 +61,7 @@ export const verifyToken = async (req, res, next) => {
     matricule: user.matricule,
     username: user.username,
     role: user.role,
-    concours: user.concours,
+    concours: user.concours, // liste de codes : ['inphb', 'ensea']…
     modalite: user.modalite
   }
   next()
@@ -71,4 +75,4 @@ export const requireRole = (...roles) => (req, res, next) => {
   next()
 }
 
-export const estEtudiant = (role) => typeof role === 'string' && role.startsWith('etudiant')
+export const estEtudiant = estEtudiantRole

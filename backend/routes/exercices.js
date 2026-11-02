@@ -3,6 +3,8 @@ import { z } from 'zod'
 import supabase from '../supabase.js'
 import { verifyToken, requireRole, estEtudiant } from '../middleware/authMiddleware.js'
 import { validate } from '../middleware/validate.js'
+import { chargerAvecConcours } from '../lib/inscriptions.js'
+import { peutGererEleve } from '../lib/concours.js'
 
 const router = express.Router()
 
@@ -19,11 +21,12 @@ const statutSchema = z.object({ statut: z.string().trim().min(1).max(50) })
 router.post('/', verifyToken, requireRole('professeur', 'admin'), validate(creerSchema), async (req, res) => {
   const { titre, matiere, description, url_fichier, etudiant_id } = req.body
 
-  const { data: etu, error: errEtu } = await supabase
-    .from('users').select('id, role').eq('id', etudiant_id).maybeSingle()
-  if (errEtu) throw errEtu
+  const etu = await chargerAvecConcours(etudiant_id)
   if (!etu || !estEtudiant(etu.role)) {
     return res.status(404).json({ error: 'Étudiant introuvable' })
+  }
+  if (!peutGererEleve(req.user, etu)) {
+    return res.status(403).json({ error: 'Cet élève ne fait pas partie de vos concours' })
   }
 
   const { data, error } = await supabase

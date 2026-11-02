@@ -7,6 +7,7 @@ import { PDFParse } from 'pdf-parse'
 import { verifyToken } from '../middleware/authMiddleware.js'
 import { iaLimiter } from '../middleware/rateLimit.js'
 import { validate } from '../middleware/validate.js'
+import { peutAcceder, peutPublierPour, concoursContenuSchema, LIBELLES } from '../lib/concours.js'
 
 const court = (max) => z.string().trim().max(max)
 const genererIaSchema = z.object({
@@ -26,7 +27,7 @@ const creerQuizSchema = z.object({
   }).passthrough()).min(1).max(100),
   ai_genere: z.boolean().nullish(),
   duree_minutes: z.union([z.number(), z.string().max(6)]),
-  concours: court(30).nullish(),
+  concours: concoursContenuSchema.nullish(),
   modalite: court(30).nullish()
 })
 const soumettreSchema = z.object({
@@ -41,17 +42,11 @@ const MATIERES = {
   all: ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire', 'Mathématiques', 'Physique', 'Anglais', 'Français']
 }
 
-// Rôles autorisés par concours
-const ROLES_INPHB = ['etudiant_inphb', 'etudiant_both', 'etudiant_inphb_cme', 'etudiant_all']
-const ROLES_ESATIC = ['etudiant_esatic', 'etudiant_both', 'etudiant_esatic_cme', 'etudiant_all']
-
-function peutVoirQuiz(role, modalite, quizConcours, quizModalite) {
-  if (role === 'admin' || role === 'professeur') return true
-  // Vérifier concours
-  if (quizConcours === 'inphb' && !ROLES_INPHB.includes(role)) return false
-  if (quizConcours === 'esatic' && !ROLES_ESATIC.includes(role)) return false
+function peutVoirQuiz(user, quizConcours, quizModalite) {
+  if (user.role === 'admin' || user.role === 'professeur') return true
+  if (!peutAcceder(user, quizConcours)) return false
   // Vérifier modalité
-  if (quizModalite !== 'les_deux' && modalite && quizModalite !== modalite) return false
+  if (quizModalite !== 'les_deux' && user.modalite && quizModalite !== user.modalite) return false
   return true
 }
 
@@ -137,7 +132,7 @@ router.get('/', verifyToken, async (req, res) => {
 
       // Filtrer les quiz selon le concours et la modalité de l'étudiant
       const quizzesFiltres = quizzesData.filter(q =>
-        peutVoirQuiz(req.user.role, req.user.modalite, q.concours || 'all', q.modalite || 'les_deux')
+        peutVoirQuiz(req.user, q.concours || 'all', q.modalite || 'les_deux')
       )
       const quizzes = quizzesFiltres.map(q => ({
         ...q,
@@ -323,6 +318,9 @@ router.post('/', verifyToken, validate(creerQuizSchema), async (req, res) => {
   const { titre, matiere, niveau, questions, ai_genere, duree_minutes, concours, modalite } = req.body
   if (!titre || !matiere || !Array.isArray(questions) || questions.length === 0) {
     return res.status(400).json({ error: 'titre, matiere et au moins une question sont requis' })
+  }
+  if (!peutPublierPour(req.user, concours || 'all')) {
+    return res.status(403).json({ error: 'Vous ne pouvez publier que pour vos concours' })
   }
   const duree = parseInt(duree_minutes)
   if (!duree || duree < 1) {
@@ -566,7 +564,7 @@ router.post('/:id/soumettre', verifyToken, validate(soumettreSchema), async (req
           const noteSur20 = Math.round((score / questions.length) * 20 * 100) / 100
           // La table "notes" utilise des libellés différents de la table "quizzes"
           // pour le concours : on fait correspondre les deux conventions.
-          const concoursNote = { inphb: 'INP-HB', esatic: 'ESATIC', all: 'tous' }[quizInfo.concours] || 'tous'
+          const concoursNote = LIBELLES[quizInfo.concours] || 'tous'
           // Une "periode" propre au quiz évite d'écraser une note saisie
           // manuellement par le professeur pour la même matière/concours.
           const periodeNote = `Genius Eval — ${quizInfo.titre}`

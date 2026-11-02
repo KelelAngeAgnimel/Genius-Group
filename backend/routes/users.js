@@ -4,14 +4,21 @@ import supabase from '../supabase.js'
 import { z } from 'zod'
 import { verifyToken, requireRole, invalidateUserCache } from '../middleware/authMiddleware.js'
 import { validate } from '../middleware/validate.js'
+import { avecConcours, avecConcoursUn, definirInscriptions } from '../lib/inscriptions.js'
+import { CODES_CONCOURS, concoursDepuisAncienRole, roleDeBase, peutGererEleve } from '../lib/concours.js'
 
 const router = express.Router()
 
+// Rôles du nouveau modèle ; les anciens rôles combinés restent acceptés (ancien frontend
+// pendant le déploiement) et sont convertis en role + concours.
 const ROLES = [
-  'admin', 'professeur',
+  'admin', 'professeur', 'etudiant',
   'etudiant_inphb', 'etudiant_esatic', 'etudiant_inphb_cme', 'etudiant_esatic_cme',
   'etudiant_cme', 'etudiant_both', 'etudiant_all'
 ]
+// `concours` : liste de codes (nouveau) ou chaîne héritée de l'ancien formulaire (ignorée)
+const concoursSchema = z.union([z.array(z.enum(CODES_CONCOURS)).max(CODES_CONCOURS.length), z.string().trim().max(50)])
+const listeConcours = (v) => (Array.isArray(v) ? v : null)
 const nomSchema = z.string().trim().max(100)
 
 const creerSchema = z.object({
@@ -20,14 +27,14 @@ const creerSchema = z.object({
   nom: nomSchema.nullish(),
   prenom: nomSchema.nullish(),
   role: z.enum(ROLES).optional(),
-  concours: z.string().trim().max(50).optional(),
+  concours: concoursSchema.optional(),
   modalite: z.enum(['en_ligne', 'presentiel']).nullish()
 })
 const modifierSchema = z.object({
   nom: nomSchema.optional(),
   prenom: nomSchema.optional(),
   role: z.enum(ROLES).optional(),
-  concours: z.string().trim().max(50).optional(),
+  concours: concoursSchema.optional(),
   modalite: z.enum(['en_ligne', 'presentiel']).optional(),
   password: z.string().min(6).max(200).optional().or(z.literal('')),
   bloque: z.boolean().optional()
@@ -72,12 +79,12 @@ async function prochainMatriculeLibre() {
 router.get('/me', verifyToken, async (req, res) => {
   const { data: user, error } = await supabase
     .from('users')
-    .select('id, matricule, username, nom, prenom, role, concours, modalite, created_at')
+    .select('id, matricule, username, nom, prenom, role, modalite, created_at')
     .eq('id', req.user.id)
     .single()
 
   if (error) return res.status(404).json({ message: 'Utilisateur non trouvé' })
-  res.json(user)
+  res.json(await avecConcoursUn(user)) // role normalisé + concours: ['inphb', …]
 })
 
 // ══════════════════════════════════════════
@@ -86,13 +93,20 @@ router.get('/me', verifyToken, async (req, res) => {
 // Accepte la modalité (en_ligne / presentiel)
 // ══════════════════════════════════════════
 router.post('/create', verifyToken, requireRole('admin'), validate(creerSchema), async (req, res) => {
-  const { username, password, nom, prenom, role, concours, modalite } = req.body
+  const { username, password, nom, prenom, modalite } = req.body
+  const roleDemande = req.body.role || 'etudiant'
+  const role = roleDeBase(roleDemande)
+  // Concours choisis (cases à cocher) ; à défaut, déduits d'un ancien rôle combiné
+  const concours = listeConcours(req.body.concours) ?? concoursDepuisAncienRole(roleDemande)
 
   // Pour les profs et admins, le username est obligatoire
   // Pour les étudiants, le matricule généré automatiquement servira d'identifiant
-  const estEtudiant = role?.startsWith('etudiant')
+  const estEtudiant = role === 'etudiant'
   if (!estEtudiant && !username) {
     return res.status(400).json({ message: 'L\'identifiant est requis pour les professeurs et administrateurs' })
+  }
+  if (estEtudiant && concours.length === 0) {
+    return res.status(400).json({ message: 'Choisissez au moins un concours pour un étudiant' })
   }
   if (estEtudiant && !['en_ligne', 'presentiel'].includes(modalite)) {
     return res.status(400).json({ message: 'La modalité (en ligne ou présentiel) est requise pour un étudiant' })
@@ -105,11 +119,11 @@ router.post('/create', verifyToken, requireRole('admin'), validate(creerSchema),
       password: hashedPassword,
       nom: nom || null,
       prenom: prenom || null,
-      role: role || 'etudiant_inphb',
-      concours: concours || 'aucun',
+      role,
+      concours: 'aucun', // colonne héritée, remplacée par la table inscriptions
       modalite: estEtudiant ? modalite : null,
     }
-    const champsSelect = 'id, matricule, username, nom, prenom, role, concours, modalite, created_at'
+    const champsSelect = 'id, matricule, username, nom, prenom, role, modalite, created_at'
 
     // Profs / admins : username fourni manuellement, pas de matricule
     if (!estEtudiant) {
@@ -119,7 +133,8 @@ router.post('/create', verifyToken, requireRole('admin'), validate(creerSchema),
         .select(champsSelect)
 
       if (error) return erreurCreation(res, error)
-      return res.status(201).json({ message: 'Utilisateur créé', user: data[0] })
+      await definirInscriptions(data[0].id, concours)
+      return res.status(201).json({ message: 'Utilisateur créé', user: await avecConcoursUn(data[0]) })
     }
 
     // Étudiants : le matricule sert d'identifiant. On part du plus petit
@@ -135,7 +150,8 @@ router.post('/create', verifyToken, requireRole('admin'), validate(creerSchema),
         .select(champsSelect)
 
       if (!error) {
-        return res.status(201).json({ message: 'Utilisateur créé', user: data[0] })
+        await definirInscriptions(data[0].id, concours)
+        return res.status(201).json({ message: 'Utilisateur créé', user: await avecConcoursUn(data[0]) })
       }
       // 23505 = violation d'unicité → ce numéro est pris, on essaie le suivant
       if (error.code === '23505') continue
@@ -159,7 +175,7 @@ function erreurCreation(res, error) {
 router.get('/all', verifyToken, requireRole('admin', 'professeur'), async (req, res) => {
   let query = supabase
     .from('users')
-    .select('id, matricule, username, nom, prenom, role, concours, modalite, bloque, created_at')
+    .select('id, matricule, username, nom, prenom, role, modalite, bloque, created_at')
     .order('created_at', { ascending: true })
 
   // Un professeur ne voit que les élèves (ni admins, ni autres professeurs)
@@ -167,7 +183,9 @@ router.get('/all', verifyToken, requireRole('admin', 'professeur'), async (req, 
 
   const { data, error } = await query
   if (error) throw error
-  res.json({ users: data })
+  const users = await avecConcours(data)
+  // Un professeur rattaché à des concours ne voit que les élèves de ces concours
+  res.json({ users: req.user.role === 'professeur' ? users.filter(u => peutGererEleve(req.user, u)) : users })
 })
 
 // ══════════════════════════════════════════
@@ -187,12 +205,15 @@ router.delete('/:id', verifyToken, requireRole('admin'), async (req, res) => {
 // PATCH /api/users/:id — Modifier un utilisateur
 // ══════════════════════════════════════════
 router.patch('/:id', verifyToken, requireRole('admin'), validate(modifierSchema), async (req, res) => {
-  const { nom, prenom, role, concours, password, modalite, bloque } = req.body
+  const { nom, prenom, password, modalite, bloque } = req.body
+  const role = req.body.role ? roleDeBase(req.body.role) : undefined
+  // Concours : liste explicite, sinon déduits d'un ancien rôle combiné (ancien frontend)
+  const concours = listeConcours(req.body.concours) ?? (req.body.role ? concoursDepuisAncienRole(req.body.role) : [])
+  const changerConcours = listeConcours(req.body.concours) !== null || concours.length > 0
   const updates = {}
   if (nom) updates.nom = nom
   if (prenom) updates.prenom = prenom
   if (role) updates.role = role
-  if (concours) updates.concours = concours
   if (modalite) updates.modalite = modalite
   if (password) updates.password = await bcrypt.hash(password, 10)
   if (typeof bloque === 'boolean') updates.bloque = bloque
@@ -201,21 +222,20 @@ router.patch('/:id', verifyToken, requireRole('admin'), validate(modifierSchema)
   if (String(req.params.id) === String(req.user.id) && (updates.bloque === true || (updates.role && updates.role !== 'admin'))) {
     return res.status(400).json({ message: 'Action impossible sur votre propre compte' })
   }
-  if (Object.keys(updates).length === 0) {
+  if (Object.keys(updates).length === 0 && !changerConcours) {
     return res.status(400).json({ message: 'Aucune modification fournie' })
   }
 
-  const { data, error } = await supabase
-    .from('users')
-    .update(updates)
-    .eq('id', req.params.id)
-    .select('id, matricule, username, nom, prenom, role, concours, modalite, bloque, created_at')
-    .maybeSingle()
+  const colonnes = 'id, matricule, username, nom, prenom, role, modalite, bloque, created_at'
+  const { data, error } = Object.keys(updates).length > 0
+    ? await supabase.from('users').update(updates).eq('id', req.params.id).select(colonnes).maybeSingle()
+    : await supabase.from('users').select(colonnes).eq('id', req.params.id).maybeSingle()
 
   if (error) throw error
   if (!data) return res.status(404).json({ message: 'Utilisateur non trouvé' })
+  if (changerConcours) await definirInscriptions(data.id, concours)
   invalidateUserCache(req.params.id)
-  res.json({ success: true, user: data })
+  res.json({ success: true, user: await avecConcoursUn(data) })
 })
 
 export default router

@@ -4,6 +4,7 @@ import { z } from 'zod'
 import supabase from '../supabase.js'
 import { verifyToken } from '../middleware/authMiddleware.js'
 import { validate } from '../middleware/validate.js'
+import { peutAcceder, peutPublierPour } from '../lib/concours.js'
 
 const router = express.Router()
 
@@ -29,29 +30,6 @@ const upload = multer({
   }
 })
 
-// Rôles par concours (un étudiant "all"/"both" fait plusieurs concours)
-const ROLES_INPHB  = ['etudiant_inphb', 'etudiant_both', 'etudiant_inphb_cme', 'etudiant_all']
-const ROLES_ESATIC = ['etudiant_esatic', 'etudiant_both', 'etudiant_esatic_cme', 'etudiant_all']
-const ROLES_CME    = ['etudiant_cme', 'etudiant_inphb_cme', 'etudiant_esatic_cme', 'etudiant_all']
-
-function peutAcceder(role, concours) {
-  if (role === 'admin' || role === 'professeur') return true
-
-  // Normalisation : insensible à la casse, tolère 'INP-HB', 'inphb', 'inp-hb + esatic', 'all', 'tous'...
-  const c = (concours || '').toString().trim().toLowerCase()
-  if (c === 'tous' || c === 'all') return true
-
-  // Une ressource peut cibler plusieurs concours à la fois (valeur combinée)
-  const cibleINPHB  = c.includes('inp')
-  const cibleESATIC = c.includes('esatic')
-  const cibleCME    = c.includes('cme')
-
-  if (cibleINPHB  && ROLES_INPHB.includes(role))  return true
-  if (cibleESATIC && ROLES_ESATIC.includes(role)) return true
-  if (cibleCME    && ROLES_CME.includes(role))    return true
-  return false
-}
-
 // ══════════════════════════════════════════
 // GET — Liste des ressources (sans URL)
 // ══════════════════════════════════════════
@@ -67,7 +45,7 @@ router.get('/', verifyToken, async (req, res) => {
 
     // Filtrer selon le concours — ne jamais exposer l'URL du fichier.
     // Les évaluations sont exclues de la Bibliothèque : elles vivent dans la page « Évaluation ».
-    const filtrees = data.filter(r => !r.est_evaluation && peutAcceder(req.user.role, r.concours))
+    const filtrees = data.filter(r => !r.est_evaluation && peutAcceder(req.user, r.concours))
     res.json({ ressources: filtrees })
   } catch (err) {
     console.error(err)
@@ -90,7 +68,7 @@ router.get('/toutes', verifyToken, async (req, res) => {
 
     if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
     // Les évaluations sont gérées à part (page « Évaluation »), on ne les mélange pas ici.
-    res.json({ ressources: data.filter(r => !r.est_evaluation) })
+    res.json({ ressources: data.filter(r => !r.est_evaluation && peutAcceder(req.user, r.concours)) })
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur' })
   }
@@ -111,7 +89,7 @@ router.get('/evaluations', verifyToken, async (req, res) => {
 
     if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
 
-    const filtrees = data.filter(r => peutAcceder(req.user.role, r.concours))
+    const filtrees = data.filter(r => peutAcceder(req.user, r.concours))
     res.json({ ressources: filtrees })
   } catch (err) {
     console.error(err)
@@ -167,7 +145,7 @@ router.get('/ouvrir/:id', verifyToken, async (req, res) => {
     if (!ressource.visible) {
       return res.status(403).json({ message: 'Cette ressource n\'est pas disponible' })
     }
-    if (!peutAcceder(req.user.role, ressource.concours)) {
+    if (!peutAcceder(req.user, ressource.concours)) {
       return res.status(403).json({ message: 'Accès refusé pour votre concours' })
     }
     if (!ressource.storage_path) {
@@ -235,6 +213,9 @@ router.post('/upload', verifyToken, (req, res, next) => {
     const { titre, description, type, matiere, concours } = req.body
     if (!titre || !matiere || !concours) {
       return res.status(400).json({ message: 'titre, matière et concours sont requis' })
+    }
+    if (!peutPublierPour(req.user, concours)) {
+      return res.status(403).json({ message: 'Vous ne pouvez publier que pour vos concours' })
     }
 
     // FormData transmet des chaînes : on convertit proprement en booléen

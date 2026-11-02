@@ -3,6 +3,8 @@ import { z } from 'zod'
 import supabase from '../supabase.js'
 import { verifyToken, requireRole, estEtudiant } from '../middleware/authMiddleware.js'
 import { validate } from '../middleware/validate.js'
+import { chargerAvecConcours, avecConcours } from '../lib/inscriptions.js'
+import { peutGererEleve, peutPublierPour, estPersonnelRestreint } from '../lib/concours.js'
 
 const router = express.Router()
 
@@ -21,12 +23,15 @@ router.post('/ajouter', verifyToken, requireRole('professeur', 'admin'), validat
   const { etudiant_id, matiere, concours, note, periode } = req.body
 
   // L'étudiant doit exister et être un élève
-  const { data: etu, error: errEtu } = await supabase
-    .from('users').select('id, role').eq('id', etudiant_id).maybeSingle()
-  if (errEtu) throw errEtu
+  const etu = await chargerAvecConcours(etudiant_id)
   if (!etu) return res.status(404).json({ message: 'Étudiant introuvable' })
   if (!estEtudiant(etu.role)) {
     return res.status(400).json({ message: 'Les notes ne peuvent être saisies que pour des élèves' })
+  }
+
+  // Un professeur rattaché à des concours ne note que ses élèves, pour ses concours
+  if (!peutGererEleve(req.user, etu) || (estPersonnelRestreint(req.user) && !peutPublierPour(req.user, concours))) {
+    return res.status(403).json({ message: 'Cet élève ou ce concours ne fait pas partie de vos concours' })
   }
 
   // Vérifier si une note existe déjà pour cet étudiant/matière/période
@@ -67,6 +72,12 @@ router.get('/mes-notes', verifyToken, async (req, res) => {
 
 // GET — Notes d'un étudiant spécifique (prof et admin)
 router.get('/etudiant/:id', verifyToken, requireRole('professeur', 'admin'), async (req, res) => {
+  if (estPersonnelRestreint(req.user)) {
+    const etu = await chargerAvecConcours(req.params.id)
+    if (!etu || !peutGererEleve(req.user, etu)) {
+      return res.status(403).json({ message: 'Cet élève ne fait pas partie de vos concours' })
+    }
+  }
   const { data, error } = await supabase
     .from('notes')
     .select('*, professeur:professeur_id(username, prenom, nom)')
@@ -92,7 +103,15 @@ router.get('/classe', verifyToken, requireRole('professeur', 'admin'), async (re
 
   const { data, error } = await query
   if (error) throw error
-  res.json({ notes: data })
+
+  // Professeur rattaché : uniquement les notes de ses élèves
+  let notes = data
+  if (estPersonnelRestreint(req.user)) {
+    const eleves = await avecConcours((data || []).map(n => n.etudiant).filter(Boolean))
+    const autorises = new Set(eleves.filter(e => peutGererEleve(req.user, e)).map(e => String(e.id)))
+    notes = (data || []).filter(n => n.etudiant && autorises.has(String(n.etudiant.id)))
+  }
+  res.json({ notes })
 })
 
 // DELETE — Supprimer une note (admin seulement)

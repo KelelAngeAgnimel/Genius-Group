@@ -3,6 +3,8 @@ import { z } from 'zod'
 import supabase from '../supabase.js'
 import { verifyToken, requireRole, estEtudiant } from '../middleware/authMiddleware.js'
 import { validate } from '../middleware/validate.js'
+import { avecConcours } from '../lib/inscriptions.js'
+import { peutGererEleve, CODES_CONCOURS } from '../lib/concours.js'
 
 const router = express.Router()
 
@@ -12,7 +14,7 @@ const contenuSchema = z.string().trim().min(1).max(5000)
 
 const envoyerSchema = z.object({ a_id: idSchema, sujet: sujetSchema, contenu: contenuSchema })
 const diffuserSchema = z.object({
-  groupe: z.enum(['tous', 'inphb', 'esatic', 'all']).optional().default('tous'),
+  groupe: z.enum(['tous', 'inphb', 'esatic', 'cme', 'ensea', 'all']).optional().default('tous'),
   sujet: sujetSchema,
   contenu: contenuSchema
 })
@@ -85,22 +87,23 @@ router.patch('/:id/lu', verifyToken, async (req, res) => {
 })
 
 // POST — Diffuser un message à un groupe d'étudiants
-// groupe : 'tous' | 'inphb' | 'esatic' | 'all'
+// groupe : 'tous' | code de concours | 'all'
 router.post('/diffuser', verifyToken, requireRole('admin', 'professeur'), validate(diffuserSchema), async (req, res) => {
   const { groupe, sujet, contenu } = req.body
 
-  const { data: etudiants, error: errE } = await supabase
+  const { data: bruts, error: errE } = await supabase
     .from('users')
     .select('id, role')
     .like('role', 'etudiant%')
   if (errE) throw errE
+  const etudiants = await avecConcours(bruts)
 
-  // Filtrer selon le groupe ciblé (un étudiant "all" fait aussi INP-HB et ESATIC)
-  const cibles = (etudiants || []).filter(u => {
-    const r = u.role || ''
-    if (groupe === 'inphb')  return r.includes('inphb') || r === 'etudiant_both' || r === 'etudiant_all'
-    if (groupe === 'esatic') return r.includes('esatic') || r === 'etudiant_both' || r === 'etudiant_all'
-    if (groupe === 'all')    return r === 'etudiant_all'
+  // Groupe ciblé : un code de concours (inscrit à ce concours), 'all' (inscrit à tous les concours
+  // historiques) ou 'tous'. Un professeur rattaché ne diffuse qu'à ses propres élèves.
+  const cibles = etudiants.filter(u => {
+    if (!peutGererEleve(req.user, u)) return false
+    if (CODES_CONCOURS.includes(groupe)) return u.concours.includes(groupe)
+    if (groupe === 'all') return ['inphb', 'esatic', 'cme'].every(c => u.concours.includes(c))
     return true // 'tous'
   })
 

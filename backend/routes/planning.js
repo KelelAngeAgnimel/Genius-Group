@@ -3,6 +3,7 @@ import { z } from 'zod'
 import supabase from '../supabase.js'
 import { verifyToken, requireRole } from '../middleware/authMiddleware.js'
 import { validate } from '../middleware/validate.js'
+import { peutAcceder, concoursContenuSchema } from '../lib/concours.js'
 
 const router = express.Router()
 
@@ -15,7 +16,7 @@ const planningBase = {
   matiere: court(100).min(1),
   type: court(30).nullish(),
   salle: court(100).nullish(),
-  concours: court(30).nullish(),
+  concours: concoursContenuSchema.nullish(),
   professeur_id: idOpt,
   modalite: z.enum(['en_ligne', 'presentiel', 'les_deux'])
 }
@@ -27,26 +28,15 @@ const SELECT_PLANNING = `
   professeur:professeur_id ( id, nom, prenom )
 `
 
-// Concours autorisés selon le rôle
-function concoursAutorises(role) {
-  if (role === 'admin' || role === 'professeur') return ['inphb', 'esatic', 'both', 'all']
-  if (role === 'etudiant_inphb') return ['inphb', 'both', 'all']
-  if (role === 'etudiant_esatic') return ['esatic', 'both', 'all']
-  if (role === 'etudiant_all') return ['inphb', 'esatic', 'both', 'all']
-  return ['both', 'all']
-}
-
 const avecProf = (c) => ({ ...c, prof: c.professeur ? `${c.professeur.prenom} ${c.professeur.nom}` : null })
 
 // GET /api/planning — cours filtrés par concours ET modalité de l'étudiant
 router.get('/', verifyToken, async (req, res) => {
-  const concours = concoursAutorises(req.user.role)
   const modalite = req.user.modalite // 'en_ligne', 'presentiel', ou null pour admin/prof
 
   let query = supabase
     .from('cours_planning')
     .select(SELECT_PLANNING)
-    .in('concours', concours)
     .order('jour')
     .order('heure_debut')
 
@@ -58,7 +48,7 @@ router.get('/', verifyToken, async (req, res) => {
 
   const { data, error } = await query
   if (error) throw error
-  res.json((data || []).map(avecProf))
+  res.json((data || []).filter(c => peutAcceder(req.user, c.concours)).map(avecProf))
 })
 
 // POST /api/planning — créer un cours (admin uniquement)

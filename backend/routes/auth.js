@@ -5,6 +5,7 @@ import { z } from 'zod'
 import supabase from '../supabase.js'
 import { validate } from '../middleware/validate.js'
 import { loginLimiter } from '../middleware/rateLimit.js'
+import { avecConcoursUn } from '../lib/inscriptions.js'
 
 const router = express.Router()
 
@@ -26,27 +27,30 @@ router.post('/login', loginLimiter, validate(loginSchema), async (req, res) => {
   const { matricule, password } = req.body
 
   // Chercher d'abord par matricule (étudiants), puis par username (profs et admins)
-  let { data: user, error } = await supabase
+  let { data: utilisateur, error } = await supabase
     .from('users')
     .select('*')
     .eq('matricule', matricule)
     .maybeSingle()
   if (error) throw error
 
-  if (!user) {
+  if (!utilisateur) {
     const res2 = await supabase
       .from('users')
       .select('*')
       .eq('username', matricule) // le champ "matricule" du body peut contenir un username
       .maybeSingle()
     if (res2.error) throw res2.error
-    user = res2.data
+    utilisateur = res2.data
   }
 
-  const validPassword = await bcrypt.compare(password, user?.password || FAUX_HASH)
-  if (!user || !validPassword) {
+  const validPassword = await bcrypt.compare(password, utilisateur?.password || FAUX_HASH)
+  if (!utilisateur || !validPassword) {
     return res.status(401).json({ message: MSG_IDENTIFIANTS, error: MSG_IDENTIFIANTS })
   }
+
+  // Rôle normalisé (etudiant / professeur / admin) + liste des concours
+  const user = await avecConcoursUn(utilisateur)
 
   if (user.bloque) {
     return res.status(403).json({ message: 'Ce compte a été bloqué. Contactez l\'administration.' })
