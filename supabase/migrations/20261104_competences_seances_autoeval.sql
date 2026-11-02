@@ -65,7 +65,7 @@ create table if not exists seances (
   titre         text not null,
   debut         timestamptz not null,
   fin           timestamptz not null,
-  meeting_id    uuid,                          -- cours à distance associé (facultatif, sans contrainte : types variables)
+  meeting_id    text,                          -- cours à distance associé (facultatif, sans contrainte : type de meetings.id inconnu)
   created_by    uuid references users(id) on delete set null,
   created_at    timestamptz not null default now(),
   constraint seances_dates_ok check (fin > debut)
