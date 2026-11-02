@@ -1,10 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import { useAuth } from '../../context/AuthContext'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+import api from '../../api'
 
 export default function Chatbot() {
-  const { token } = useAuth()
   const [messages, setMessages] = useState([
     { role: 'bot', texte: "Bonjour ! Je suis le chatbot d'aide. Comment puis-je t'aider ?" }
   ])
@@ -23,12 +20,8 @@ export default function Chatbot() {
     setInput('')
     setLoading(true)
     try {
-      const res = await fetch(`${API_URL}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ message: userMessage })
-      })
-      const data = await res.json().catch(() => ({}))
+      const res = await api.post('/api/chat', { message: userMessage })
+      const data = res.data ?? {}
       const texte = res.ok
         ? data.reply
         : res.status === 429

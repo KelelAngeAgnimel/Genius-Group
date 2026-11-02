@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import API_URL from '../config'
+import api from '../api'
 import Breadcrumb from '../components/Breadcrumb'
 
 const ROLES_INPHB  = ['etudiant_inphb', 'etudiant_both', 'etudiant_inphb_cme', 'etudiant_all', 'professeur', 'admin']
@@ -81,7 +81,7 @@ function chargerPdfJs() {
   return pdfjsPromise
 }
 
-function LecteurPDF({ ressource, token, onFermer }) {
+function LecteurPDF({ ressource, onFermer }) {
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
   const containerRef = useRef(null)
@@ -94,14 +94,14 @@ function LecteurPDF({ ressource, token, onFermer }) {
 
   // Récupère les octets du PDF (protégés par le token) sous forme d'ArrayBuffer
   const recupererBuffer = async () => {
-    const res = await fetch(`${API_URL}/api/ressources/ouvrir/${ressource.id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const res = await api.get(`/api/ressources/ouvrir/${ressource.id}`, { responseType: 'arraybuffer' })
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
+      // Le corps d'erreur arrive aussi en binaire : on le décode pour lire le message
+      let err = {}
+      try { err = JSON.parse(new TextDecoder().decode(res.data)) } catch { /* corps non JSON */ }
       throw new Error(err.message || 'Impossible de charger le document')
     }
-    return res.arrayBuffer()
+    return res.data
   }
 
   // Rend chaque page dans un <canvas> — fonctionne sur PC ET mobile
@@ -218,7 +218,7 @@ function LecteurPDF({ ressource, token, onFermer }) {
 // PAGE PRINCIPALE
 // ══════════════════════════════════════════
 export default function Ressources() {
-  const { user, token } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const [ecoleSelectionnee, setEcoleSelectionnee] = useState(null)
   const [matiereSelectionnee, setMatiereSelectionnee] = useState(null)
@@ -238,8 +238,8 @@ export default function Ressources() {
     setLoading(true)
     setErreur('')
     try {
-      const res = await fetch(`${API_URL}/api/ressources`, { headers: { Authorization: `Bearer ${token}` } })
-      const data = await res.json()
+      const res = await api.get('/api/ressources')
+      const data = res.data
       if (data.ressources) {
         setRessources(data.ressources.filter(r => correspondEcole(r.concours, ecoleSelectionnee)))
       } else {
@@ -260,7 +260,7 @@ export default function Ressources() {
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
 
       {ressourceOuverte && (
-        <LecteurPDF ressource={ressourceOuverte} token={token} onFermer={() => setRessourceOuverte(null)} />
+        <LecteurPDF ressource={ressourceOuverte} onFermer={() => setRessourceOuverte(null)} />
       )}
 
       {/* EN-TÊTE */}

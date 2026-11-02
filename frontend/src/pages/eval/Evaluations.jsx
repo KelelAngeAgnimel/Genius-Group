@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import API_URL from '../../config'
+import api from '../../api'
 
 const COULEURS = { or: '#C9A84C', bleu: '#4C7BC9', vert: '#4CC9A8', rose: '#C94C7B', navy: '#071020', violet: '#7B4CC9' }
 
@@ -38,7 +38,7 @@ function chargerPdfJs() {
   return pdfjsPromise
 }
 
-function LecteurPDF({ ressource, token, onFermer }) {
+function LecteurPDF({ ressource, onFermer }) {
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
   const containerRef = useRef(null)
@@ -50,14 +50,14 @@ function LecteurPDF({ ressource, token, onFermer }) {
   }, [])
 
   const recupererBuffer = async () => {
-    const res = await fetch(`${API_URL}/api/ressources/ouvrir/${ressource.id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const res = await api.get(`/api/ressources/ouvrir/${ressource.id}`, { responseType: 'arraybuffer' })
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
+      // Le corps d'erreur arrive aussi en binaire : on le décode pour lire le message
+      let err = {}
+      try { err = JSON.parse(new TextDecoder().decode(res.data)) } catch { /* corps non JSON */ }
       throw new Error(err.message || 'Impossible de charger le document')
     }
-    return res.arrayBuffer()
+    return res.data
   }
 
   const afficherPDF = async (estAnnule = () => false) => {
@@ -170,7 +170,7 @@ function LecteurPDF({ ressource, token, onFermer }) {
 // ══════════════════════════════════════════
 // VUE ÉTUDIANT — évaluations filtrées par son concours
 // ══════════════════════════════════════════
-function VueEtudiant({ token }) {
+function VueEtudiant() {
   const [evaluations, setEvaluations] = useState([])
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -181,8 +181,8 @@ function VueEtudiant({ token }) {
     const charger = async () => {
       setLoading(true)
       try {
-        const res = await fetch(`${API_URL}/api/ressources/evaluations`, { headers: { Authorization: `Bearer ${token}` } })
-        const data = await res.json()
+        const res = await api.get('/api/ressources/evaluations')
+        const data = res.data
         if (data.ressources) setEvaluations(data.ressources)
         else setErreur('Erreur lors du chargement')
       } catch { setErreur('Erreur serveur') }
@@ -196,7 +196,7 @@ function VueEtudiant({ token }) {
 
   return (
     <div>
-      {ouverte && <LecteurPDF ressource={ouverte} token={token} onFermer={() => setOuverte(null)} />}
+      {ouverte && <LecteurPDF ressource={ouverte} onFermer={() => setOuverte(null)} />}
 
       {matieres.length > 1 && (
         <div className="flex gap-2 flex-wrap mb-5">
@@ -261,7 +261,7 @@ function VueEtudiant({ token }) {
 // VUE PROF / ADMIN — gestion des évaluations
 // (le prof ne voit que les siennes, l'admin voit tout)
 // ══════════════════════════════════════════
-function VueProf({ token, role }) {
+function VueProf({ role }) {
   const [evaluations, setEvaluations] = useState([])
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -270,8 +270,8 @@ function VueProf({ token, role }) {
   const charger = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${API_URL}/api/ressources/evaluations/gestion`, { headers: { Authorization: `Bearer ${token}` } })
-      const data = await res.json()
+      const res = await api.get('/api/ressources/evaluations/gestion')
+      const data = res.data
       if (data.ressources) setEvaluations(data.ressources)
       else setErreur(data.message || 'Erreur lors du chargement')
     } catch { setErreur('Erreur serveur') }
@@ -282,28 +282,24 @@ function VueProf({ token, role }) {
 
   const basculerVisibilite = async (ev) => {
     try {
-      const res = await fetch(`${API_URL}/api/ressources/${ev.id}/visibilite`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visible: !ev.visible })
-      })
+      const res = await api.patch(`/api/ressources/${ev.id}/visibilite`, { visible: !ev.visible })
       if (res.ok) setEvaluations(prev => prev.map(x => x.id === ev.id ? { ...x, visible: !ev.visible } : x))
-      else { const d = await res.json().catch(() => ({})); alert(d.message || 'Action impossible') }
+      else { const d = res.data ?? {}; alert(d.message || 'Action impossible') }
     } catch { alert('Erreur réseau') }
   }
 
   const supprimer = async (ev) => {
     if (!window.confirm('Supprimer cette évaluation ?')) return
     try {
-      const res = await fetch(`${API_URL}/api/ressources/${ev.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      const res = await api.delete(`/api/ressources/${ev.id}`)
       if (res.ok) setEvaluations(prev => prev.filter(x => x.id !== ev.id))
-      else { const d = await res.json().catch(() => ({})); alert(d.message || 'Suppression impossible') }
+      else { const d = res.data ?? {}; alert(d.message || 'Suppression impossible') }
     } catch { alert('Erreur réseau') }
   }
 
   return (
     <div>
-      {ouverte && <LecteurPDF ressource={ouverte} token={token} onFermer={() => setOuverte(null)} />}
+      {ouverte && <LecteurPDF ressource={ouverte} onFermer={() => setOuverte(null)} />}
 
       <div className="rounded-2xl p-4 mb-5 flex items-start gap-3" style={{ background: `${COULEURS.or}0F`, border: `1px solid ${COULEURS.or}33` }}>
         <span className="text-lg">💡</span>
@@ -370,7 +366,7 @@ function VueProf({ token, role }) {
 // COMPOSANT PRINCIPAL
 // ══════════════════════════════════════════
 export default function Evaluations() {
-  const { user, token } = useAuth()
+  const { user } = useAuth()
   const isProfOrAdmin = ['professeur', 'admin'].includes(user?.role)
 
   return (
@@ -382,7 +378,7 @@ export default function Evaluations() {
           {isProfOrAdmin ? 'Gérez les évaluations publiées' : 'Les évaluations publiées pour vos concours'}
         </p>
       </div>
-      {isProfOrAdmin ? <VueProf token={token} role={user?.role} /> : <VueEtudiant token={token} />}
+      {isProfOrAdmin ? <VueProf role={user?.role} /> : <VueEtudiant />}
     </div>
   )
 }

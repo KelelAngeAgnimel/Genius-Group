@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import API_URL from '../../config'
+import api from '../../api'
 
 const COULEURS = { or: '#C9A84C', navy: '#071020', vert: '#4CC9A8', rose: '#C94C7B', bleu: '#4C7BC9' }
 
@@ -11,7 +11,7 @@ const concoursConfig = {
 }
 
 export default function Meetings() {
-  const { user, token } = useAuth()
+  const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
   const peutPublier = user?.role === 'admin' || user?.role === 'professeur'
 
@@ -29,10 +29,8 @@ export default function Meetings() {
   const charger = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${API_URL}/api/meetings`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
+      const res = await api.get('/api/meetings')
+      const data = res.data
       if (Array.isArray(data)) setCours(data)
       else setErreur(data.error || 'Erreur de chargement')
     } catch {
@@ -55,14 +53,10 @@ export default function Meetings() {
       return
     }
     try {
-      const url = editId ? `${API_URL}/api/meetings/${editId}` : `${API_URL}/api/meetings`
-      const method = editId ? 'PATCH' : 'POST'
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form)
-      })
-      const data = await res.json()
+      const res = editId
+        ? await api.patch(`/api/meetings/${editId}`, form)
+        : await api.post('/api/meetings', form)
+      const data = res.data
       if (!res.ok) { setErreur(data.error || 'Erreur'); return }
       setSucces(editId ? 'Cours modifié.' : 'Cours publié avec succès.')
       setForm(formVide)
@@ -85,10 +79,7 @@ export default function Meetings() {
   const handleDelete = async (id) => {
     if (!confirm('Supprimer ce cours ?')) return
     try {
-      await fetch(`${API_URL}/api/meetings/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await api.delete(`/api/meetings/${id}`)
       if (editId === id) { setForm(formVide); setEditId(null); setShowForm(false) }
       charger()
     } catch {
@@ -98,11 +89,7 @@ export default function Meetings() {
 
   const toggleLive = async (id, currentLive) => {
     try {
-      await fetch(`${API_URL}/api/meetings/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ live: !currentLive })
-      })
+      await api.patch(`/api/meetings/${id}`, { live: !currentLive })
       charger()
     } catch {
       setErreur('Erreur lors de la mise à jour')

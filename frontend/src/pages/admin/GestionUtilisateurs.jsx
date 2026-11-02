@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '../../context/AuthContext'
-import API_URL from '../../config'
+import api from '../../api'
 
 // Rôles réellement utilisés dans l'application (alignés avec CreerUtilisateur.jsx)
 const roleConfig = {
@@ -24,7 +23,6 @@ const ROLES_ETUDIANT = [
 ]
 
 export default function GestionUtilisateurs() {
-  const { token } = useAuth()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -41,10 +39,8 @@ export default function GestionUtilisateurs() {
 
   const chargerUtilisateurs = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/users/all`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
+      const res = await api.get('/api/users/all')
+      const data = res.data
       if (data.users) setUsers(data.users)
       else setErreur('Impossible de charger les utilisateurs.')
     } catch {
@@ -57,10 +53,7 @@ export default function GestionUtilisateurs() {
   const supprimerUtilisateur = async (id) => {
     if (!confirm('Supprimer cet utilisateur ?')) return
     try {
-      await fetch(`${API_URL}/api/users/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await api.delete(`/api/users/${id}`)
       setUsers(prev => prev.filter(u => u.id !== id))
     } catch {
       alert('Erreur lors de la suppression')
@@ -71,12 +64,8 @@ export default function GestionUtilisateurs() {
     const bloquer = !u.bloque
     if (bloquer && !confirm(`Bloquer le compte de ${u.prenom || ''} ${u.nom || u.username} ?\nCette personne ne pourra plus se connecter.`)) return
     try {
-      const res = await fetch(`${API_URL}/api/users/${u.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ bloque: bloquer })
-      })
-      const data = await res.json()
+      const res = await api.patch(`/api/users/${u.id}`, { bloque: bloquer })
+      const data = res.data
       if (res.ok) {
         setUsers(prev => prev.map(x => x.id === u.id ? { ...x, bloque: bloquer } : x))
       } else {
@@ -100,18 +89,14 @@ export default function GestionUtilisateurs() {
   const enregistrerEdition = async (id) => {
     setEnregistrement(true)
     try {
-      const res = await fetch(`${API_URL}/api/users/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
+      const res = await api.patch(`/api/users/${id}`, {
           nom: editForm.nom,
           prenom: editForm.prenom,
           ...(editForm.role ? { role: editForm.role } : {}),
           ...(editForm.modalite ? { modalite: editForm.modalite } : {}),
           ...(editForm.password ? { password: editForm.password } : {})
         })
-      })
-      const data = await res.json()
+      const data = res.data
       if (res.ok) {
         setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data.user } : u))
         setEditingId(null)

@@ -1,7 +1,7 @@
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import API_URL from '../../config'
+import api from '../../api'
 
 // Deux blocs fixes, un par concours, avec leurs matières officielles.
 // Ce sont ces mêmes matières qui sont proposées lors de la création d'un quiz
@@ -23,7 +23,7 @@ const BLOCS_CONCOURS = [
 ]
 
 export default function MesNotes() {
-  const { user, token } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const isProfOrAdmin = ['professeur', 'admin'].includes(user?.role)
   const [notes, setNotes] = useState([])
@@ -33,8 +33,8 @@ export default function MesNotes() {
     if (isProfOrAdmin) { setLoading(false); return }
     const charger = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/notes/mes-notes`, { headers: { Authorization: `Bearer ${token}` } })
-        const data = await res.json()
+        const res = await api.get('/api/notes/mes-notes')
+        const data = res.data
         if (data.notes) setNotes(data.notes)
       } catch (err) { console.error(err) }
       finally { setLoading(false) }

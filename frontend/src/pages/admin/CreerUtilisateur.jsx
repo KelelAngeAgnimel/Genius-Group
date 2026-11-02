@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { useAuth } from '../../context/AuthContext'
-import API_URL from '../../config'
+import api from '../../api'
 
 const rolesDisponibles = [
   { value: 'etudiant_inphb', label: 'Etudiant INP-HB', couleur: '#C9A84C', description: 'Prépare uniquement le concours INP-HB' },
@@ -11,7 +10,6 @@ const rolesDisponibles = [
 ]
 
 export default function CreerUtilisateur() {
-  const { token } = useAuth()
   const [form, setForm] = useState({
     username: '',
     password: '',
@@ -49,12 +47,8 @@ export default function CreerUtilisateur() {
     }
 
     try {
-      const res = await fetch(`${API_URL}/api/users/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form)
-      })
-      const data = await res.json()
+      const res = await api.post('/api/users/create', form)
+      const data = res.data
       if (res.ok) {
         setSucces('Compte créé avec succès !')
         setUtilisateurCree(data.user)

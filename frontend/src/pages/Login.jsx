@@ -1,8 +1,7 @@
-import API_URL from '../config'
+import api from '../api'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import axios from 'axios'
 
 // Photos d'étudiants africains/noirs — Unsplash (libres de droits)
 // Sources : Emmanuel Ikwuegbu, Desola Lanre-Ologun, TopSphere Media, Nqobile Vundla
@@ -80,11 +79,15 @@ export default function Login() {
     setLoading(true)
     setError('')
     try {
-      const res = await axios.post(`${API_URL}/api/auth/login`, { matricule, password })
+      const res = await api.post('/api/auth/login', { matricule, password })
+      if (!res.ok) {
+        setError(res.data?.message || 'Matricule ou mot de passe incorrect')
+        return
+      }
       login(res.data.user, res.data.token)
       navigate('/accueil')
-    } catch (err) {
-      setError(err.response?.data?.message || 'Matricule ou mot de passe incorrect')
+    } catch {
+      setError('Impossible de joindre le serveur. Réessaie.')
     } finally {
       setLoading(false)
     }

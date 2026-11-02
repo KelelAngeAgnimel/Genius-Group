@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import API_URL from '../../config'
+import api from '../../api'
 
 // ================================
 // SUIVI PROGRESSION PROFESSEUR
@@ -51,7 +51,7 @@ const couleurConcours = {
   'CME': '#4CC9A8',
 }
 
-function SuiviProfesseur({ token }) {
+function SuiviProfesseur() {
   const [etudiants, setEtudiants] = useState([])
   const [notesEtudiant, setNotesEtudiant] = useState([])
   const [loading, setLoading] = useState(true)
@@ -63,10 +63,8 @@ function SuiviProfesseur({ token }) {
   useEffect(() => {
     const charger = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/users/all`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        const data = await res.json()
+        const res = await api.get('/api/users/all')
+        const data = res.data
         if (data.users) {
           setEtudiants(data.users.filter(u => u.role.startsWith('etudiant')))
         }
@@ -83,10 +81,8 @@ function SuiviProfesseur({ token }) {
     setEtudiantActif(etudiant)
     setLoadingNotes(true)
     try {
-      const res = await fetch(`${API_URL}/api/notes/etudiant/${etudiant.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
+      const res = await api.get(`/api/notes/etudiant/${etudiant.id}`)
+      const data = res.data
       if (data.notes) setNotesEtudiant(data.notes)
       else setNotesEtudiant([])
     } catch (err) {
@@ -426,7 +422,7 @@ function SuiviProfesseur({ token }) {
 // ================================
 // SUIVI PROGRESSION ETUDIANT
 // ================================
-function SuiviEtudiant({ user, token }) {
+function SuiviEtudiant({ user }) {
   const [ecoleSelectionnee, setEcoleSelectionnee] = useState(null)
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -472,10 +468,8 @@ function SuiviEtudiant({ user, token }) {
 
   const chargerNotes = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/notes/mes-notes`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
+      const res = await api.get('/api/notes/mes-notes')
+      const data = res.data
       if (data.notes) setNotes(data.notes)
     } catch (err) {
       console.error(err)
@@ -703,11 +697,11 @@ function SuiviEtudiant({ user, token }) {
 // COMPOSANT PRINCIPAL
 // ========================
 export default function SuiviProgression() {
-  const { user, token } = useAuth()
+  const { user } = useAuth()
 
   if (user?.role === 'professeur' || user?.role === 'admin') {
-    return <SuiviProfesseur token={token} />
+    return <SuiviProfesseur />
   }
 
-  return <SuiviEtudiant user={user} token={token} />
+  return <SuiviEtudiant user={user} />
 }
