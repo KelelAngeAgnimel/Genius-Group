@@ -149,7 +149,7 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
 
       <div className="rounded-2xl p-5 mb-4 flex items-center justify-between" style={{ background: `linear-gradient(135deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${COULEURS.or}4D` }}>
         <div>
-          <p className="text-xs tracking-widest uppercase" style={{ color: COULEURS.or }}>{data.quiz.matiere}</p>
+          <p className="text-xs tracking-widest uppercase" style={{ color: '#C9A84C' }}>{data.quiz.matiere}</p>
           <p className="font-bold text-white text-lg">{data.quiz.titre}</p>
           <p className="text-xs text-gray-400 mt-1">Durée : {data.quiz.duree_minutes} min — {data.questions.length} question(s)</p>
         </div>
@@ -327,7 +327,7 @@ function VueEtudiant() {
               className="rounded-2xl p-5 cursor-pointer transition hover:shadow-lg"
               style={{ background: `linear-gradient(145deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${q.deja_fait ? COULEURS.vert + '4D' : COULEURS.or + '4D'}` }}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs tracking-widest uppercase" style={{ color: COULEURS.or }}>{q.matiere}</span>
+                <span className="text-xs tracking-widest uppercase" style={{ color: '#C9A84C' }}>{q.matiere}</span>
                 {q.deja_fait ? (
                   <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '20px', background: `${COULEURS.vert}26`, color: COULEURS.vert, border: `1px solid ${COULEURS.vert}` }}>
                     Meilleur : {q.score}/{q.total_score}
@@ -540,7 +540,7 @@ function VueProf() {
             {quizzes.map((q, i) => (
               <div key={i} className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs tracking-widest uppercase" style={{ color: COULEURS.or }}>{q.matiere}</span>
+                  <span className="text-xs tracking-widest uppercase" style={{ color: '#8A6D1A' }}>{q.matiere}</span>
                   <div className="flex items-center gap-1.5">
                     {q.publie === false && (
                       <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: `${COULEURS.rose}1A`, color: COULEURS.rose }}>🚫 Masqué</span>
@@ -767,7 +767,7 @@ function VueProf() {
         <div>
           <button onClick={() => setVue('liste')} className="text-xs font-semibold mb-4" style={{ color: COULEURS.or }}>← Retour aux quiz</button>
           <div className="rounded-2xl p-5 mb-4" style={{ background: `linear-gradient(135deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${COULEURS.or}4D` }}>
-            <p className="text-xs tracking-widest uppercase" style={{ color: COULEURS.or }}>{resultats.quiz.matiere}</p>
+            <p className="text-xs tracking-widest uppercase" style={{ color: '#C9A84C' }}>{resultats.quiz.matiere}</p>
             <p className="font-bold text-white text-lg">{resultats.quiz.titre}</p>
             <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
               👥 Visible par : {audienceQuiz(resultats.quiz.concours, resultats.quiz.modalite)}
@@ -848,7 +848,7 @@ export default function GeniusEval() {
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
       <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: COULEURS.or }}>Outils</p>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Outils</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: COULEURS.navy }}>Quiz</h1>
         <p className="text-gray-400 text-sm mt-1">
           {isProfOrAdmin ? 'Créez et suivez des QCM auto-corrigés' : 'Vos quiz auto-corrigés'}

@@ -31,7 +31,7 @@ export default function PageNotes() {
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
       <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>Outils</p>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Outils</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Mes notes</h1>
         <p className="text-gray-400 text-sm mt-1">Votre progression, matière par matière.</p>
       </div>

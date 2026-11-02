@@ -324,7 +324,7 @@ function VueProf({ role }) {
           {evaluations.map((ev, i) => (
             <div key={i} className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs tracking-widest uppercase" style={{ color: COULEURS.or }}>{ev.matiere}</span>
+                <span className="text-xs tracking-widest uppercase" style={{ color: '#8A6D1A' }}>{ev.matiere}</span>
                 {!ev.visible && (
                   <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: `${COULEURS.rose}1A`, color: COULEURS.rose }}>🚫 Masquée</span>
                 )}
@@ -372,7 +372,7 @@ export default function Evaluations() {
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
       <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: COULEURS.or }}>Outils</p>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Outils</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: COULEURS.navy }}>Évaluation</h1>
         <p className="text-gray-400 text-sm mt-1">
           {isProfOrAdmin ? 'Gérez les évaluations publiées' : 'Les évaluations publiées pour vos concours'}

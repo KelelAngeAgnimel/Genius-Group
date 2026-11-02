@@ -102,7 +102,7 @@ export default function Meetings() {
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
 
       <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: COULEURS.or }}>Outils</p>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Outils</p>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold" style={{ color: COULEURS.navy }}>Cours à distance</h1>

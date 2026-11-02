@@ -501,7 +501,7 @@ function DashboardEtudiant({ user, navigate }) {
 
       {/* EN-TÊTE */}
       <div className="mb-6 md:mb-8">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>Tableau de bord</p>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Tableau de bord</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           Bonjour, {user?.prenom || user?.username} 👋
         </h1>

@@ -52,7 +52,7 @@ export default function Actualites() {
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
 
       <div className="mb-6 md:mb-8">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>
           Actualités
         </p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>

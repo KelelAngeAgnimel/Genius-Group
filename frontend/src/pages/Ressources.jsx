@@ -281,7 +281,7 @@ export default function Ressources() {
           suivantLabel={!ecoleActive ? 'Mon Planning' : null}
           suivantPath={!ecoleActive ? '/planning/emploi-du-temps' : null}
         />
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>Bibliothèque</p>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Bibliothèque</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           {!ecoleActive && 'Tous les Documents'}
           {ecoleActive && !matiereSelectionnee && `Documents ${ecoleActive.sigle}`}

@@ -228,7 +228,7 @@ function VueEtudiant({ user }) {
       <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>Exercices</p>
+            <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Exercices</p>
             <h2 className="font-bold text-base" style={{ color: '#071020' }}>Exercices assignés par vos professeurs</h2>
           </div>
           {exercicesEnAttente > 0 && (
@@ -363,7 +363,7 @@ function VueProfesseur({ user }) {
 
         {/* LISTE ÉTUDIANTS */}
         <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
-          <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>Sélection</p>
+          <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Sélection</p>
           <p className="font-bold text-sm mb-4" style={{ color: '#071020' }}>Choisir un étudiant</p>
           {loading ? (
             <p className="text-xs text-gray-400 text-center py-4">Chargement...</p>
@@ -462,7 +462,7 @@ function VueProfesseur({ user }) {
 
               {/* FORMULAIRE EXERCICE */}
               <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
-                <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>Assigner</p>
+                <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Assigner</p>
                 <p className="font-bold text-sm mb-4" style={{ color: '#071020' }}>
                   Envoyer un exercice à {etudiantSelectionne.prenom || etudiantSelectionne.username}
                 </p>
@@ -539,7 +539,7 @@ function VueProfesseur({ user }) {
       {/* EXERCICES ENVOYÉS */}
       {exercicesEnvoyes.length > 0 && (
         <div className="mt-6 rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
-          <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>Historique</p>
+          <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Historique</p>
           <p className="font-bold text-sm mb-4" style={{ color: '#071020' }}>Exercices envoyés ({exercicesEnvoyes.length})</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {exercicesEnvoyes.map((ex, i) => (
@@ -576,7 +576,7 @@ export default function PlanningPerso() {
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
       <div className="mb-6 md:mb-8">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>
           {isProfOrAdmin ? 'Suivi personnalisé' : 'Mon espace'}
         </p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>

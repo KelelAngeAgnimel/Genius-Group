@@ -96,7 +96,7 @@ export default function EmploiDuTemps() {
 
       {/* EN-TETE */}
       <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>
           Planning
         </p>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

@@ -129,7 +129,7 @@ export default function GestionUtilisateurs() {
 
       {/* EN-TETE */}
       <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>
           Administration
         </p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>

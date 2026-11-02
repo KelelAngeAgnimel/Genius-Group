@@ -1,3 +1,49 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Accessibilité et confort mobile (passe ergonomie) ───────────────────────────── */
+
+/* Focus clavier toujours visible (remplace les « outline-none » dispersés dans les pages) */
+:focus-visible {
+  outline: 2px solid #7B4CC9 !important;
+  outline-offset: 2px;
+}
+
+/* Doré de la marque, version assez foncée pour du petit texte sur fond clair (contraste ≥ 4,5:1) */
+.texte-or {
+  color: #8A6D1A;
+}
+
+/* iOS Safari zoome sur les champs dont la police est inférieure à 16 px */
+@media (max-width: 767px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Écrans tactiles : actions principales et champs d'au moins 40 px de haut */
+@media (pointer: coarse) {
+  button[class*='px-4'],
+  button[class*='px-3'],
+  select,
+  input[type='text'],
+  input[type='number'],
+  input[type='password'],
+  input[type='datetime-local'],
+  input[type='search'] {
+    min-height: 40px;
+  }
+}
+
+/* Respecte la préférence « réduire les animations » */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
