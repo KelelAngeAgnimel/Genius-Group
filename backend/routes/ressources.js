@@ -1,13 +1,23 @@
 import express from 'express'
 import multer from 'multer'
-import { createClient } from '@supabase/supabase-js'
-import { verifyToken } from './auth.js'
-import dotenv from 'dotenv'
-
-dotenv.config()
+import { z } from 'zod'
+import supabase from '../supabase.js'
+import { verifyToken } from '../middleware/authMiddleware.js'
+import { validate } from '../middleware/validate.js'
 
 const router = express.Router()
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
+
+const court = (max) => z.string().trim().max(max)
+// Les champs arrivent en multipart (chaînes)
+const uploadSchema = z.object({
+  titre: court(200).min(1),
+  description: court(2000).nullish(),
+  type: court(50).nullish(),
+  matiere: court(100).min(1),
+  concours: court(30).min(1),
+  est_evaluation: z.union([z.boolean(), z.enum(['true', 'false'])]).nullish()
+}).passthrough()
+const visibiliteSchema = z.object({ visible: z.boolean() })
 
 // Multer en mémoire — 50 Mo max, PDF uniquement
 const upload = multer({
@@ -53,7 +63,7 @@ router.get('/', verifyToken, async (req, res) => {
       .eq('visible', true)
       .order('created_at', { ascending: false })
 
-    if (error) return res.status(500).json({ message: error.message })
+    if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
 
     // Filtrer selon le concours — ne jamais exposer l'URL du fichier.
     // Les évaluations sont exclues de la Bibliothèque : elles vivent dans la page « Évaluation ».
@@ -78,7 +88,7 @@ router.get('/toutes', verifyToken, async (req, res) => {
       .select('id, titre, description, type, matiere, concours, visible, est_evaluation, professeur_id, created_at, professeur:professeur_id(username, prenom, nom)')
       .order('created_at', { ascending: false })
 
-    if (error) return res.status(500).json({ message: error.message })
+    if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
     // Les évaluations sont gérées à part (page « Évaluation »), on ne les mélange pas ici.
     res.json({ ressources: data.filter(r => !r.est_evaluation) })
   } catch (err) {
@@ -99,7 +109,7 @@ router.get('/evaluations', verifyToken, async (req, res) => {
       .eq('est_evaluation', true)
       .order('created_at', { ascending: false })
 
-    if (error) return res.status(500).json({ message: error.message })
+    if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
 
     const filtrees = data.filter(r => peutAcceder(req.user.role, r.concours))
     res.json({ ressources: filtrees })
@@ -130,7 +140,7 @@ router.get('/evaluations/gestion', verifyToken, async (req, res) => {
     }
 
     const { data, error } = await query
-    if (error) return res.status(500).json({ message: error.message })
+    if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
     res.json({ ressources: data })
   } catch (err) {
     console.error(err)
@@ -207,12 +217,12 @@ router.post('/upload', verifyToken, (req, res, next) => {
   upload.single('fichier')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ message: 'Fichier trop volumineux (50 Mo max)' })
-      return res.status(400).json({ message: err.message })
+      return res.status(400).json({ message: "Erreur lors de l'envoi du fichier" })
     }
-    if (err) return res.status(400).json({ message: err.message })
+    if (err) return res.status(400).json({ message: 'Fichier invalide, seuls les PDF sont acceptés' })
     next()
   })
-}, async (req, res) => {
+}, validate(uploadSchema), async (req, res) => {
   try {
     const { role, id: professeur_id } = req.user
     if (!['professeur', 'admin'].includes(role)) {
@@ -243,7 +253,7 @@ router.post('/upload', verifyToken, (req, res, next) => {
       })
 
     if (uploadError) {
-      return res.status(500).json({ message: `Erreur upload : ${uploadError.message}` })
+      return res.status(500).json({ message: "Erreur lors de l'enregistrement du fichier" })
     }
 
     // Sauvegarder dans la table ressources — uniquement le chemin, jamais l'URL
@@ -268,20 +278,20 @@ router.post('/upload', verifyToken, (req, res, next) => {
     if (error) {
       // Supprimer le fichier uploadé si la DB échoue
       await supabase.storage.from('ressources').remove([storagePath])
-      return res.status(500).json({ message: error.message })
+      { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
     }
 
     res.json({ success: true, ressource: data })
   } catch (err) {
     console.error('Erreur upload:', err)
-    res.status(500).json({ message: `Erreur : ${err.message}` })
+    res.status(500).json({ message: 'Erreur serveur' })
   }
 })
 
 // ══════════════════════════════════════════
 // PATCH — Changer la visibilité
 // ══════════════════════════════════════════
-router.patch('/:id/visibilite', verifyToken, async (req, res) => {
+router.patch('/:id/visibilite', verifyToken, validate(visibiliteSchema), async (req, res) => {
   try {
     if (!['professeur', 'admin'].includes(req.user.role)) {
       return res.status(403).json({ message: 'Accès refusé' })
@@ -305,7 +315,7 @@ router.patch('/:id/visibilite', verifyToken, async (req, res) => {
       .select('id, titre, visible, est_evaluation')
       .single()
 
-    if (error) return res.status(500).json({ message: error.message })
+    if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
     res.json({ success: true, ressource: data })
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur' })
@@ -338,7 +348,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
     }
 
     const { error } = await supabase.from('ressources').delete().eq('id', req.params.id)
-    if (error) return res.status(500).json({ message: error.message })
+    if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
     res.json({ success: true })
   } catch (err) {
     console.error(err)

@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
+import { useAuth } from '../../context/AuthContext'
 
-const SESSION_ID = crypto.randomUUID()
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 export default function Chatbot() {
+  const { token } = useAuth()
   const [messages, setMessages] = useState([
     { role: 'bot', texte: "Bonjour ! Je suis le chatbot d'aide. Comment puis-je t'aider ?" }
   ])
@@ -24,11 +25,18 @@ export default function Chatbot() {
     try {
       const res = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage, sessionId: SESSION_ID })
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ message: userMessage })
       })
-      const data = await res.json()
-      setMessages(prev => [...prev, { role: 'bot', texte: data.reply }])
+      const data = await res.json().catch(() => ({}))
+      const texte = res.ok
+        ? data.reply
+        : res.status === 429
+          ? '⏳ Trop de messages, patiente une minute.'
+          : res.status === 401
+            ? '🔒 Session expirée, reconnecte-toi.'
+            : (data.message || data.error || '❌ Une erreur est survenue. Réessaie.')
+      setMessages(prev => [...prev, { role: 'bot', texte }])
     } catch {
       setMessages(prev => [...prev, { role: 'bot', texte: '❌ Erreur de connexion. Réessaie.' }])
     } finally {
