@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { verifyToken, requireRole } from '../middleware/authMiddleware.js'
 import { validate } from '../middleware/validate.js'
 import { viderCacheOptions } from '../lib/inscriptions.js'
+import { recalculerConcours } from '../lib/renforcement.js'
 import { CODES_CONCOURS, LIBELLES } from '../lib/concours.js'
 
 const router = express.Router()
@@ -25,7 +26,10 @@ const optionsSchema = z.object({
   autoeval_bloquante: z.boolean().optional(),
   autoeval_delai_heures: z.number().int().min(1).max(720).optional(),
   autoeval_rappel_heures: z.number().int().min(0).max(720).optional(),
-  classement_visible: z.boolean().optional()
+  classement_visible: z.boolean().optional(),
+  score_alpha: z.number().min(0).max(1).optional(),     // poids de l'auto-évaluation (0,3 = 30 %)
+  score_seuil: z.number().min(0).max(100).optional(),   // sous ce score : renforcement
+  renforcement_mode: z.enum(['auto', 'manuel']).optional()
 }).strict().refine(
   v => v.autoeval_rappel_heures === undefined || v.autoeval_delai_heures === undefined || v.autoeval_rappel_heures <= v.autoeval_delai_heures,
   { path: ['autoeval_rappel_heures'], message: 'Le rappel doit précéder la fin du délai' }
@@ -42,6 +46,10 @@ router.patch('/:code/options', verifyToken, requireRole('admin'), validate(optio
   const { error: errMaj } = await supabase.from('concours').update({ options }).eq('code', req.params.code)
   if (errMaj) throw errMaj
   viderCacheOptions()
+  // α ou seuil modifié : on recalcule les scores du concours, sans envoyer aucun exercice
+  if (req.body.score_alpha !== undefined || req.body.score_seuil !== undefined) {
+    await recalculerConcours(req.params.code, { declencher: false })
+  }
   res.json({ success: true, code: req.params.code, options })
 })
 

@@ -6,6 +6,7 @@ import { verifyToken, requireRole, estEtudiant } from '../middleware/authMiddlew
 import { depotLimiter } from '../middleware/rateLimit.js'
 import { validate } from '../middleware/validate.js'
 import { peutAcceder, peutPublierPour, CODES_CONCOURS, LIBELLES } from '../lib/concours.js'
+import { assurerRattachement, recalculerSansBloquer } from '../lib/renforcement.js'
 import {
   LIMITES, detecterType, fusionnerEnPdf, urlSignee, supprimerFichiers, deposerPdf, nomAffichable, FichierInvalide
 } from '../lib/fichiers.js'
@@ -267,6 +268,18 @@ router.put('/copies/:copieId/correction', verifyToken, requireRole('professeur',
       ? await supabase.from('notes').update(ligne).eq('id', existante.id)
       : await supabase.from('notes').insert([{ ...ligne, etudiant_id: copie.etudiant_id, matiere: evaluation.matiere, concours: concoursNote, periode }])
     if (resultat.error) throw resultat.error
+
+    // Les compétences de l'évaluation sont connues : la note compte pour elles, et le score est recalculé
+    if (evaluation.competences?.length) {
+      const { data: competences, error: errComp } = await supabase.from('competences').select('id, code')
+        .eq('concours_code', evaluation.concours_code)
+      if (errComp) throw errComp
+      await assurerRattachement({
+        concours: evaluation.concours_code, matiere: evaluation.matiere, periode,
+        competenceIds: (competences ?? []).filter(c => evaluation.competences.includes(c.code)).map(c => c.id)
+      })
+    }
+    await recalculerSansBloquer(copie.etudiant_id)
 
     res.json({ success: true, copie: copiePublique(data) })
   })
