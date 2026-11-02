@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import API_URL from '../../config'
+import api from '../../api'
 
 const matieresConcours = {
   'INP-HB': ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire'],
@@ -61,7 +61,7 @@ const libelleEtudiant = (e) =>
   `${identifiant(e)} — ${nomComplet(e)}`
 
 export default function EspaceProfesseur() {
-  const { user, token } = useAuth()
+  const { user } = useAuth()
   const [onglet, setOnglet] = useState('ressources')
   const [ressources, setRessources] = useState([])
   const [etudiants, setEtudiants] = useState([])
@@ -95,7 +95,6 @@ export default function EspaceProfesseur() {
   const [filtreNotesConcours, setFiltreNotesConcours] = useState('INP-HB')
   const [filtreNotesPeriode, setFiltreNotesPeriode] = useState('Mar 2026')
 
-  const headers = { Authorization: `Bearer ${token}` }
 
   useEffect(() => {
     chargerRessources()
@@ -108,15 +107,15 @@ export default function EspaceProfesseur() {
   }, [onglet, filtreNotesConcours, filtreNotesPeriode])
 
   const chargerRessources = async () => {
-    const res = await fetch(`${API_URL}/api/ressources/toutes`, { headers })
-    const data = await res.json()
+    const res = await api.get('/api/ressources/toutes')
+    const data = res.data
     if (data.ressources) setRessources(data.ressources)
   }
 
   const chargerEtudiants = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/users/all`, { headers })
-      const data = await res.json()
+      const res = await api.get('/api/users/all')
+      const data = res.data
       if (!data.users) {
         setErreur(data.message || 'Impossible de charger la liste des etudiants')
         return
@@ -133,19 +132,16 @@ export default function EspaceProfesseur() {
   }
 
   const chargerMessages = async () => {
-    const res = await fetch(`${API_URL}/api/messages/envoyes`, { headers })
-    const data = await res.json()
+    const res = await api.get('/api/messages/envoyes')
+    const data = res.data
     if (data.messages) setMessages(data.messages)
   }
 
   const chargerNotesClasse = async () => {
     setLoading(true)
     try {
-      const res = await fetch(
-        `${API_URL}/api/notes/classe?concours=${filtreNotesConcours}&periode=${filtreNotesPeriode}`,
-        { headers }
-      )
-      const data = await res.json()
+      const res = await api.get(`/api/notes/classe?concours=${filtreNotesConcours}&periode=${filtreNotesPeriode}`)
+      const data = res.data
       if (data.notes) setNotesClasse(data.notes)
     } catch (err) {
       console.error(err)
@@ -164,12 +160,8 @@ export default function EspaceProfesseur() {
       Object.entries(form).forEach(([k, v]) => formData.append(k, v))
       if (fichier) formData.append('fichier', fichier)
 
-      const res = await fetch(`${API_URL}/api/ressources/upload`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData
-      })
-      const data = await res.json()
+      const res = await api.post('/api/ressources/upload', formData)
+      const data = res.data
 
       if (data.success) {
         setSucces(form.est_evaluation
@@ -189,17 +181,13 @@ export default function EspaceProfesseur() {
   }
 
   const toggleVisibilite = async (id, visible) => {
-    await fetch(`${API_URL}/api/ressources/${id}/visibilite`, {
-      method: 'PATCH',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ visible: !visible })
-    })
+    await api.patch(`/api/ressources/${id}/visibilite`, { visible: !visible })
     chargerRessources()
   }
 
   const supprimerRessource = async (id) => {
     if (!confirm('Supprimer cette ressource ?')) return
-    await fetch(`${API_URL}/api/ressources/${id}`, { method: 'DELETE', headers })
+    await api.delete(`/api/ressources/${id}`)
     chargerRessources()
   }
 
@@ -211,12 +199,8 @@ export default function EspaceProfesseur() {
     try {
       if (msgMode === 'groupe') {
         // Diffusion à un groupe d'étudiants
-        const res = await fetch(`${API_URL}/api/messages/diffuser`, {
-          method: 'POST',
-          headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ groupe: msgGroupe, sujet: msgForm.sujet, contenu: msgForm.contenu })
-        })
-        const data = await res.json()
+        const res = await api.post('/api/messages/diffuser', { groupe: msgGroupe, sujet: msgForm.sujet, contenu: msgForm.contenu })
+        const data = res.data
         if (data.success) {
           setSucces(`Message envoye a ${data.count} etudiant${data.count > 1 ? 's' : ''} !`)
           setMsgForm({ a_id: '', sujet: '', contenu: '' })
@@ -226,12 +210,8 @@ export default function EspaceProfesseur() {
         }
       } else {
         // Envoi à un seul étudiant
-        const res = await fetch(`${API_URL}/api/messages/envoyer`, {
-          method: 'POST',
-          headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify(msgForm)
-        })
-        const data = await res.json()
+        const res = await api.post('/api/messages/envoyer', msgForm)
+        const data = res.data
         if (data.success) {
           setSucces('Message envoye avec succes !')
           setMsgForm({ a_id: '', sujet: '', contenu: '' })
@@ -253,15 +233,11 @@ export default function EspaceProfesseur() {
     setSucces('')
     setErreur('')
     try {
-      const res = await fetch(`${API_URL}/api/notes/ajouter`, {
-        method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const res = await api.post('/api/notes/ajouter', {
           ...noteForm,
           note: parseFloat(noteForm.note)
         })
-      })
-      const data = await res.json()
+      const data = res.data
       if (data.success) {
         setSucces('Note publiee avec succes !')
         setNoteForm({ etudiant_id: '', matiere: '', concours: 'INP-HB', note: '', periode: 'Mar 2026' })
