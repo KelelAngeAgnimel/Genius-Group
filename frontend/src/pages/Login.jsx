@@ -207,7 +207,7 @@ export default function Login() {
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
                 Matricule
               </label>
-              <input aria-label="Matricule ou identifiant"
+              <input
                 type="text"
                 value={matricule}
                 onChange={e => setMatricule(e.target.value)}

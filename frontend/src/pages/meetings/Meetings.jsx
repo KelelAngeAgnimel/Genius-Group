@@ -3,14 +3,26 @@ import { useAuth } from '../../context/AuthContext'
 import api from '../../api'
 import { useConfirm } from '../../hooks/useUi'
 import Loader from '../../components/Loader'
+import { useConcours } from '../../hooks/useConcours'
 
 const COULEURS = { or: '#C9A84C', navy: '#071020', vert: '#4CC9A8', rose: '#C94C7B', bleu: '#4C7BC9' }
 
 const concoursConfig = {
   inphb: { label: 'INP-HB', couleur: '#4C7BC9' },
   esatic: { label: 'ESATIC', couleur: '#4CC9A8' },
-  both: { label: 'INP-HB + ESATIC', couleur: '#C9A84C' },
+  cme: { label: 'CME', couleur: '#C97B4C' },
+  ensea: { label: 'ENSEA', couleur: '#7B4CC9' },
+  both: { label: 'Tous les concours', couleur: '#C9A84C' },
 }
+
+// Concours proposables à la publication d'un cours (« both » = visible de tous les élèves)
+const OPTIONS_CONCOURS = [
+  ['both', 'Tous les concours'],
+  ['inphb', 'INP-HB seulement'],
+  ['esatic', 'ESATIC seulement'],
+  ['cme', 'CME seulement'],
+  ['ensea', 'ENSEA seulement'],
+]
 
 export default function Meetings() {
   const confirmer = useConfirm()
@@ -26,7 +38,11 @@ export default function Meetings() {
   const [editId, setEditId] = useState(null)
   const [filtreActive, setFiltreActive] = useState(false)
 
-  const formVide = { titre: '', prof: '', heure: '', lien: '', concours: 'both' }
+  // Un professeur rattaché à des concours ne publie que pour les siens (le serveur le vérifie aussi)
+  const { concours: miens, estProfesseur } = useConcours()
+  const restreint = estProfesseur && miens.length > 0
+  const optionsConcours = restreint ? OPTIONS_CONCOURS.filter(([valeur]) => miens.includes(valeur)) : OPTIONS_CONCOURS
+  const formVide = { titre: '', prof: '', heure: '', lien: '', concours: restreint ? miens[0] : 'both' }
   const [form, setForm] = useState(formVide)
 
   const charger = async () => {
@@ -177,9 +193,7 @@ export default function Meetings() {
               onChange={e => handleChange('concours', e.target.value)}
               className="text-xs rounded-xl px-3 py-2.5 outline-none"
               style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }}>
-              <option value="both">INP-HB + ESATIC (tous)</option>
-              <option value="inphb">INP-HB seulement</option>
-              <option value="esatic">ESATIC seulement</option>
+              {optionsConcours.map(([valeur, libelle]) => <option key={valeur} value={valeur}>{libelle}</option>)}
             </select>
             <input
               value={form.lien}
