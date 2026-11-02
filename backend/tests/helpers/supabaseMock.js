@@ -52,7 +52,7 @@ function from(table) {
     like: (k, m) => { motifs[k] = m; return q },
     maybeSingle: async () => { executer(); return { data: resultat()[0] ?? null, error: null } },
     single: async () => { executer(); return { data: resultat()[0] ?? null, error: null } },
-    then: (ok, ko) => { executer(); return Promise.resolve({ data: op === 'select' ? resultat() : null, error: null }).then(ok, ko) }
+    then: (ok, ko) => { executer(); return Promise.resolve({ data: op === 'select' || op === 'insert' ? resultat() : null, error: null }).then(ok, ko) }
   }
   return q
 }

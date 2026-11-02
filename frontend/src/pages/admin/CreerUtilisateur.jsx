@@ -52,7 +52,9 @@ export default function CreerUtilisateur() {
     }
 
     try {
-      const res = await api.post('/api/users/create', form)
+      // L'identifiant n'est envoyé que pour les professeurs et administrateurs
+      const { username, ...reste } = form
+      const res = await api.post('/api/users/create', estEtudiant ? reste : { ...reste, username })
       const data = res.data
       if (res.ok) {
         setSucces('Compte créé avec succès !')
