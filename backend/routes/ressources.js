@@ -303,8 +303,9 @@ router.patch('/:id/visibilite', verifyToken, validate(visibiliteSchema), async (
       .select('professeur_id, est_evaluation')
       .eq('id', req.params.id)
       .single()
-    if (existante?.est_evaluation && req.user.role !== 'admin' && existante.professeur_id !== req.user.id) {
-      return res.status(403).json({ message: 'Vous ne pouvez modifier que vos propres évaluations' })
+    if (!existante) return res.status(404).json({ message: 'Ressource introuvable' })
+    if (req.user.role !== 'admin' && existante.professeur_id !== req.user.id) {
+      return res.status(403).json({ message: 'Vous ne pouvez modifier que vos propres ressources' })
     }
 
     const { visible } = req.body
@@ -338,8 +339,9 @@ router.delete('/:id', verifyToken, async (req, res) => {
       .single()
 
     // Un professeur ne peut supprimer que ses propres évaluations
-    if (ressource?.est_evaluation && req.user.role !== 'admin' && ressource.professeur_id !== req.user.id) {
-      return res.status(403).json({ message: 'Vous ne pouvez supprimer que vos propres évaluations' })
+    if (!ressource) return res.status(404).json({ message: 'Ressource introuvable' })
+    if (req.user.role !== 'admin' && ressource.professeur_id !== req.user.id) {
+      return res.status(403).json({ message: 'Vous ne pouvez supprimer que vos propres ressources' })
     }
 
     // Supprimer le fichier de Supabase Storage
