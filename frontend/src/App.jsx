@@ -41,6 +41,7 @@ const Orientation = lazy(() => import('./pages/aides/Orientation'))
 const PreparationMentale = lazy(() => import('./pages/aides/PreparationMentale'))
 const Forum = lazy(() => import('./pages/aides/Forum'))
 const Chatbot = lazy(() => import('./pages/aides/Chatbot'))
+const GuideUtilisation = lazy(() => import('./pages/aides/GuideUtilisation'))
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 
@@ -105,6 +106,7 @@ export default function App() {
           <Route path="preparation-mentale" element={<PreparationMentale />} />
           <Route path="forum" element={<Forum />} />
           <Route path="chatbot" element={<Chatbot />} />
+          <Route path="guide-utilisation" element={<GuideUtilisation />} />
         </Route>
 
         <Route path="/professeur" element={

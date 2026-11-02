@@ -288,7 +288,7 @@ export default function Meetings() {
                       color: c.live ? COULEURS.rose : COULEURS.vert,
                       border: `1px solid ${c.live ? COULEURS.rose : COULEURS.vert}40`
                     }}>
-                    {c.live ? 'Arreter' : 'Demarrer'}
+                    {c.live ? 'Arrêter' : 'Démarrer'}
                   </button>
                   <button
                     onClick={() => handleEdit(c)}

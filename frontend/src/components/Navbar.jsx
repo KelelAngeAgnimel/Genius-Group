@@ -99,6 +99,7 @@ const menuItems = [
     label: 'Aide',
     icon: 'lifebuoy',
     dropdown: [
+      { label: 'Guide d’utilisation', icon: 'bookOpen', path: '/aides/guide-utilisation' },
       { label: 'Questions Fréquentes', icon: 'helpCircle', path: '/aides/faq-generale' },
       { label: 'Nous Contacter', icon: 'mail', path: '/aides/contacts' },
       { label: 'Guide d\'Orientation', icon: 'compass', path: '/aides/orientation' },
