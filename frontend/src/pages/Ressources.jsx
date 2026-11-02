@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useConcours } from '../hooks/useConcours'
 import api from '../api'
 import Breadcrumb from '../components/Breadcrumb'
 import { useToast } from '../hooks/useUi'
+import EmptyState from '../components/EmptyState'
 
 // Une ressource correspond-elle à l'école affichée ?
 // Inclusif : une ressource "tous"/"all" ou combinée apparaît sous chaque école concernée.
@@ -225,9 +226,15 @@ function LecteurPDF({ ressource, onFermer }) {
 // ══════════════════════════════════════════
 // PAGE PRINCIPALE
 // ══════════════════════════════════════════
-export default function Ressources() {
+function RessourcesContenu() {
   const navigate = useNavigate()
-  const [ecoleSelectionnee, setEcoleSelectionnee] = useState(null)
+  const { peutAcceder: peutVoirContenu } = useConcours()
+  const peutAcceder = (ecole) => peutVoirContenu(ecole.code)
+  // /ressources?ecole=ENSEA présélectionne le concours (seulement s'il est accessible)
+  const [ecoleSelectionnee, setEcoleSelectionnee] = useState(() => {
+    const demandee = new URLSearchParams(window.location.search).get('ecole')
+    return ecoles.find(e => e.sigle === demandee && peutVoirContenu(e.code))?.sigle ?? null
+  })
   const [matiereSelectionnee, setMatiereSelectionnee] = useState(null)
   const [ressources, setRessources] = useState([])
   const [loading, setLoading] = useState(false)
@@ -235,8 +242,8 @@ export default function Ressources() {
   const [ressourceOuverte, setRessourceOuverte] = useState(null)
 
   const ecoleActive = ecoles.find(e => e.sigle === ecoleSelectionnee)
-  const { peutAcceder: peutVoirContenu } = useConcours()
-  const peutAcceder = (ecole) => peutVoirContenu(ecole.code)
+  // Un élève ne voit que les concours auxquels il est inscrit (le personnel voit ceux auxquels il a accès)
+  const ecolesVisibles = ecoles.filter(peutAcceder)
 
   useEffect(() => {
     if (ecoleSelectionnee) chargerRessources()
@@ -296,10 +303,13 @@ export default function Ressources() {
         </p>
       </div>
 
-      {/* NIVEAU 1 — Choix du concours — TOUS AFFICHÉS, non inscrit grisé */}
-      {!ecoleSelectionnee && (
+      {/* NIVEAU 1 — Choix du concours : uniquement ceux de l'utilisateur */}
+      {!ecoleSelectionnee && ecolesVisibles.length === 0 && (
+        <EmptyState icone="🎓" titre="Aucun concours associé à votre compte" texte="Contactez l’administration pour être inscrit à un concours." />
+      )}
+      {!ecoleSelectionnee && ecolesVisibles.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {ecoles.map((ecole, i) => {
+          {ecolesVisibles.map((ecole, i) => {
             const acces = peutAcceder(ecole)
             return (
               <div key={i}
@@ -477,4 +487,9 @@ export default function Ressources() {
       )}
     </div>
   )
+}
+
+export default function Ressources() {
+  const { search } = useLocation()
+  return <RessourcesContenu key={search} />
 }

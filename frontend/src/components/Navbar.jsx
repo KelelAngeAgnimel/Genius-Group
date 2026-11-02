@@ -43,11 +43,11 @@ function Icon({ name, className = 'w-4 h-4' }) {
   )
 }
 
+// Menu regroupé par usage. `id` / `concours` servent à masquer ce qui ne concerne pas l'utilisateur (voir `visible`).
 const menuItems = [
   {
     label: 'Accueil',
     icon: 'home',
-    path: '/accueil',
     dropdown: [
       { label: 'Mon Espace', icon: 'user', path: '/accueil/tableau-de-bord' },
       { label: 'Actualités & Concours', icon: 'newspaper', path: '/accueil/actualites' },
@@ -56,46 +56,48 @@ const menuItems = [
     ]
   },
   {
-    label: 'Planning',
+    label: 'Mes cours',
     icon: 'calendar',
-    path: '/planning',
     dropdown: [
       { label: 'Emploi du Temps', icon: 'calendarDays', path: '/planning/emploi-du-temps' },
-      { label: 'Suivi de Progression', icon: 'trendingUp', path: '/planning/suivi-progression' },
-      { label: 'Agenda Personnel', icon: 'pencil', path: '/planning/planning-perso' },
-    ]
-  },
-  {
-    label: 'Bibliothèque',
-    icon: 'book',
-    path: '/ressources',
-    dropdown: [
-      { label: 'Documents', icon: 'fileText', path: '/ressources' },
-      { label: 'INP-HB', icon: 'cap', path: '/ressources' },
-      { label: 'ESATIC', icon: 'cap', path: '/ressources' },
-      { label: 'CME', icon: 'cap', path: '/ressources' },
-      { label: 'ENSEA', icon: 'cap', path: '/ressources' },
-    ]
-  },
-  {
-    label: 'Outils',
-    icon: 'target',
-    path: '/outils',
-    dropdown: [
       { label: 'Cours à Distance', icon: 'video', path: '/outils/teams' },
-      { label: 'Notes', icon: 'clipboard', path: '/outils/notes' },
-      { label: 'Quiz', icon: 'checkSquare', path: '/outils/genius-eval', id: 'quiz' },
+      { label: 'Agenda Personnel', icon: 'pencil', path: '/planning/planning-perso' },
+      { label: 'Séances et auto-évaluations', icon: 'calendarDays', path: '/outils/seances', id: 'seances' },
+    ]
+  },
+  {
+    label: 'Mes évaluations',
+    icon: 'target',
+    dropdown: [
       { label: 'Évaluation', icon: 'fileText', path: '/outils/evaluations' },
+      { label: 'Quiz', icon: 'checkSquare', path: '/outils/genius-eval', id: 'quiz' },
       { label: 'Évaluations ENSEA', icon: 'clipboard', path: '/outils/evaluations-ensea', id: 'ensea' },
-      { label: 'Séances', icon: 'calendarDays', path: '/outils/seances', id: 'seances' },
+    ]
+  },
+  {
+    label: 'Mes progrès',
+    icon: 'trendingUp',
+    dropdown: [
+      { label: 'Notes', icon: 'clipboard', path: '/outils/notes' },
+      { label: 'Suivi de Progression', icon: 'trendingUp', path: '/planning/suivi-progression' },
       { label: 'Mes compétences', icon: 'target', path: '/outils/competences', id: 'competences' },
       { label: 'Élèves en difficulté', icon: 'trendingUp', path: '/outils/difficultes', id: 'difficultes' },
     ]
   },
   {
-    label: 'Accompagnement',
+    label: 'Ressources',
+    icon: 'book',
+    dropdown: [
+      { label: 'Documents', icon: 'fileText', path: '/ressources' },
+      { label: 'INP-HB', icon: 'cap', path: '/ressources?ecole=INP-HB', concours: 'inphb' },
+      { label: 'ESATIC', icon: 'cap', path: '/ressources?ecole=ESATIC', concours: 'esatic' },
+      { label: 'CME', icon: 'cap', path: '/ressources?ecole=CME', concours: 'cme' },
+      { label: 'ENSEA', icon: 'cap', path: '/ressources?ecole=ENSEA', concours: 'ensea' },
+    ]
+  },
+  {
+    label: 'Aide',
     icon: 'lifebuoy',
-    path: '/aides',
     dropdown: [
       { label: 'Questions Fréquentes', icon: 'helpCircle', path: '/aides/faq-generale' },
       { label: 'Nous Contacter', icon: 'mail', path: '/aides/contacts' },
@@ -105,6 +107,25 @@ const menuItems = [
     ]
   },
 ]
+
+// Ce qui ne concerne pas l'utilisateur est masqué :
+//  - Quiz : seulement si un de ses concours propose des quiz automatiques
+//  - ENSEA / compétences : élèves ENSEA (le personnel voit « Évaluations ENSEA »)
+//  - Séances, élèves en difficulté : personnel
+//  - Ressources par concours : les concours de l'élève (le personnel voit ceux auxquels il a accès)
+function visible(sub, ctx) {
+  switch (sub.id) {
+    case 'quiz': return ctx.peutVoirQuiz
+    case 'ensea': return ctx.aConcours('ensea') || ctx.estPersonnel
+    case 'seances':
+    case 'difficultes': return ctx.estPersonnel
+    case 'competences': return ctx.aConcours('ensea') && !ctx.estPersonnel
+    default: return sub.concours ? ctx.peutAcceder(sub.concours) : true
+  }
+}
+
+// Un groupe est actif quand la page courante est l'une de ses entrées
+const groupeActif = (item, pathname) => item.dropdown.some(sub => pathname === sub.path.split('?')[0] || (sub.path.length > 1 && pathname.startsWith(sub.path.split('?')[0] + '/')))
 
 function DropdownMenu({ items, onClose }) {
   return (
@@ -126,13 +147,11 @@ function DropdownMenu({ items, onClose }) {
 
 export default function Navbar() {
   const { user, logout } = useAuth()
-  const { peutVoirQuiz, aConcours, estPersonnel } = useConcours()
-  // Quiz masqué si aucun concours de l'élève n'a de quiz automatiques ; « Évaluations ENSEA » pour les ENSEA et le personnel
+  const { peutVoirQuiz, aConcours, estPersonnel, peutAcceder } = useConcours()
   const menus = menuItems.map(m => ({
     ...m,
-    dropdown: m.dropdown.filter(sub =>
-      sub.id === 'quiz' ? peutVoirQuiz : sub.id === 'ensea' ? (aConcours('ensea') || estPersonnel) : sub.id === 'seances' || sub.id === 'difficultes' ? estPersonnel : sub.id === 'competences' ? (aConcours('ensea') && !estPersonnel) : true)
-  }))
+    dropdown: m.dropdown.filter(sub => visible(sub, { peutVoirQuiz, aConcours, estPersonnel, peutAcceder }))
+  })).filter(m => m.dropdown.length > 0)
   const navigate = useNavigate()
   const location = useLocation()
   const [openMenu, setOpenMenu] = useState(null)
@@ -176,10 +195,11 @@ export default function Navbar() {
               <button
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all"
                 style={{
-                  color: location.pathname.startsWith(item.path) ? '#C9A84C' : '#9ca3af',
-                  background: location.pathname.startsWith(item.path) ? 'rgba(201,168,76,0.1)' : 'transparent',
-                  borderBottom: location.pathname.startsWith(item.path) ? '2px solid #C9A84C' : '2px solid transparent'
+                  color: groupeActif(item, location.pathname) ? '#C9A84C' : '#9ca3af',
+                  background: groupeActif(item, location.pathname) ? 'rgba(201,168,76,0.1)' : 'transparent',
+                  borderBottom: groupeActif(item, location.pathname) ? '2px solid #C9A84C' : '2px solid transparent'
                 }}
+                aria-haspopup="true" aria-expanded={openMenu === item.label}
                 onClick={() => setOpenMenu(openMenu === item.label ? null : item.label)}>
                 <Icon name={item.icon} className="w-4 h-4" />
                 {item.label}
@@ -242,20 +262,22 @@ export default function Navbar() {
         </div>
 
         {/* Burger mobile */}
-        <button className="md:hidden text-white text-xl p-2" onClick={() => setMobileOpen(!mobileOpen)}>
+        <button className="md:hidden text-white text-xl p-2" aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'} aria-expanded={mobileOpen}
+          onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? '✕' : '☰'}
         </button>
       </div>
 
       {/* Menu mobile */}
       {mobileOpen && (
-        <div className="md:hidden px-4 pb-4 overflow-y-auto max-h-96"
+        <div className="md:hidden px-4 pb-4 overflow-y-auto max-h-[calc(100vh-3.5rem)]"
           style={{ background: '#071020', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
           {menus.map((item) => (
             <div key={item.label}>
               <button
                 className="w-full flex items-center justify-between py-3 text-sm font-semibold"
                 style={{ color: '#C9A84C', borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                aria-expanded={mobileExpanded === item.label}
                 onClick={() => setMobileExpanded(mobileExpanded === item.label ? null : item.label)}>
                 <span className="flex items-center gap-2">
                   <Icon name={item.icon} className="w-4 h-4" />
@@ -268,7 +290,7 @@ export default function Navbar() {
                   {item.dropdown.map((sub, i) => (
                     <Link key={i} to={sub.path}
                       onClick={() => { setMobileOpen(false); setMobileExpanded(null) }}
-                      className="flex items-center gap-2.5 py-2 text-xs text-gray-400">
+                      className="flex items-center gap-2.5 py-3 text-sm text-gray-300">
                       <Icon name={sub.icon} className="w-4 h-4 flex-shrink-0 opacity-80" />
                       {sub.label}
                     </Link>
