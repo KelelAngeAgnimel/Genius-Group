@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../../api'
+import { useConfirm } from '../../hooks/useUi'
 
 const jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
@@ -35,6 +36,7 @@ const formVide = {
 }
 
 export default function GestionPlanning() {
+  const confirmer = useConfirm()
   const [cours, setCours] = useState([])
   const [profs, setProfs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -136,7 +138,7 @@ export default function GestionPlanning() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Supprimer ce cours du planning ?')) return
+    if (!(await confirmer({ titre: 'Supprimer le cours ?', message: 'Ce cours sera retiré du planning.', confirmer: 'Supprimer', danger: true }))) return
     try {
       const res = await api.delete(`/api/planning/${id}`)
       const data = res.data

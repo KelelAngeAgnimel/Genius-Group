@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../../api'
 import SelecteurConcours from '../../components/SelecteurConcours'
 import { CODES_CONCOURS, concoursDe, libelleConcours, libelleUtilisateur, couleurConcours, roleDeBase } from '../../lib/concours'
+import { useToast, useConfirm } from '../../hooks/useUi'
 
 // Rôles de l'application ; les concours sont gérés séparément (inscriptions)
 const roleConfig = {
@@ -16,6 +17,8 @@ const modaliteConfig = {
 }
 
 export default function GestionUtilisateurs() {
+  const toast = useToast()
+  const confirmer = useConfirm()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -44,28 +47,28 @@ export default function GestionUtilisateurs() {
   }
 
   const supprimerUtilisateur = async (id) => {
-    if (!confirm('Supprimer cet utilisateur ?')) return
+    if (!(await confirmer({ titre: 'Supprimer l’utilisateur ?', message: 'Le compte sera supprimé définitivement.', confirmer: 'Supprimer', danger: true }))) return
     try {
       await api.delete(`/api/users/${id}`)
       setUsers(prev => prev.filter(u => u.id !== id))
     } catch {
-      alert('Erreur lors de la suppression')
+      toast.erreur('Erreur lors de la suppression')
     }
   }
 
   const basculerBlocage = async (u) => {
     const bloquer = !u.bloque
-    if (bloquer && !confirm(`Bloquer le compte de ${u.prenom || ''} ${u.nom || u.username} ?\nCette personne ne pourra plus se connecter.`)) return
+    if (bloquer && !(await confirmer({ titre: 'Bloquer ce compte ?', message: `${u.prenom || ''} ${u.nom || u.username} ne pourra plus se connecter.`, confirmer: 'Bloquer', danger: true }))) return
     try {
       const res = await api.patch(`/api/users/${u.id}`, { bloque: bloquer })
       const data = res.data
       if (res.ok) {
         setUsers(prev => prev.map(x => x.id === u.id ? { ...x, bloque: bloquer } : x))
       } else {
-        alert(data.message || 'Erreur lors du blocage')
+        toast.erreur(data.message || 'Erreur lors du blocage')
       }
     } catch {
-      alert('Erreur serveur lors du blocage')
+      toast.erreur('Erreur serveur lors du blocage')
     }
   }
 
@@ -94,10 +97,10 @@ export default function GestionUtilisateurs() {
         setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data.user } : u))
         setEditingId(null)
       } else {
-        alert(data.message || 'Erreur lors de la modification')
+        toast.erreur(data.message || 'Erreur lors de la modification')
       }
     } catch {
-      alert('Erreur serveur lors de la modification')
+      toast.erreur('Erreur serveur lors de la modification')
     } finally {
       setEnregistrement(false)
     }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api'
+import { useConfirm } from '../../hooks/useUi'
 
 const COULEURS = { or: '#C9A84C', navy: '#071020', vert: '#4CC9A8', rose: '#C94C7B', bleu: '#4C7BC9' }
 
@@ -11,6 +12,7 @@ const concoursConfig = {
 }
 
 export default function Meetings() {
+  const confirmer = useConfirm()
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
   const peutPublier = user?.role === 'admin' || user?.role === 'professeur'
@@ -77,7 +79,7 @@ export default function Meetings() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Supprimer ce cours ?')) return
+    if (!(await confirmer({ titre: 'Supprimer le cours ?', message: 'Le lien du cours ne sera plus visible des élèves.', confirmer: 'Supprimer', danger: true }))) return
     try {
       await api.delete(`/api/meetings/${id}`)
       if (editId === id) { setForm(formVide); setEditId(null); setShowForm(false) }

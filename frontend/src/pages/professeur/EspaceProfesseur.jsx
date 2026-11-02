@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api'
 import { concoursDe, libelleConcours, libelleUtilisateur } from '../../lib/concours'
+import { useConfirm } from '../../hooks/useUi'
 
 const matieresConcours = {
   'INP-HB': ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire'],
@@ -37,6 +38,7 @@ const libelleEtudiant = (e) =>
   `${identifiant(e)} — ${nomComplet(e)}`
 
 export default function EspaceProfesseur() {
+  const confirmer = useConfirm()
   const { user } = useAuth()
   const [onglet, setOnglet] = useState('ressources')
   const [ressources, setRessources] = useState([])
@@ -162,7 +164,7 @@ export default function EspaceProfesseur() {
   }
 
   const supprimerRessource = async (id) => {
-    if (!confirm('Supprimer cette ressource ?')) return
+    if (!(await confirmer({ titre: 'Supprimer la ressource ?', message: 'Le document sera retiré de la bibliothèque.', confirmer: 'Supprimer', danger: true }))) return
     await api.delete(`/api/ressources/${id}`)
     chargerRessources()
   }

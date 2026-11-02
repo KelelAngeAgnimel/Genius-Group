@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api'
+import { useToast, useConfirm } from '../../hooks/useUi'
 
 const COULEURS = { or: '#C9A84C', bleu: '#4C7BC9', vert: '#4CC9A8', rose: '#C94C7B', navy: '#071020', violet: '#7B4CC9' }
 
@@ -39,6 +40,7 @@ function chargerPdfJs() {
 }
 
 function LecteurPDF({ ressource, onFermer }) {
+  const toast = useToast()
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
   const containerRef = useRef(null)
@@ -116,7 +118,7 @@ function LecteurPDF({ ressource, onFermer }) {
       a.remove()
       setTimeout(() => URL.revokeObjectURL(url), 2000)
     } catch {
-      alert('Téléchargement impossible pour le moment.')
+      toast.erreur('Téléchargement impossible pour le moment.')
     }
   }
 
@@ -262,6 +264,8 @@ function VueEtudiant() {
 // (le prof ne voit que les siennes, l'admin voit tout)
 // ══════════════════════════════════════════
 function VueProf({ role }) {
+  const toast = useToast()
+  const confirmer = useConfirm()
   const [evaluations, setEvaluations] = useState([])
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -284,17 +288,17 @@ function VueProf({ role }) {
     try {
       const res = await api.patch(`/api/ressources/${ev.id}/visibilite`, { visible: !ev.visible })
       if (res.ok) setEvaluations(prev => prev.map(x => x.id === ev.id ? { ...x, visible: !ev.visible } : x))
-      else { const d = res.data ?? {}; alert(d.message || 'Action impossible') }
-    } catch { alert('Erreur réseau') }
+      else { const d = res.data ?? {}; toast.erreur(d.message || 'Action impossible') }
+    } catch { toast.erreur('Erreur réseau') }
   }
 
   const supprimer = async (ev) => {
-    if (!window.confirm('Supprimer cette évaluation ?')) return
+    if (!(await confirmer({ titre: 'Supprimer l’évaluation ?', message: 'Cette action est définitive.', confirmer: 'Supprimer', danger: true }))) return
     try {
       const res = await api.delete(`/api/ressources/${ev.id}`)
       if (res.ok) setEvaluations(prev => prev.filter(x => x.id !== ev.id))
-      else { const d = res.data ?? {}; alert(d.message || 'Suppression impossible') }
-    } catch { alert('Erreur réseau') }
+      else { const d = res.data ?? {}; toast.erreur(d.message || 'Suppression impossible') }
+    } catch { toast.erreur('Erreur réseau') }
   }
 
   return (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../../api'
 import { CODES_CONCOURS, libelleConcours } from '../../lib/concours'
 import { lireCsv, telechargerCsv } from '../../lib/csv'
+import { useConfirm } from '../../hooks/useUi'
 
 const VIOLET = '#7B4CC9'
 const CHAMP = 'text-sm rounded-xl px-3 py-2 outline-none'
@@ -162,6 +163,7 @@ function ImportCsv({ code, onFini }) {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 export default function GestionCompetences() {
+  const confirmer = useConfirm()
   const [concours, setConcours] = useState('ensea')
   const [competences, setCompetences] = useState([])
   const [edition, setEdition] = useState(null)   // { id, libelle, ordre, url, matiere }
@@ -189,7 +191,7 @@ export default function GestionCompetences() {
     await api.patch(`/api/competences/${c.id}`, { actif: !c.actif }); charger()
   }
   const supprimer = async (c) => {
-    if (!window.confirm(`Supprimer ${c.code} ? (désactivée si elle a déjà servi)`)) return
+    if (!(await confirmer({ titre: 'Supprimer la compétence ?', message: `${c.code} sera supprimée, ou simplement désactivée si elle a déjà servi.`, confirmer: 'Supprimer', danger: true }))) return
     await api.delete(`/api/competences/${c.id}`); charger()
   }
   const ajouter = async (e) => {

@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import api from '../../api'
 import { Link } from 'react-router-dom'
 import { useConcours } from '../../hooks/useConcours'
+import { useToast, useConfirm } from '../../hooks/useUi'
 
 
 // Matières par concours — doivent correspondre exactement aux matières dans la table notes
@@ -354,6 +355,8 @@ function VueEtudiant() {
 // VUE PROF / ADMIN
 // ========================
 function VueProf() {
+  const toast = useToast()
+  const confirmer = useConfirm()
   // Un professeur rattaché uniquement à des concours sans génération automatique (ENSEA) ne la voit pas
   const { concours: mesConcours, generationAutoTests, estProfesseur } = useConcours()
   const generationPossible = !(estProfesseur && mesConcours.length > 0 && !mesConcours.some(generationAutoTests))
@@ -472,7 +475,7 @@ function VueProf() {
   }
 
   const supprimer = async (id) => {
-    if (!window.confirm('Supprimer ce quiz ?')) return
+    if (!(await confirmer({ titre: 'Supprimer le quiz ?', message: 'Les questions et les résultats associés seront perdus.', confirmer: 'Supprimer', danger: true }))) return
     try {
       await api.delete(`/api/quiz/${id}`)
       charger()
@@ -490,10 +493,10 @@ function VueProf() {
       if (res.ok && data.quiz) {
         setQuizzes(prev => prev.map(x => x.id === q.id ? { ...x, titre: data.quiz.titre } : x))
       } else {
-        alert(data.error || "Impossible de renommer. Vérifie que le serveur (Render) est à jour.")
+        toast.erreur(data.error || "Impossible de renommer. Vérifie que le serveur (Render) est à jour.")
       }
     } catch {
-      alert('Erreur réseau lors du renommage.')
+      toast.erreur('Erreur réseau lors du renommage.')
     }
   }
 
@@ -505,10 +508,10 @@ function VueProf() {
         // Mise à jour immédiate du bouton à partir de la réponse du serveur
         setQuizzes(prev => prev.map(x => x.id === q.id ? { ...x, publie: data.quiz.publie } : x))
       } else {
-        alert(data.error || "Impossible de changer la visibilité. Vérifie que le serveur (Render) est bien à jour.")
+        toast.erreur(data.error || "Impossible de changer la visibilité. Vérifie que le serveur (Render) est bien à jour.")
       }
     } catch {
-      alert('Erreur réseau lors du changement de visibilité.')
+      toast.erreur('Erreur réseau lors du changement de visibilité.')
     }
   }
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useConcours } from '../hooks/useConcours'
 import api from '../api'
 import Breadcrumb from '../components/Breadcrumb'
+import { useToast } from '../hooks/useUi'
 
 // Une ressource correspond-elle à l'école affichée ?
 // Inclusif : une ressource "tous"/"all" ou combinée apparaît sous chaque école concernée.
@@ -88,6 +89,7 @@ function chargerPdfJs() {
 }
 
 function LecteurPDF({ ressource, onFermer }) {
+  const toast = useToast()
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
   const containerRef = useRef(null)
@@ -168,7 +170,7 @@ function LecteurPDF({ ressource, onFermer }) {
       a.remove()
       setTimeout(() => URL.revokeObjectURL(url), 2000)
     } catch {
-      alert('Téléchargement impossible pour le moment.')
+      toast.erreur('Téléchargement impossible pour le moment.')
     }
   }
 
