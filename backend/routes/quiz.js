@@ -7,14 +7,16 @@ import { PDFParse } from 'pdf-parse'
 import { verifyToken } from '../middleware/authMiddleware.js'
 import { iaLimiter } from '../middleware/rateLimit.js'
 import { validate } from '../middleware/validate.js'
-import { peutAcceder, peutPublierPour, concoursContenuSchema, LIBELLES } from '../lib/concours.js'
+import { peutAcceder, peutPublierPour, concoursContenuSchema, generationAutoAutorisee, LIBELLES } from '../lib/concours.js'
+import { optionsConcours } from '../lib/inscriptions.js'
 
 const court = (max) => z.string().trim().max(max)
 const genererIaSchema = z.object({
   matiere: court(100).min(1),
   niveau: court(100).nullish(),
   theme: court(300).nullish(),
-  nombre_questions: z.union([z.number(), z.string().max(5)]).nullish()
+  nombre_questions: z.union([z.number(), z.string().max(5)]).nullish(),
+  concours: concoursContenuSchema.nullish()
 })
 const creerQuizSchema = z.object({
   titre: court(200).min(1),
@@ -155,7 +157,10 @@ router.post('/generer-ia', verifyToken, iaLimiter, validate(genererIaSchema), as
   if (!['professeur', 'admin'].includes(req.user.role)) {
     return res.status(403).json({ error: 'Accès réservé aux professeurs et administrateurs' })
   }
-  const { matiere, niveau, theme, nombre_questions } = req.body
+  const { matiere, niveau, theme, nombre_questions, concours } = req.body
+  if (!generationAutoAutorisee(await optionsConcours(), req.user, concours)) {
+    return res.status(403).json({ error: 'La génération automatique de tests n’est pas disponible pour ce concours' })
+  }
   const n = Math.min(Math.max(parseInt(nombre_questions) || 5, 1), 20)
   if (!matiere) return res.status(400).json({ error: 'La matière est requise' })
 
@@ -213,6 +218,9 @@ router.post('/importer-pdf', verifyToken, iaLimiter, (req, res, next) => {
 }, async (req, res) => {
   if (!['professeur', 'admin'].includes(req.user.role)) {
     return res.status(403).json({ error: 'Accès réservé aux professeurs et administrateurs' })
+  }
+  if (!generationAutoAutorisee(await optionsConcours(), req.user, req.body?.concours)) {
+    return res.status(403).json({ error: 'La génération automatique de tests n’est pas disponible pour ce concours' })
   }
   if (!req.file) {
     return res.status(400).json({ error: 'Aucun fichier PDF reçu' })
@@ -318,6 +326,9 @@ router.post('/', verifyToken, validate(creerQuizSchema), async (req, res) => {
   const { titre, matiere, niveau, questions, ai_genere, duree_minutes, concours, modalite } = req.body
   if (!titre || !matiere || !Array.isArray(questions) || questions.length === 0) {
     return res.status(400).json({ error: 'titre, matiere et au moins une question sont requis' })
+  }
+  if (ai_genere && !generationAutoAutorisee(await optionsConcours(), req.user, concours)) {
+    return res.status(403).json({ error: 'La génération automatique de tests n’est pas disponible pour ce concours' })
   }
   if (!peutPublierPour(req.user, concours || 'all')) {
     return res.status(403).json({ error: 'Vous ne pouvez publier que pour vos concours' })

@@ -75,3 +75,43 @@ describe('lib/concours', () => {
     expect(peutAcceder({ role: 'etudiant', concours: ['cme'] }, 'both')).toBe(true)
   })
 })
+
+describe('Génération automatique de quiz (options des concours)', () => {
+  const quiz = { matiere: 'Mathématiques', concours: 'ensea' }
+  beforeEach(() => {
+    invalidateUserCache()
+    resetDb({
+      users: [user(20, 'professeur'), user(21, 'professeur'), user(30, 'admin')],
+      inscriptions: [{ user_id: 21, concours_code: 'ensea' }]
+    })
+  })
+
+  it('génération IA refusée pour un quiz ENSEA (même admin)', async () => {
+    for (const id of [20, 30]) {
+      const r = await request(app).post('/api/quiz/generer-ia').set(bearer(id)).send(quiz)
+      expect(r.status).toBe(403)
+    }
+  })
+
+  it('génération IA refusée à un prof rattaché uniquement à ENSEA, même sans concours précisé', async () => {
+    const r = await request(app).post('/api/quiz/generer-ia').set(bearer(21)).send({ matiere: 'Mathématiques' })
+    expect(r.status).toBe(403)
+  })
+
+  it('génération IA toujours permise pour INP-HB (échec seulement faute de clé IA : 503)', async () => {
+    const r = await request(app).post('/api/quiz/generer-ia').set(bearer(20)).send({ matiere: 'Physique', concours: 'esatic' })
+    expect(r.status).toBe(503)
+  })
+
+  it("import PDF refusé pour ENSEA et création d'un quiz IA ENSEA refusée", async () => {
+    const pdf = await request(app).post('/api/quiz/importer-pdf').set(bearer(20))
+      .field('concours', 'ensea')
+      .attach('fichier', Buffer.from('%PDF-1.4'), { filename: 'a.pdf', contentType: 'application/pdf' })
+    expect(pdf.status).toBe(403)
+
+    const q = { titre: 'T', matiere: 'Maths', concours: 'ensea', ai_genere: true, duree_minutes: 10,
+      questions: [{ question: 'Q ?', options: ['a', 'b', 'c', 'd'], bonne_reponse: 0 }] }
+    const r = await request(app).post('/api/quiz').set(bearer(20)).send(q)
+    expect(r.status).toBe(403)
+  })
+})

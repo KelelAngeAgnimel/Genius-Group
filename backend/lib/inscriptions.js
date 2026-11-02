@@ -58,3 +58,19 @@ export async function chargerAvecConcours(id) {
   if (error) throw error
   return avecConcoursUn(data)
 }
+
+// Options des concours (table concours.options), mises en cache 60 s. Table absente → options par défaut.
+let cacheOptions = null
+export async function optionsConcours() {
+  if (cacheOptions && cacheOptions.expire > Date.now()) return cacheOptions.valeur
+  const { data, error } = await supabase.from('concours').select('code, options')
+  let valeur = {}
+  if (!error) {
+    valeur = Object.fromEntries((data ?? []).map(c => [c.code, c.options ?? {}]))
+  } else if (!TABLE_ABSENTE.has(error.code)) {
+    throw error
+  }
+  cacheOptions = { valeur, expire: Date.now() + 60 * 1000 }
+  return valeur
+}
+export const viderCacheOptions = () => { cacheOptions = null }

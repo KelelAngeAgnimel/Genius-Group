@@ -89,5 +89,24 @@ export function peutGererEleve(user, eleve) {
 export const concoursContenuSchema = z.string().trim().toLowerCase()
   .refine(v => CODES_CONCOURS.includes(v) || ['both', 'all', 'tous'].includes(v), 'Concours inconnu')
 
+// Options par défaut des concours (la table `concours.options` les surcharge).
+// ENSEA : pas de génération automatique de tests (cf. docs/pole-educatif.md).
+export const OPTIONS_PAR_DEFAUT = {
+  ensea: { generation_auto_tests: false }
+}
+
+const genAutoPermise = (optionsParCode, code) =>
+  (optionsParCode?.[code] ?? OPTIONS_PAR_DEFAUT[code])?.generation_auto_tests !== false
+
+// La génération automatique de quiz (IA / import PDF) est-elle permise ?
+//  - concours précisé : tous les concours ciblés doivent l'autoriser
+//  - sinon : un professeur rattaché n'est refusé que si aucun de ses concours ne l'autorise
+export function generationAutoAutorisee(optionsParCode, user, valeurConcours) {
+  const cibles = codesDepuisContenu(valeurConcours)
+  if (cibles && cibles.length > 0) return cibles.every(c => genAutoPermise(optionsParCode, c))
+  if (estPersonnelRestreint(user)) return concoursDeLUtilisateur(user).some(c => genAutoPermise(optionsParCode, c))
+  return true
+}
+
 // Libellé utilisé par la table notes (« INP-HB », « ESATIC »…) pour un code
 export const LIBELLES = { inphb: 'INP-HB', esatic: 'ESATIC', cme: 'CME', ensea: 'ENSEA' }
