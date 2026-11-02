@@ -53,6 +53,16 @@ join (values
 on conflict do nothing;
 
 -- 5) Rôle réduit à etudiant / professeur / admin --------------------------------------------
+-- La base contient une contrainte users_role_check qui n'autorise que les anciens rôles.
+-- On la remplace par une version qui accepte les nouveaux rôles ET les anciens (pendant la
+-- transition, un ancien frontend ou le retour arrière peuvent encore en avoir besoin).
+alter table users drop constraint if exists users_role_check;
+alter table users add constraint users_role_check check (role in (
+  'admin', 'professeur', 'etudiant',
+  'etudiant_inphb', 'etudiant_esatic', 'etudiant_cme',
+  'etudiant_inphb_cme', 'etudiant_esatic_cme', 'etudiant_both', 'etudiant_all'
+));
+
 update users set role = 'etudiant' where role like 'etudiant\_%' escape '\';
 
 -- Les professeurs et admins n'ont volontairement AUCUNE inscription : « aucune inscription »

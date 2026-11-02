@@ -26,6 +26,14 @@ where s.user_id = u.id and u.role = 'etudiant' and u.role_ancien is null;
 -- 2) Restaurer les rôles
 update users set role = role_ancien where role_ancien is not null and role <> role_ancien;
 
+-- 2 bis) Contrainte d'origine : seuls les anciens rôles sont autorisés
+alter table users drop constraint if exists users_role_check;
+alter table users add constraint users_role_check check (role in (
+  'admin', 'professeur',
+  'etudiant_inphb', 'etudiant_esatic', 'etudiant_cme',
+  'etudiant_inphb_cme', 'etudiant_esatic_cme', 'etudiant_both', 'etudiant_all'
+));
+
 -- 3) Supprimer les nouvelles structures
 drop table if exists inscriptions;
 drop table if exists concours;
