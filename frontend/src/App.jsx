@@ -23,7 +23,10 @@ import EmploiDuTemps from './pages/Planning/EmploiDuTemps'
 import SuiviProgression from './pages/Planning/SuiviProgression'
 import PlanningPerso from './pages/Planning/PlanningPerso'
 import Meetings from './pages/meetings/Meetings'
-import MesNotes from './pages/notes/MesNotes'
+import PageNotes from './pages/notes/PageNotes'
+import Seances from './pages/professeur/Seances'
+import GestionCompetences from './pages/admin/GestionCompetences'
+import VueGlobale from './pages/admin/VueGlobale'
 import GeniusEval from './pages/eval/GeniusEval'
 import Evaluations from './pages/eval/Evaluations'
 import EvaluationsEnsea from './pages/eval/EvaluationsEnsea'
@@ -77,7 +80,8 @@ export default function App() {
         }>
           <Route index element={<Navigate to="teams" />} />
           <Route path="teams" element={<Meetings />} />
-          <Route path="notes" element={<MesNotes />} />
+          <Route path="notes" element={<PageNotes />} />
+          <Route path="seances" element={<Seances />} />
           <Route path="genius-eval" element={<GeniusEval />} />
           <Route path="evaluations" element={<Evaluations />} />
           <Route path="evaluations-ensea" element={<EvaluationsEnsea />} />
@@ -111,6 +115,8 @@ export default function App() {
           <Route path="utilisateurs" element={<GestionUtilisateurs />} />
           <Route path="creer" element={<CreerUtilisateur />} />
           <Route path="planning" element={<GestionPlanning />} />
+          <Route path="competences" element={<GestionCompetences />} />
+          <Route path="vue-globale" element={<VueGlobale />} />
         </Route>
 
       </Routes>

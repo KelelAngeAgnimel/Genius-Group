@@ -87,6 +87,7 @@ const menuItems = [
       { label: 'Quiz', icon: 'checkSquare', path: '/outils/genius-eval', id: 'quiz' },
       { label: 'Évaluation', icon: 'fileText', path: '/outils/evaluations' },
       { label: 'Évaluations ENSEA', icon: 'clipboard', path: '/outils/evaluations-ensea', id: 'ensea' },
+      { label: 'Séances', icon: 'calendarDays', path: '/outils/seances', id: 'seances' },
     ]
   },
   {
@@ -128,7 +129,7 @@ export default function Navbar() {
   const menus = menuItems.map(m => ({
     ...m,
     dropdown: m.dropdown.filter(sub =>
-      sub.id === 'quiz' ? peutVoirQuiz : sub.id === 'ensea' ? (aConcours('ensea') || estPersonnel) : true)
+      sub.id === 'quiz' ? peutVoirQuiz : sub.id === 'ensea' ? (aConcours('ensea') || estPersonnel) : sub.id === 'seances' ? estPersonnel : true)
   }))
   const navigate = useNavigate()
   const location = useLocation()
