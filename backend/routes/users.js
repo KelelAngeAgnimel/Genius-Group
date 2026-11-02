@@ -22,7 +22,8 @@ const listeConcours = (v) => (Array.isArray(v) ? v : null)
 const nomSchema = z.string().trim().max(100)
 
 const creerSchema = z.object({
-  username: z.string().trim().min(1).max(64).optional(),
+  // Vide pour un élève (son identifiant est le matricule généré) : traité comme absent
+  username: z.preprocess(v => (typeof v === 'string' && v.trim() === '' ? undefined : v), z.string().trim().min(1).max(64).optional()),
   password: z.string().min(6).max(200),
   nom: nomSchema.nullish(),
   prenom: nomSchema.nullish(),
