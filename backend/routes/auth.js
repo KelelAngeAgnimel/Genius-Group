@@ -1,103 +1,87 @@
 import express from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import { z } from 'zod'
 import supabase from '../supabase.js'
+import { validate } from '../middleware/validate.js'
+import { loginLimiter } from '../middleware/rateLimit.js'
+import { avecConcoursUn } from '../lib/inscriptions.js'
 
 const router = express.Router()
+
+const loginSchema = z.object({
+  matricule: z.string().trim().min(1).max(64),
+  password: z.string().min(1).max(200)
+})
+
+// Hash factice : on compare toujours un mot de passe, même si l'utilisateur n'existe pas
+// (évite de deviner les matricules existants par le temps de réponse).
+const FAUX_HASH = bcrypt.hashSync('mot-de-passe-factice', 10)
+const MSG_IDENTIFIANTS = 'Identifiants incorrects'
 
 // POST /api/auth/login — connexion par MATRICULE + mot de passe
 // Les profs et admins se connectent par username
 // Les étudiants se connectent par matricule
-router.post('/login', async (req, res) => {
+// Le limiteur lit req.body.matricule : il doit passer après express.json (déjà monté dans server.js)
+router.post('/login', loginLimiter, validate(loginSchema), async (req, res) => {
   const { matricule, password } = req.body
 
-  if (!matricule || !password) {
-    return res.status(400).json({ message: 'Matricule et mot de passe requis' })
-  }
+  // Chercher d'abord par matricule (étudiants), puis par username (profs et admins)
+  let { data: utilisateur, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('matricule', matricule)
+    .maybeSingle()
+  if (error) throw error
 
-  try {
-    // Chercher d'abord par matricule (étudiants)
-    // puis par username (profs et admins qui n'ont pas de matricule)
-    let user = null
-
-    const { data: parMatricule } = await supabase
+  if (!utilisateur) {
+    const res2 = await supabase
       .from('users')
       .select('*')
-      .eq('matricule', matricule)
-      .single()
-
-    if (parMatricule) {
-      user = parMatricule
-    } else {
-      // Fallback : connexion par username pour profs/admins
-      const { data: parUsername } = await supabase
-        .from('users')
-        .select('*')
-        .eq('username', matricule) // le champ "matricule" du body peut contenir un username
-        .single()
-      user = parUsername
-    }
-
-    if (!user) {
-      return res.status(401).json({ message: 'Matricule ou identifiant incorrect' })
-    }
-
-    const validPassword = await bcrypt.compare(password, user.password)
-    if (!validPassword) {
-      return res.status(401).json({ message: 'Mot de passe incorrect' })
-    }
-
-    if (user.bloque) {
-      return res.status(403).json({ message: 'Ce compte a été bloqué. Contactez l\'administration.' })
-    }
-
-    const token = jwt.sign(
-      {
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        matricule: user.matricule,
-        concours: user.concours,
-        modalite: user.modalite
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    )
-
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        matricule: user.matricule,
-        username: user.username,
-        nom: user.nom,
-        prenom: user.prenom,
-        role: user.role,
-        concours: user.concours,
-        modalite: user.modalite
-      }
-    })
-
-  } catch (err) {
-    res.status(500).json({ message: 'Erreur serveur', error: err.message })
+      .eq('username', matricule) // le champ "matricule" du body peut contenir un username
+      .maybeSingle()
+    if (res2.error) throw res2.error
+    utilisateur = res2.data
   }
+
+  const validPassword = await bcrypt.compare(password, utilisateur?.password || FAUX_HASH)
+  if (!utilisateur || !validPassword) {
+    return res.status(401).json({ message: MSG_IDENTIFIANTS, error: MSG_IDENTIFIANTS })
+  }
+
+  // Rôle normalisé (etudiant / professeur / admin) + liste des concours
+  const user = await avecConcoursUn(utilisateur)
+
+  if (user.bloque) {
+    return res.status(403).json({ message: 'Ce compte a été bloqué. Contactez l\'administration.' })
+  }
+
+  const token = jwt.sign(
+    {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      matricule: user.matricule,
+      concours: user.concours,
+      modalite: user.modalite
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '24h', algorithm: 'HS256' }
+  )
+
+  res.json({
+    token,
+    user: {
+      id: user.id,
+      matricule: user.matricule,
+      username: user.username,
+      nom: user.nom,
+      prenom: user.prenom,
+      role: user.role,
+      concours: user.concours,
+      modalite: user.modalite
+    }
+  })
 })
-
-export function verifyToken(req, res, next) {
-  const authHeader = req.headers.authorization
-  const token = authHeader && authHeader.split(' ')[1]
-
-  if (!token) {
-    return res.status(401).json({ message: 'Token manquant' })
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    req.user = decoded
-    next()
-  } catch (err) {
-    return res.status(403).json({ message: 'Token invalide' })
-  }
-}
 
 export default router

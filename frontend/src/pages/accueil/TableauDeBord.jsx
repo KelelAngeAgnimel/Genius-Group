@@ -1,12 +1,13 @@
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
-import API_URL from '../../config'
+import api from '../../api'
+import { concoursDe } from '../../lib/concours'
 
 // =====================
 // DASHBOARD ADMIN
 // =====================
-function DashboardAdmin({ user, token, navigate }) {
+function DashboardAdmin({ user, navigate }) {
   const [stats, setStats] = useState({ total: 0, etudiants: 0, professeurs: 0, admins: 0 })
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
@@ -15,11 +16,11 @@ function DashboardAdmin({ user, token, navigate }) {
     const charger = async () => {
       try {
         const [usersRes, msgRes] = await Promise.all([
-          fetch(`${API_URL}/api/users/all`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_URL}/api/messages/recus`, { headers: { Authorization: `Bearer ${token}` } })
+          api.get('/api/users/all'),
+          api.get('/api/messages/recus')
         ])
-        const usersData = await usersRes.json()
-        const msgData = await msgRes.json()
+        const usersData = usersRes.data
+        const msgData = msgRes.data
         if (usersData.users) {
           const u = usersData.users
           setStats({ total: u.length, etudiants: u.filter(x => x.role.startsWith('etudiant')).length, professeurs: u.filter(x => x.role === 'professeur').length, admins: u.filter(x => x.role === 'admin').length })
@@ -95,7 +96,7 @@ function DashboardAdmin({ user, token, navigate }) {
 // =====================
 // DASHBOARD PROFESSEUR
 // =====================
-function DashboardProfesseur({ user, token, navigate }) {
+function DashboardProfesseur({ user, navigate }) {
   const [ressources, setRessources] = useState([])
   const [etudiants, setEtudiants] = useState([])
   const [messages, setMessages] = useState([])
@@ -105,13 +106,13 @@ function DashboardProfesseur({ user, token, navigate }) {
     const charger = async () => {
       try {
         const [resRes, usersRes, msgRes] = await Promise.all([
-          fetch(`${API_URL}/api/ressources/toutes`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_URL}/api/users/all`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_URL}/api/messages/envoyes`, { headers: { Authorization: `Bearer ${token}` } })
+          api.get('/api/ressources/toutes'),
+          api.get('/api/users/all'),
+          api.get('/api/messages/envoyes')
         ])
-        const resData = await resRes.json()
-        const usersData = await usersRes.json()
-        const msgData = await msgRes.json()
+        const resData = resRes.data
+        const usersData = usersRes.data
+        const msgData = msgRes.data
         if (resData.ressources) setRessources(resData.ressources)
         if (usersData.users) setEtudiants(usersData.users.filter(u => u.role.startsWith('etudiant')))
         if (msgData.messages) setMessages(msgData.messages)
@@ -310,6 +311,11 @@ function CarteCompetencesFIFA({ config, notes }) {
 // DÉCOMPTE DYNAMIQUE VERS LE CONCOURS
 // ══════════════════════════════════════════
 function DecompteConcours({ dateConcours, nomConcours, couleurConcours }) {
+  if (!dateConcours) return null
+  return <DecompteAvecDate dateConcours={dateConcours} nomConcours={nomConcours} couleurConcours={couleurConcours} />
+}
+
+function DecompteAvecDate({ dateConcours, nomConcours, couleurConcours }) {
   const calcJours = () => {
     const auj = new Date(); auj.setHours(0, 0, 0, 0)
     const cible = new Date(dateConcours); cible.setHours(0, 0, 0, 0)
@@ -369,7 +375,6 @@ const CONCOURS_CONFIG = [
     matieres: ['Culture Scientifique', 'Culture Générale', 'Culture Littéraire'],
     couleur: '#C9A84C',
     site: 'https://inphb.ci',
-    roles: ['etudiant_inphb', 'etudiant_both', 'etudiant_inphb_cme', 'etudiant_all'],
     dateConcours: '2026-08-05',
     nomConcours: 'Épreuves INP-HB'
   },
@@ -381,7 +386,6 @@ const CONCOURS_CONFIG = [
     matieres: ['Mathématiques', 'Physique', 'Anglais', 'Français'],
     couleur: '#4C7BC9',
     site: 'https://esatic.ci',
-    roles: ['etudiant_esatic', 'etudiant_both', 'etudiant_esatic_cme', 'etudiant_all'],
     dateConcours: '2026-08-04',
     nomConcours: 'Épreuves ESATIC'
   },
@@ -393,9 +397,19 @@ const CONCOURS_CONFIG = [
     matieres: ['Culture Générale', 'Culture Scientifique', 'Anglais', 'Français'],
     couleur: '#4CC9A8',
     site: '#',
-    roles: ['etudiant_cme', 'etudiant_inphb_cme', 'etudiant_esatic_cme', 'etudiant_all'],
     dateConcours: '2026-08-10',
     nomConcours: 'Épreuves CME'
+  },
+  {
+    sigle: 'ENSEA',
+    codeConcours: 'ensea',
+    nom: 'École Nationale Supérieure de Statistique et d’Économie Appliquée',
+    logo: '/ensea-logo.png',
+    matieres: ['Français', 'Mathématiques'],
+    couleur: '#7B4CC9',
+    site: 'https://ensea.ed.ci',
+    dateConcours: null, // date non fournie par le pôle éducatif : le décompte n'est pas affiché
+    nomConcours: 'Épreuves ENSEA'
   },
 ]
 
@@ -409,7 +423,7 @@ const COULEUR_TYPE = {
 // ══════════════════════════════════════════
 // DASHBOARD ÉTUDIANT
 // ══════════════════════════════════════════
-function DashboardEtudiant({ user, token, navigate }) {
+function DashboardEtudiant({ user, navigate }) {
   const [messages, setMessages] = useState([])
   const [notes, setNotes] = useState([])
   const [planning, setPlanning] = useState([])
@@ -426,8 +440,8 @@ function DashboardEtudiant({ user, token, navigate }) {
 
   const chargerMessages = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/messages/recus`, { headers: { Authorization: `Bearer ${token}` } })
-      const data = await res.json()
+      const res = await api.get('/api/messages/recus')
+      const data = res.data
       if (data.messages) setMessages(data.messages)
     } catch (err) { console.error(err) }
     finally { setLoadingMsg(false) }
@@ -435,8 +449,8 @@ function DashboardEtudiant({ user, token, navigate }) {
 
   const chargerNotes = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/notes/mes-notes`, { headers: { Authorization: `Bearer ${token}` } })
-      const data = await res.json()
+      const res = await api.get('/api/notes/mes-notes')
+      const data = res.data
       if (data.notes) setNotes(data.notes)
     } catch (err) { console.error(err) }
     finally { setLoadingNotes(false) }
@@ -444,8 +458,8 @@ function DashboardEtudiant({ user, token, navigate }) {
 
   const chargerPlanning = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/planning`, { headers: { Authorization: `Bearer ${token}` } })
-      const data = await res.json()
+      const res = await api.get('/api/planning')
+      const data = res.data
       if (Array.isArray(data)) setPlanning(data)
     } catch (err) { console.error(err) }
     finally { setLoadingPlanning(false) }
@@ -453,7 +467,7 @@ function DashboardEtudiant({ user, token, navigate }) {
 
   const marquerLu = async (id) => {
     try {
-      await fetch(`${API_URL}/api/messages/${id}/lu`, { method: 'PATCH', headers: { Authorization: `Bearer ${token}` } })
+      await api.patch(`/api/messages/${id}/lu`)
       setMessages(prev => prev.map(m => m.id === id ? { ...m, lu: true } : m))
     } catch (err) { console.error(err) }
   }
@@ -463,8 +477,8 @@ function DashboardEtudiant({ user, token, navigate }) {
     if (!msg.lu) marquerLu(msg.id)
   }
 
-  // Concours visibles selon le rôle
-  const concoursVisibles = CONCOURS_CONFIG.filter(c => c.roles.includes(user?.role))
+  // Concours visibles : ceux auxquels l'élève est inscrit
+  const concoursVisibles = CONCOURS_CONFIG.filter(c => concoursDe(user).includes(c.codeConcours))
   const concoursPrincipal = concoursVisibles[0]
   const messagesNonLus = messages.filter(m => !m.lu).length
 
@@ -705,9 +719,9 @@ function DashboardEtudiant({ user, token, navigate }) {
 // COMPOSANT PRINCIPAL
 // ========================
 export default function TableauDeBord() {
-  const { user, token } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
-  if (user?.role === 'admin') return <DashboardAdmin user={user} token={token} navigate={navigate} />
-  if (user?.role === 'professeur') return <DashboardProfesseur user={user} token={token} navigate={navigate} />
-  return <DashboardEtudiant user={user} token={token} navigate={navigate} />
+  if (user?.role === 'admin') return <DashboardAdmin user={user} navigate={navigate} />
+  if (user?.role === 'professeur') return <DashboardProfesseur user={user} navigate={navigate} />
+  return <DashboardEtudiant user={user} navigate={navigate} />
 }

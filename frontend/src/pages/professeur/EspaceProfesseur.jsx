@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import API_URL from '../../config'
+import api from '../../api'
+import { concoursDe, libelleConcours, libelleUtilisateur } from '../../lib/concours'
 
 const matieresConcours = {
   'INP-HB': ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire'],
@@ -18,36 +19,11 @@ const typeColor = {
   exercice: '#C94C7B'
 }
 
-const roleLabel = {
-  etudiant_inphb: 'INP-HB',
-  etudiant_esatic: 'ESATIC',
-  etudiant_both: 'INP-HB + ESATIC',
-  etudiant_cme: 'CME',
-  etudiant_inphb_cme: 'INP-HB + CME',
-  etudiant_esatic_cme: 'ESATIC + CME',
-  etudiant_all: 'INP-HB + ESATIC + CME',
-}
 
-// ══════════════════════════════════════════════════════════════
-// Concours reellement prepares par un etudiant selon son role.
-// Un profil multi-concours (etudiant_all, etudiant_both, ...) doit
-// apparaitre dans TOUTES les listes correspondantes, sinon il devient
-// invisible au moment de publier une note.
-// ══════════════════════════════════════════════════════════════
-const concoursDeRole = (role) => {
-  const r = (role || '').toLowerCase()
-  if (r === 'etudiant_all')  return ['INP-HB', 'ESATIC', 'CME']
-  if (r === 'etudiant_both') return ['INP-HB', 'ESATIC']
-  const liste = []
-  if (r.includes('inphb'))  liste.push('INP-HB')
-  if (r.includes('esatic')) liste.push('ESATIC')
-  if (r.includes('cme'))    liste.push('CME')
-  return liste
-}
-
-// L'etudiant prepare-t-il ce concours ? ('tous' = aucun filtre)
-const suitLeConcours = (role, concours) =>
-  !concours || concours === 'tous' || concoursDeRole(role).includes(concours)
+// L'etudiant prepare-t-il ce concours (libelle « INP-HB », « ESATIC »…) ? ('tous' = aucun filtre)
+// Un eleve inscrit a plusieurs concours apparait dans TOUTES les listes correspondantes.
+const suitLeConcours = (etudiant, concours) =>
+  !concours || concours === 'tous' || concoursDe(etudiant).map(libelleConcours).includes(concours)
 
 // Identifiant affichable : matricule en priorite, sinon username
 const identifiant = (e) => e.matricule || e.username || ''
@@ -61,7 +37,7 @@ const libelleEtudiant = (e) =>
   `${identifiant(e)} — ${nomComplet(e)}`
 
 export default function EspaceProfesseur() {
-  const { user, token } = useAuth()
+  const { user } = useAuth()
   const [onglet, setOnglet] = useState('ressources')
   const [ressources, setRessources] = useState([])
   const [etudiants, setEtudiants] = useState([])
@@ -95,7 +71,6 @@ export default function EspaceProfesseur() {
   const [filtreNotesConcours, setFiltreNotesConcours] = useState('INP-HB')
   const [filtreNotesPeriode, setFiltreNotesPeriode] = useState('Mar 2026')
 
-  const headers = { Authorization: `Bearer ${token}` }
 
   useEffect(() => {
     chargerRessources()
@@ -108,15 +83,15 @@ export default function EspaceProfesseur() {
   }, [onglet, filtreNotesConcours, filtreNotesPeriode])
 
   const chargerRessources = async () => {
-    const res = await fetch(`${API_URL}/api/ressources/toutes`, { headers })
-    const data = await res.json()
+    const res = await api.get('/api/ressources/toutes')
+    const data = res.data
     if (data.ressources) setRessources(data.ressources)
   }
 
   const chargerEtudiants = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/users/all`, { headers })
-      const data = await res.json()
+      const res = await api.get('/api/users/all')
+      const data = res.data
       if (!data.users) {
         setErreur(data.message || 'Impossible de charger la liste des etudiants')
         return
@@ -133,19 +108,16 @@ export default function EspaceProfesseur() {
   }
 
   const chargerMessages = async () => {
-    const res = await fetch(`${API_URL}/api/messages/envoyes`, { headers })
-    const data = await res.json()
+    const res = await api.get('/api/messages/envoyes')
+    const data = res.data
     if (data.messages) setMessages(data.messages)
   }
 
   const chargerNotesClasse = async () => {
     setLoading(true)
     try {
-      const res = await fetch(
-        `${API_URL}/api/notes/classe?concours=${filtreNotesConcours}&periode=${filtreNotesPeriode}`,
-        { headers }
-      )
-      const data = await res.json()
+      const res = await api.get(`/api/notes/classe?concours=${filtreNotesConcours}&periode=${filtreNotesPeriode}`)
+      const data = res.data
       if (data.notes) setNotesClasse(data.notes)
     } catch (err) {
       console.error(err)
@@ -164,12 +136,8 @@ export default function EspaceProfesseur() {
       Object.entries(form).forEach(([k, v]) => formData.append(k, v))
       if (fichier) formData.append('fichier', fichier)
 
-      const res = await fetch(`${API_URL}/api/ressources/upload`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData
-      })
-      const data = await res.json()
+      const res = await api.post('/api/ressources/upload', formData)
+      const data = res.data
 
       if (data.success) {
         setSucces(form.est_evaluation
@@ -189,17 +157,13 @@ export default function EspaceProfesseur() {
   }
 
   const toggleVisibilite = async (id, visible) => {
-    await fetch(`${API_URL}/api/ressources/${id}/visibilite`, {
-      method: 'PATCH',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ visible: !visible })
-    })
+    await api.patch(`/api/ressources/${id}/visibilite`, { visible: !visible })
     chargerRessources()
   }
 
   const supprimerRessource = async (id) => {
     if (!confirm('Supprimer cette ressource ?')) return
-    await fetch(`${API_URL}/api/ressources/${id}`, { method: 'DELETE', headers })
+    await api.delete(`/api/ressources/${id}`)
     chargerRessources()
   }
 
@@ -211,12 +175,8 @@ export default function EspaceProfesseur() {
     try {
       if (msgMode === 'groupe') {
         // Diffusion à un groupe d'étudiants
-        const res = await fetch(`${API_URL}/api/messages/diffuser`, {
-          method: 'POST',
-          headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ groupe: msgGroupe, sujet: msgForm.sujet, contenu: msgForm.contenu })
-        })
-        const data = await res.json()
+        const res = await api.post('/api/messages/diffuser', { groupe: msgGroupe, sujet: msgForm.sujet, contenu: msgForm.contenu })
+        const data = res.data
         if (data.success) {
           setSucces(`Message envoye a ${data.count} etudiant${data.count > 1 ? 's' : ''} !`)
           setMsgForm({ a_id: '', sujet: '', contenu: '' })
@@ -226,12 +186,8 @@ export default function EspaceProfesseur() {
         }
       } else {
         // Envoi à un seul étudiant
-        const res = await fetch(`${API_URL}/api/messages/envoyer`, {
-          method: 'POST',
-          headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify(msgForm)
-        })
-        const data = await res.json()
+        const res = await api.post('/api/messages/envoyer', msgForm)
+        const data = res.data
         if (data.success) {
           setSucces('Message envoye avec succes !')
           setMsgForm({ a_id: '', sujet: '', contenu: '' })
@@ -253,15 +209,11 @@ export default function EspaceProfesseur() {
     setSucces('')
     setErreur('')
     try {
-      const res = await fetch(`${API_URL}/api/notes/ajouter`, {
-        method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const res = await api.post('/api/notes/ajouter', {
           ...noteForm,
           note: parseFloat(noteForm.note)
         })
-      })
-      const data = await res.json()
+      const data = res.data
       if (data.success) {
         setSucces('Note publiee avec succes !')
         setNoteForm({ etudiant_id: '', matiere: '', concours: 'INP-HB', note: '', periode: 'Mar 2026' })
@@ -279,7 +231,7 @@ export default function EspaceProfesseur() {
 
   // Liste des étudiants filtrée (onglet "Mes étudiants")
   const etudiantsFiltres = etudiants.filter(e =>
-    suitLeConcours(e.role, filtreEtuConcours) &&
+    suitLeConcours(e, filtreEtuConcours) &&
     (filtreEtuModalite === 'tous' || e.modalite === filtreEtuModalite)
   )
 
@@ -299,7 +251,7 @@ export default function EspaceProfesseur() {
   // ══════════════════════════════════════════════════════════════
   const rechercheNormalisee = rechercheEtu.trim().toLowerCase()
   const etudiantsPourNotes = etudiants
-    .filter(e => suitLeConcours(e.role, noteForm.concours))
+    .filter(e => suitLeConcours(e, noteForm.concours))
     .filter(e => !rechercheNormalisee ||
       `${nomComplet(e)} ${identifiant(e)} ${e.username || ''}`
         .toLowerCase()
@@ -315,10 +267,10 @@ export default function EspaceProfesseur() {
   // ══════════════════════════════════════════════════════════════
   const CONCOURS_NOTABLES = ['INP-HB', 'ESATIC']
   const nbParConcours = Object.fromEntries(
-    CONCOURS_NOTABLES.map(c => [c, etudiants.filter(e => suitLeConcours(e.role, c)).length])
+    CONCOURS_NOTABLES.map(c => [c, etudiants.filter(e => suitLeConcours(e, c)).length])
   )
   const etudiantsOrphelins = etudiants.filter(
-    e => !CONCOURS_NOTABLES.some(c => suitLeConcours(e.role, c))
+    e => !CONCOURS_NOTABLES.some(c => suitLeConcours(e, c))
   )
 
   // Si l'etudiant selectionne sort de la liste (changement de concours
@@ -704,7 +656,7 @@ export default function EspaceProfesseur() {
                   <option value="">Choisir un etudiant</option>
                   {etudiantsPourNotes.map(e => (
                     <option key={e.id} value={e.id}>
-                      {libelleEtudiant(e)} ({roleLabel[e.role] || e.role})
+                      {libelleEtudiant(e)} ({libelleUtilisateur(e)})
                     </option>
                   ))}
                 </select>
@@ -922,7 +874,7 @@ export default function EspaceProfesseur() {
                 </div>
                 <span className="text-xs font-semibold px-2 py-1 rounded-lg flex-shrink-0"
                   style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
-                  {roleLabel[etudiant.role] || etudiant.role}
+                  {libelleUtilisateur(etudiant)}
                 </span>
                 <button
                   onClick={() => {
@@ -980,7 +932,7 @@ export default function EspaceProfesseur() {
                     <option value="">Choisir un etudiant</option>
                     {etudiants.map(e => (
                       <option key={e.id} value={e.id}>
-                        {libelleEtudiant(e)} ({roleLabel[e.role] || e.role})
+                        {libelleEtudiant(e)} ({libelleUtilisateur(e)})
                       </option>
                     ))}
                   </select>

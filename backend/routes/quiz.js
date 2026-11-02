@@ -1,12 +1,40 @@
 import express from 'express'
-import { createClient } from '@supabase/supabase-js'
+import { z } from 'zod'
+import supabase from '../supabase.js'
 import Groq from 'groq-sdk'
 import multer from 'multer'
 import { PDFParse } from 'pdf-parse'
-import { verifyToken } from './auth.js'
-import dotenv from 'dotenv'
+import { verifyToken } from '../middleware/authMiddleware.js'
+import { iaLimiter } from '../middleware/rateLimit.js'
+import { validate } from '../middleware/validate.js'
+import { peutAcceder, peutPublierPour, concoursContenuSchema, generationAutoAutorisee, LIBELLES } from '../lib/concours.js'
+import { optionsConcours } from '../lib/inscriptions.js'
 
-dotenv.config()
+const court = (max) => z.string().trim().max(max)
+const genererIaSchema = z.object({
+  matiere: court(100).min(1),
+  niveau: court(100).nullish(),
+  theme: court(300).nullish(),
+  nombre_questions: z.union([z.number(), z.string().max(5)]).nullish(),
+  concours: concoursContenuSchema.nullish()
+})
+const creerQuizSchema = z.object({
+  titre: court(200).min(1),
+  matiere: court(100).min(1),
+  niveau: court(100).nullish(),
+  questions: z.array(z.object({
+    question: court(2000).min(1),
+    options: z.array(z.string().max(1000)).length(4),
+    bonne_reponse: z.number().int().min(0).max(3)
+  }).passthrough()).min(1).max(100),
+  ai_genere: z.boolean().nullish(),
+  duree_minutes: z.union([z.number(), z.string().max(6)]),
+  concours: concoursContenuSchema.nullish(),
+  modalite: court(30).nullish()
+})
+const soumettreSchema = z.object({
+  reponses: z.union([z.array(z.any()).max(500), z.record(z.string(), z.any())])
+}).passthrough()
 
 
 // Matières officielles par concours
@@ -16,22 +44,15 @@ const MATIERES = {
   all: ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire', 'Mathématiques', 'Physique', 'Anglais', 'Français']
 }
 
-// Rôles autorisés par concours
-const ROLES_INPHB = ['etudiant_inphb', 'etudiant_both', 'etudiant_inphb_cme', 'etudiant_all']
-const ROLES_ESATIC = ['etudiant_esatic', 'etudiant_both', 'etudiant_esatic_cme', 'etudiant_all']
-
-function peutVoirQuiz(role, modalite, quizConcours, quizModalite) {
-  if (role === 'admin' || role === 'professeur') return true
-  // Vérifier concours
-  if (quizConcours === 'inphb' && !ROLES_INPHB.includes(role)) return false
-  if (quizConcours === 'esatic' && !ROLES_ESATIC.includes(role)) return false
+function peutVoirQuiz(user, quizConcours, quizModalite) {
+  if (user.role === 'admin' || user.role === 'professeur') return true
+  if (!peutAcceder(user, quizConcours)) return false
   // Vérifier modalité
-  if (quizModalite !== 'les_deux' && modalite && quizModalite !== modalite) return false
+  if (quizModalite !== 'les_deux' && user.modalite && quizModalite !== user.modalite) return false
   return true
 }
 
 const router = express.Router()
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
 // On instancie Groq seulement si la clé existe, pour ne jamais faire planter le serveur au démarrage
 const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null
 
@@ -56,7 +77,7 @@ router.get('/', verifyToken, async (req, res) => {
         query = query.eq('created_by', req.user.id)
       }
       const { data: quizzes, error } = await query
-      if (error) return res.status(500).json({ error: error.message })
+      if (error) { console.error(error); return res.status(500).json({ error: 'Erreur serveur' }) }
 
       const quizIds = quizzes.map(q => q.id)
 
@@ -85,7 +106,7 @@ router.get('/', verifyToken, async (req, res) => {
         .select('*')
         .eq('publie', true)
         .order('created_at', { ascending: false })
-      if (quizzesErr) return res.status(500).json({ error: quizzesErr.message })
+      if (quizzesErr) { console.error(quizzesErr); return res.status(500).json({ error: 'Erreur serveur' }) }
 
       const quizIds = quizzesData.map(q => q.id)
 
@@ -113,7 +134,7 @@ router.get('/', verifyToken, async (req, res) => {
 
       // Filtrer les quiz selon le concours et la modalité de l'étudiant
       const quizzesFiltres = quizzesData.filter(q =>
-        peutVoirQuiz(req.user.role, req.user.modalite, q.concours || 'all', q.modalite || 'les_deux')
+        peutVoirQuiz(req.user, q.concours || 'all', q.modalite || 'les_deux')
       )
       const quizzes = quizzesFiltres.map(q => ({
         ...q,
@@ -132,11 +153,14 @@ router.get('/', verifyToken, async (req, res) => {
 })
 
 // ── POST /api/quiz/generer-ia — génération IA (sans sauvegarde) ──
-router.post('/generer-ia', verifyToken, async (req, res) => {
+router.post('/generer-ia', verifyToken, iaLimiter, validate(genererIaSchema), async (req, res) => {
   if (!['professeur', 'admin'].includes(req.user.role)) {
     return res.status(403).json({ error: 'Accès réservé aux professeurs et administrateurs' })
   }
-  const { matiere, niveau, theme, nombre_questions } = req.body
+  const { matiere, niveau, theme, nombre_questions, concours } = req.body
+  if (!generationAutoAutorisee(await optionsConcours(), req.user, concours)) {
+    return res.status(403).json({ error: 'La génération automatique de tests n’est pas disponible pour ce concours' })
+  }
   const n = Math.min(Math.max(parseInt(nombre_questions) || 5, 1), 20)
   if (!matiere) return res.status(400).json({ error: 'La matière est requise' })
 
@@ -178,22 +202,25 @@ router.post('/generer-ia', verifyToken, async (req, res) => {
 })
 
 // ── POST /api/quiz/importer-pdf — extraction de QCM depuis un PDF ─
-router.post('/importer-pdf', verifyToken, (req, res, next) => {
+router.post('/importer-pdf', verifyToken, iaLimiter, (req, res, next) => {
   upload.single('fichier')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
         return res.status(400).json({ error: 'Le fichier PDF dépasse la taille maximale autorisée (10 Mo)' })
       }
-      return res.status(400).json({ error: `Erreur d'upload : ${err.message}` })
+      return res.status(400).json({ error: "Erreur lors de l'envoi du fichier" })
     }
     if (err) {
-      return res.status(400).json({ error: err.message || 'Fichier invalide, seuls les PDF sont acceptés' })
+      return res.status(400).json({ error: 'Fichier invalide, seuls les PDF sont acceptés' })
     }
     next()
   })
 }, async (req, res) => {
   if (!['professeur', 'admin'].includes(req.user.role)) {
     return res.status(403).json({ error: 'Accès réservé aux professeurs et administrateurs' })
+  }
+  if (!generationAutoAutorisee(await optionsConcours(), req.user, req.body?.concours)) {
+    return res.status(403).json({ error: 'La génération automatique de tests n’est pas disponible pour ce concours' })
   }
   if (!req.file) {
     return res.status(400).json({ error: 'Aucun fichier PDF reçu' })
@@ -292,13 +319,19 @@ router.post('/importer-pdf', verifyToken, (req, res, next) => {
 })
 
 // ── POST /api/quiz — créer un quiz (manuel ou issu de l'IA) ──────
-router.post('/', verifyToken, async (req, res) => {
+router.post('/', verifyToken, validate(creerQuizSchema), async (req, res) => {
   if (!['professeur', 'admin'].includes(req.user.role)) {
     return res.status(403).json({ error: 'Accès réservé aux professeurs et administrateurs' })
   }
   const { titre, matiere, niveau, questions, ai_genere, duree_minutes, concours, modalite } = req.body
   if (!titre || !matiere || !Array.isArray(questions) || questions.length === 0) {
     return res.status(400).json({ error: 'titre, matiere et au moins une question sont requis' })
+  }
+  if (ai_genere && !generationAutoAutorisee(await optionsConcours(), req.user, concours)) {
+    return res.status(403).json({ error: 'La génération automatique de tests n’est pas disponible pour ce concours' })
+  }
+  if (!peutPublierPour(req.user, concours || 'all')) {
+    return res.status(403).json({ error: 'Vous ne pouvez publier que pour vos concours' })
   }
   const duree = parseInt(duree_minutes)
   if (!duree || duree < 1) {
@@ -326,7 +359,7 @@ router.post('/', verifyToken, async (req, res) => {
       .select()
       .single()
 
-    if (quizErr) return res.status(500).json({ error: quizErr.message })
+    if (quizErr) { console.error(quizErr); return res.status(500).json({ error: 'Erreur serveur' }) }
 
     const questionsToInsert = questions.map(q => ({
       quiz_id: quiz.id,
@@ -341,7 +374,7 @@ router.post('/', verifyToken, async (req, res) => {
 
     if (questionsErr) {
       await supabase.from('quizzes').delete().eq('id', quiz.id)
-      return res.status(500).json({ error: questionsErr.message })
+      { console.error(questionsErr); return res.status(500).json({ error: 'Erreur serveur' }) }
     }
 
     res.json({ quiz })
@@ -378,7 +411,7 @@ router.patch('/:id/visibilite', verifyToken, async (req, res) => {
       .select()
       .single()
 
-    if (error) return res.status(500).json({ error: error.message })
+    if (error) { console.error(error); return res.status(500).json({ error: 'Erreur serveur' }) }
     res.json({ quiz: data })
   } catch (err) {
     console.error(err)
@@ -418,7 +451,7 @@ router.patch('/:id', verifyToken, async (req, res) => {
       .select()
       .single()
 
-    if (error) return res.status(500).json({ error: error.message })
+    if (error) { console.error(error); return res.status(500).json({ error: 'Erreur serveur' }) }
     res.json({ quiz: data })
   } catch (err) {
     console.error(err)
@@ -443,7 +476,7 @@ router.get('/:id', verifyToken, async (req, res) => {
       .eq('quiz_id', req.params.id)
       .order('id')
 
-    if (qErr) return res.status(500).json({ error: qErr.message })
+    if (qErr) { console.error(qErr); return res.status(500).json({ error: 'Erreur serveur' }) }
     let questions = questionsData
 
     if (!['professeur', 'admin'].includes(req.user.role)) {
@@ -477,7 +510,7 @@ router.get('/:id', verifyToken, async (req, res) => {
 })
 
 // ── POST /api/quiz/:id/soumettre — soumission + correction auto ──
-router.post('/:id/soumettre', verifyToken, async (req, res) => {
+router.post('/:id/soumettre', verifyToken, validate(soumettreSchema), async (req, res) => {
   const { reponses } = req.body
   try {
     const { data: tentativesPrecedentes, error: tentErr } = await supabase
@@ -488,7 +521,7 @@ router.post('/:id/soumettre', verifyToken, async (req, res) => {
       .order('tentative_numero', { ascending: false })
       .limit(1)
 
-    if (tentErr) return res.status(500).json({ error: tentErr.message })
+    if (tentErr) { console.error(tentErr); return res.status(500).json({ error: 'Erreur serveur' }) }
     const estPremiEreTentative = !tentativesPrecedentes || tentativesPrecedentes.length === 0
     const prochainNumero = estPremiEreTentative ? 1 : tentativesPrecedentes[0].tentative_numero + 1
 
@@ -498,7 +531,7 @@ router.post('/:id/soumettre', verifyToken, async (req, res) => {
       .eq('quiz_id', req.params.id)
       .order('id')
 
-    if (qErr) return res.status(500).json({ error: qErr.message })
+    if (qErr) { console.error(qErr); return res.status(500).json({ error: 'Erreur serveur' }) }
     if (!questions || questions.length === 0) return res.status(404).json({ error: 'Quiz introuvable' })
 
     let score = 0
@@ -525,7 +558,7 @@ router.post('/:id/soumettre', verifyToken, async (req, res) => {
         }])
         .select()
         .single()
-      if (insertErr) return res.status(500).json({ error: insertErr.message })
+      if (insertErr) { console.error(insertErr); return res.status(500).json({ error: 'Erreur serveur' }) }
       created_at = nouvelleTentative.created_at
 
       // Répercuter automatiquement la note dans "Mes notes" de l'étudiant.
@@ -542,7 +575,7 @@ router.post('/:id/soumettre', verifyToken, async (req, res) => {
           const noteSur20 = Math.round((score / questions.length) * 20 * 100) / 100
           // La table "notes" utilise des libellés différents de la table "quizzes"
           // pour le concours : on fait correspondre les deux conventions.
-          const concoursNote = { inphb: 'INP-HB', esatic: 'ESATIC', all: 'tous' }[quizInfo.concours] || 'tous'
+          const concoursNote = LIBELLES[quizInfo.concours] || 'tous'
           // Une "periode" propre au quiz évite d'écraser une note saisie
           // manuellement par le professeur pour la même matière/concours.
           const periodeNote = `Genius Eval — ${quizInfo.titre}`
@@ -618,7 +651,7 @@ router.get('/:id/resultats', verifyToken, async (req, res) => {
       .order('etudiant_id')
       .order('tentative_numero', { ascending: true })
 
-    if (resErr) return res.status(500).json({ error: resErr.message })
+    if (resErr) { console.error(resErr); return res.status(500).json({ error: 'Erreur serveur' }) }
 
     const parEtudiant = {}
     for (const r of (resultats || [])) {
@@ -673,7 +706,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
     }
 
     const { error: delErr } = await supabase.from('quizzes').delete().eq('id', req.params.id)
-    if (delErr) return res.status(500).json({ error: delErr.message })
+    if (delErr) { console.error(delErr); return res.status(500).json({ error: 'Erreur serveur' }) }
     res.json({ success: true })
   } catch (err) {
     console.error(err)

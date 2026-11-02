@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '../../context/AuthContext'
-import API_URL from '../../config'
+import api from '../../api'
 
 const heures = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00']
 
@@ -30,7 +29,6 @@ function getHeureIndex(heure) {
 }
 
 export default function EmploiDuTemps() {
-  const { token } = useAuth()
   const today = new Date()
   const [moisActuel, setMoisActuel] = useState(today.getMonth())
   const [anneeActuelle, setAnneeActuelle] = useState(today.getFullYear())
@@ -51,10 +49,8 @@ export default function EmploiDuTemps() {
     setLoading(true)
     setErreur('')
     try {
-      const res = await fetch(`${API_URL}/api/planning`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
+      const res = await api.get('/api/planning')
+      const data = res.data
 
       if (!res.ok) {
         setErreur(data.error || 'Impossible de charger le planning.')

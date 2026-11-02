@@ -1,6 +1,8 @@
 import { useAuth } from '../../context/AuthContext'
 import { useState, useEffect, useRef } from 'react'
-import API_URL from '../../config'
+import api from '../../api'
+import { Link } from 'react-router-dom'
+import { useConcours } from '../../hooks/useConcours'
 
 
 // Matières par concours — doivent correspondre exactement aux matières dans la table notes
@@ -37,7 +39,7 @@ function formatChrono(secondes) {
 // ========================
 // LECTEUR DE QUIZ (étudiant)
 // ========================
-function LecteurQuiz({ quizId, token, onTermine, onRetour }) {
+function LecteurQuiz({ quizId, onTermine, onRetour }) {
   const [data, setData] = useState(null)
   const [reponses, setReponses] = useState({})
   const [loading, setLoading] = useState(true)
@@ -56,8 +58,8 @@ function LecteurQuiz({ quizId, token, onTermine, onRetour }) {
   useEffect(() => {
     const charger = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/quiz/${quizId}`, { headers: { Authorization: `Bearer ${token}` } })
-        const d = await res.json()
+        const res = await api.get(`/api/quiz/${quizId}`)
+        const d = res.data
         setData(d)
       } catch (err) { console.error(err) }
       finally { setLoading(false) }
@@ -72,12 +74,8 @@ function LecteurQuiz({ quizId, token, onTermine, onRetour }) {
     setSubmitting(true)
     if (intervalRef.current) clearInterval(intervalRef.current)
     try {
-      const res = await fetch(`${API_URL}/api/quiz/${quizId}/soumettre`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reponses: reponsesRef.current })
-      })
-      const d = await res.json()
+      const res = await api.post(`/api/quiz/${quizId}/soumettre`, { reponses: reponsesRef.current })
+      const d = res.data
       if (res.ok) {
         setResultat({
           score: d.score,
@@ -292,7 +290,7 @@ function LecteurQuiz({ quizId, token, onTermine, onRetour }) {
 // ========================
 // VUE ÉTUDIANT
 // ========================
-function VueEtudiant({ token }) {
+function VueEtudiant() {
   const [quizzes, setQuizzes] = useState([])
   const [loading, setLoading] = useState(true)
   const [quizOuvert, setQuizOuvert] = useState(null)
@@ -300,8 +298,8 @@ function VueEtudiant({ token }) {
   const charger = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${API_URL}/api/quiz`, { headers: { Authorization: `Bearer ${token}` } })
-      const d = await res.json()
+      const res = await api.get('/api/quiz')
+      const d = res.data
       if (d.quizzes) setQuizzes(d.quizzes)
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
@@ -310,7 +308,7 @@ function VueEtudiant({ token }) {
   useEffect(() => { charger() }, [])
 
   if (quizOuvert) {
-    return <LecteurQuiz quizId={quizOuvert} token={token} onTermine={charger} onRetour={() => setQuizOuvert(null)} />
+    return <LecteurQuiz quizId={quizOuvert} onTermine={charger} onRetour={() => setQuizOuvert(null)} />
   }
 
   return (
@@ -355,7 +353,10 @@ function VueEtudiant({ token }) {
 // ========================
 // VUE PROF / ADMIN
 // ========================
-function VueProf({ token }) {
+function VueProf() {
+  // Un professeur rattaché uniquement à des concours sans génération automatique (ENSEA) ne la voit pas
+  const { concours: mesConcours, generationAutoTests, estProfesseur } = useConcours()
+  const generationPossible = !(estProfesseur && mesConcours.length > 0 && !mesConcours.some(generationAutoTests))
   const [vue, setVue] = useState('liste')
   const [quizzes, setQuizzes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -373,8 +374,8 @@ function VueProf({ token }) {
   const charger = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${API_URL}/api/quiz`, { headers: { Authorization: `Bearer ${token}` } })
-      const d = await res.json()
+      const res = await api.get('/api/quiz')
+      const d = res.data
       if (d.quizzes) setQuizzes(d.quizzes)
     } catch (err) { console.error(err) }
     finally { setLoading(false) }
@@ -399,12 +400,8 @@ function VueProf({ token }) {
     setGenerating(true)
     setErreur('')
     try {
-      const res = await fetch(`${API_URL}/api/quiz/generer-ia`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ matiere: form.matiere, niveau: form.niveau, theme: iaForm.theme, nombre_questions: iaForm.nombre_questions })
-      })
-      const d = await res.json()
+      const res = await api.post('/api/quiz/generer-ia', { matiere: form.matiere, niveau: form.niveau, theme: iaForm.theme, nombre_questions: iaForm.nombre_questions, concours: form.concours })
+      const d = res.data
       if (res.ok && d.questions) setQuestions(d.questions)
       else setErreur(d.error || 'Erreur lors de la génération')
     } catch (err) { setErreur('Erreur réseau lors de la génération') }
@@ -426,13 +423,10 @@ function VueProf({ token }) {
     try {
       const formData = new FormData()
       formData.append('fichier', fichier)
+      formData.append('concours', form.concours)
 
-      const res = await fetch(`${API_URL}/api/quiz/importer-pdf`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }, // pas de Content-Type, le navigateur le génère avec la boundary multipart
-        body: formData
-      })
-      const d = await res.json()
+      const res = await api.post('/api/quiz/importer-pdf')
+      const d = res.data
 
       if (res.ok && d.questions) {
         setQuestions(d.questions)
@@ -460,21 +454,17 @@ function VueProf({ token }) {
     setSaving(true)
     setErreur('')
     try {
-      const res = await fetch(`${API_URL}/api/quiz`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, duree_minutes: duree, questions })
-      })
+      const res = await api.post('/api/quiz', { ...form, duree_minutes: duree, questions })
       if (res.ok) { reinitialiserForm(); setVue('liste'); charger() }
-      else { const d = await res.json(); setErreur(d.error || 'Erreur lors de l\'enregistrement') }
+      else { const d = res.data; setErreur(d.error || 'Erreur lors de l\'enregistrement') }
     } catch (err) { setErreur('Erreur réseau') }
     finally { setSaving(false) }
   }
 
   const voirResultats = async (id) => {
     try {
-      const res = await fetch(`${API_URL}/api/quiz/${id}/resultats`, { headers: { Authorization: `Bearer ${token}` } })
-      const d = await res.json()
+      const res = await api.get(`/api/quiz/${id}/resultats`)
+      const d = res.data
       setResultats(d)
       setEtudiantOuvert(null)
       setVue('resultats')
@@ -484,7 +474,7 @@ function VueProf({ token }) {
   const supprimer = async (id) => {
     if (!window.confirm('Supprimer ce quiz ?')) return
     try {
-      await fetch(`${API_URL}/api/quiz/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      await api.delete(`/api/quiz/${id}`)
       charger()
     } catch (err) { console.error(err) }
   }
@@ -495,12 +485,8 @@ function VueProf({ token }) {
     const titre = saisie.trim()
     if (!titre || titre === q.titre) return
     try {
-      const res = await fetch(`${API_URL}/api/quiz/${q.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ titre })
-      })
-      const data = await res.json().catch(() => ({}))
+      const res = await api.patch(`/api/quiz/${q.id}`, { titre })
+      const data = res.data ?? {}
       if (res.ok && data.quiz) {
         setQuizzes(prev => prev.map(x => x.id === q.id ? { ...x, titre: data.quiz.titre } : x))
       } else {
@@ -513,12 +499,8 @@ function VueProf({ token }) {
 
   const basculerVisibilite = async (q) => {
     try {
-      const res = await fetch(`${API_URL}/api/quiz/${q.id}/visibilite`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ publie: !q.publie })
-      })
-      const data = await res.json().catch(() => ({}))
+      const res = await api.patch(`/api/quiz/${q.id}/visibilite`, { publie: !q.publie })
+      const data = res.data ?? {}
       if (res.ok && data.quiz) {
         // Mise à jour immédiate du bouton à partir de la réponse du serveur
         setQuizzes(prev => prev.map(x => x.id === q.id ? { ...x, publie: data.quiz.publie } : x))
@@ -693,6 +675,8 @@ function VueProf({ token }) {
             </div>
           </div>
 
+          {generationPossible ? (
+            <>
           <div className="rounded-2xl p-5" style={{ background: `linear-gradient(135deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${COULEURS.bleu}4D` }}>
             <p className="font-bold text-sm text-white mb-1">🤖 Génération assistée par IA</p>
             <p className="text-xs text-gray-400 mb-3">Remplit automatiquement les questions ci-dessous — modifiable ensuite.</p>
@@ -734,6 +718,11 @@ function VueProf({ token }) {
               />
             </label>
           </div>
+
+            </>
+          ) : (
+            <p className="text-xs text-gray-400">La génération automatique de tests n’est pas disponible pour vos concours : saisissez les questions manuellement.</p>
+          )}
 
           <div className="flex flex-col gap-3">
             {questions.map((q, i) => (
@@ -841,8 +830,20 @@ function VueProf({ token }) {
 // COMPOSANT PRINCIPAL
 // ========================
 export default function GeniusEval() {
-  const { user, token } = useAuth()
+  const { user } = useAuth()
+  const { peutVoirQuiz } = useConcours()
   const isProfOrAdmin = ['professeur', 'admin'].includes(user?.role)
+
+  // Élève dont aucun concours n'a de quiz automatiques (ENSEA seul) : renvoi vers les évaluations ENSEA
+  if (!peutVoirQuiz) {
+    return (
+      <div className="p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
+        <h1 className="text-2xl font-bold mb-2" style={{ color: COULEURS.navy }}>Quiz</h1>
+        <p className="text-sm text-gray-500 mb-4">Les quiz automatiques ne sont pas proposés pour votre concours.</p>
+        <Link to="/outils/evaluations-ensea" className="text-sm font-semibold underline" style={{ color: COULEURS.or }}>Accéder aux Évaluations ENSEA</Link>
+      </div>
+    )
+  }
 
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
@@ -853,7 +854,7 @@ export default function GeniusEval() {
           {isProfOrAdmin ? 'Créez et suivez des QCM auto-corrigés' : 'Vos quiz auto-corrigés'}
         </p>
       </div>
-      {isProfOrAdmin ? <VueProf token={token} /> : <VueEtudiant token={token} />}
+      {isProfOrAdmin ? <VueProf /> : <VueEtudiant />}
     </div>
   )
 }

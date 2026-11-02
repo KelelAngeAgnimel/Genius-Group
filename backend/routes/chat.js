@@ -1,45 +1,51 @@
 import express from 'express'
 import Groq from 'groq-sdk'
+import { z } from 'zod'
+import { verifyToken } from '../middleware/authMiddleware.js'
+import { iaLimiter } from '../middleware/rateLimit.js'
+import { validate } from '../middleware/validate.js'
 
 const router = express.Router()
 // On instancie Groq seulement si la clé existe, pour ne jamais faire planter le serveur au démarrage
 const groq = process.env.GROQ_API_KEY ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null
 
-// Historique par session (en mémoire)
-const conversations = {}
+const MAX_MESSAGES = 20            // historique conservé par utilisateur
+const TTL_MS = 60 * 60 * 1000      // une conversation inactive 1 h est oubliée
 
-router.post('/', async (req, res) => {
-  const { message, sessionId } = req.body
+// Historique en mémoire, clé = id de l'utilisateur authentifié (jamais fourni par le client)
+const conversations = new Map() // userId -> { messages, derniere }
 
-  if (!message || !sessionId) {
-    return res.status(400).json({ error: 'message et sessionId sont requis' })
-  }
+setInterval(() => {
+  const limite = Date.now() - TTL_MS
+  for (const [id, c] of conversations) if (c.derniere < limite) conversations.delete(id)
+}, 10 * 60 * 1000).unref()
 
+const chatSchema = z.object({
+  message: z.string().trim().min(1).max(2000)
+})
+
+router.post('/', verifyToken, iaLimiter, validate(chatSchema), async (req, res) => {
   if (!groq) {
-    return res.status(503).json({ error: 'Le service IA est momentanément indisponible (clé API manquante côté serveur)' })
+    return res.status(503).json({ error: 'Le service IA est momentanément indisponible' })
   }
 
-  if (!conversations[sessionId]) {
-    conversations[sessionId] = []
-  }
-
-  conversations[sessionId].push({
-    role: 'user',
-    content: message
-  })
+  const cle = String(req.user.id)
+  const conv = conversations.get(cle) || { messages: [], derniere: 0 }
+  const historique = [...conv.messages, { role: 'user', content: req.body.message }].slice(-MAX_MESSAGES)
 
   try {
     const response = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
-      messages: conversations[sessionId],
+      messages: historique,
       max_tokens: 1024
     })
 
     const reply = response.choices[0].message.content
 
-    conversations[sessionId].push({
-      role: 'assistant',
-      content: reply
+    // On ne mémorise l'échange qu'en cas de succès
+    conversations.set(cle, {
+      messages: [...historique, { role: 'assistant', content: reply }].slice(-MAX_MESSAGES),
+      derniere: Date.now()
     })
 
     res.json({ reply })

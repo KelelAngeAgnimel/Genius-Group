@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '../../context/AuthContext'
-import API_URL from '../../config'
+import api from '../../api'
 
 const jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
@@ -36,7 +35,6 @@ const formVide = {
 }
 
 export default function GestionPlanning() {
-  const { token } = useAuth()
   const [cours, setCours] = useState([])
   const [profs, setProfs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -54,11 +52,11 @@ export default function GestionPlanning() {
     setLoading(true)
     try {
       const [resPlanning, resUsers] = await Promise.all([
-        fetch(`${API_URL}/api/planning`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_URL}/api/users/all`, { headers: { Authorization: `Bearer ${token}` } })
+        api.get('/api/planning'),
+        api.get('/api/users/all')
       ])
-      const dataPlanning = await resPlanning.json()
-      const dataUsers = await resUsers.json()
+      const dataPlanning = resPlanning.data
+      const dataUsers = resUsers.data
 
       if (Array.isArray(dataPlanning)) setCours(dataPlanning)
       else setErreur(dataPlanning.error || 'Impossible de charger le planning.')
@@ -102,18 +100,10 @@ export default function GestionPlanning() {
     }
 
     try {
-      const url = editId ? `${API_URL}/api/planning/${editId}` : `${API_URL}/api/planning`
-      const method = editId ? 'PATCH' : 'POST'
-
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      })
-      const data = await res.json()
+      const res = editId
+        ? await api.patch(`/api/planning/${editId}`, payload)
+        : await api.post('/api/planning', payload)
+      const data = res.data
 
       if (!res.ok) {
         setErreur(data.error || "Erreur lors de l'enregistrement.")
@@ -148,11 +138,8 @@ export default function GestionPlanning() {
   const handleDelete = async (id) => {
     if (!confirm('Supprimer ce cours du planning ?')) return
     try {
-      const res = await fetch(`${API_URL}/api/planning/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
+      const res = await api.delete(`/api/planning/${id}`)
+      const data = res.data
       if (!res.ok) {
         setErreur(data.error || 'Erreur lors de la suppression.')
         return

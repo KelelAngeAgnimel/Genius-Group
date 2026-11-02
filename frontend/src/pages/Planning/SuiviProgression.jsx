@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import API_URL from '../../config'
+import api from '../../api'
+import { concoursDe, libelleConcours, libelleUtilisateur, couleurConcours as couleurCode, CODES_CONCOURS } from '../../lib/concours'
 
 // ================================
 // SUIVI PROGRESSION PROFESSEUR
@@ -25,25 +26,8 @@ const matieres = {
   ]
 }
 
-const roleLabel = {
-  etudiant_inphb: 'INP-HB',
-  etudiant_esatic: 'ESATIC',
-  etudiant_both: 'INP-HB + ESATIC',
-  etudiant_cme: 'CME',
-  etudiant_inphb_cme: 'INP-HB + CME',
-  etudiant_esatic_cme: 'ESATIC + CME',
-  etudiant_all: 'INP-HB + ESATIC + CME',
-}
-
-const roleCouleur = {
-  etudiant_inphb: '#C9A84C',
-  etudiant_esatic: '#4C7BC9',
-  etudiant_both: '#4CC9A8',
-  etudiant_cme: '#4CC9A8',
-  etudiant_inphb_cme: '#C97B4C',
-  etudiant_esatic_cme: '#C94C7B',
-  etudiant_all: '#C9A84C',
-}
+// Couleur d'un élève = celle de son premier concours
+const couleurEleve = (e) => couleurCode(concoursDe(e)[0])
 
 const couleurConcours = {
   'INP-HB': '#C9A84C',
@@ -51,7 +35,7 @@ const couleurConcours = {
   'CME': '#4CC9A8',
 }
 
-function SuiviProfesseur({ token }) {
+function SuiviProfesseur() {
   const [etudiants, setEtudiants] = useState([])
   const [notesEtudiant, setNotesEtudiant] = useState([])
   const [loading, setLoading] = useState(true)
@@ -63,10 +47,8 @@ function SuiviProfesseur({ token }) {
   useEffect(() => {
     const charger = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/users/all`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        const data = await res.json()
+        const res = await api.get('/api/users/all')
+        const data = res.data
         if (data.users) {
           setEtudiants(data.users.filter(u => u.role.startsWith('etudiant')))
         }
@@ -83,10 +65,8 @@ function SuiviProfesseur({ token }) {
     setEtudiantActif(etudiant)
     setLoadingNotes(true)
     try {
-      const res = await fetch(`${API_URL}/api/notes/etudiant/${etudiant.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
+      const res = await api.get(`/api/notes/etudiant/${etudiant.id}`)
+      const data = res.data
       if (data.notes) setNotesEtudiant(data.notes)
       else setNotesEtudiant([])
     } catch (err) {
@@ -98,7 +78,7 @@ function SuiviProfesseur({ token }) {
   }
 
   const etudiantsFiltres = etudiants.filter(e => {
-    const matchRole = filtreRole === 'tous' || e.role === filtreRole
+    const matchRole = filtreRole === 'tous' || concoursDe(e).includes(filtreRole)
     const matchRecherche = recherche === '' ||
       e.username?.toLowerCase().includes(recherche.toLowerCase()) ||
       e.nom?.toLowerCase().includes(recherche.toLowerCase()) ||
@@ -106,17 +86,6 @@ function SuiviProfesseur({ token }) {
       e.matricule?.toLowerCase().includes(recherche.toLowerCase())
     return matchRole && matchRecherche
   })
-
-  const getConcours = (role) => {
-    if (role === 'etudiant_inphb') return ['INP-HB']
-    if (role === 'etudiant_esatic') return ['ESATIC']
-    if (role === 'etudiant_both') return ['INP-HB', 'ESATIC']
-    if (role === 'etudiant_cme') return ['CME']
-    if (role === 'etudiant_inphb_cme') return ['INP-HB', 'CME']
-    if (role === 'etudiant_esatic_cme') return ['ESATIC', 'CME']
-    if (role === 'etudiant_all') return ['INP-HB', 'ESATIC', 'CME']
-    return []
-  }
 
   const getDerniereNote = (matiere, concours) => {
     const notes = notesEtudiant
@@ -176,13 +145,13 @@ function SuiviProfesseur({ token }) {
             <div className="flex flex-col sm:flex-row items-center gap-4 p-5"
               style={{
                 background: 'linear-gradient(135deg, #071020, #0d1f3c)',
-                borderBottom: `2px solid ${roleCouleur[etudiantActif.role]}`
+                borderBottom: `2px solid ${couleurEleve(etudiantActif)}`
               }}>
               <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold flex-shrink-0"
                 style={{
-                  background: `${roleCouleur[etudiantActif.role]}30`,
-                  border: `2px solid ${roleCouleur[etudiantActif.role]}`,
-                  color: roleCouleur[etudiantActif.role]
+                  background: `${couleurEleve(etudiantActif)}30`,
+                  border: `2px solid ${couleurEleve(etudiantActif)}`,
+                  color: couleurEleve(etudiantActif)
                 }}>
                 {etudiantActif.username?.[0]?.toUpperCase()}
               </div>
@@ -195,10 +164,10 @@ function SuiviProfesseur({ token }) {
                 </p>
                 <span className="text-xs font-semibold mt-1 inline-block px-2 py-0.5 rounded-full"
                   style={{
-                    background: `${roleCouleur[etudiantActif.role]}20`,
-                    color: roleCouleur[etudiantActif.role]
+                    background: `${couleurEleve(etudiantActif)}20`,
+                    color: couleurEleve(etudiantActif)
                   }}>
-                  {roleLabel[etudiantActif.role]}
+                  {libelleUtilisateur(etudiantActif)}
                 </span>
               </div>
             </div>
@@ -211,7 +180,7 @@ function SuiviProfesseur({ token }) {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {getConcours(etudiantActif.role).map((concours, ci) => {
+              {concoursDe(etudiantActif).map(libelleConcours).map((concours, ci) => {
                 const matieresConcours = matieres[concours] || []
                 const moyenne = getMoyenneConcours(concours)
                 const couleur = couleurConcours[concours] || '#C9A84C'
@@ -340,7 +309,7 @@ function SuiviProfesseur({ token }) {
               onBlur={e => e.target.style.borderColor = '#f0ece0'}
             />
             <div className="flex gap-2 flex-wrap">
-              {['tous', 'etudiant_inphb', 'etudiant_esatic', 'etudiant_both', 'etudiant_cme', 'etudiant_inphb_cme', 'etudiant_esatic_cme', 'etudiant_all'].map((role, i) => (
+              {['tous', ...CODES_CONCOURS].map((role, i) => (
                 <button key={i}
                   onClick={() => setFiltreRole(role)}
                   className="px-3 py-2 rounded-xl text-xs font-semibold transition whitespace-nowrap"
@@ -349,7 +318,7 @@ function SuiviProfesseur({ token }) {
                     color: filtreRole === role ? '#C9A84C' : '#6b7280',
                     border: filtreRole === role ? '1px solid rgba(201,168,76,0.4)' : '1px solid #f0ece0'
                   }}>
-                  {role === 'tous' ? 'Tous' : roleLabel[role]}
+                  {role === 'tous' ? 'Tous' : libelleConcours(role)}
                 </button>
               ))}
             </div>
@@ -370,8 +339,8 @@ function SuiviProfesseur({ token }) {
                 </div>
               )}
               {etudiantsFiltres.map((etudiant, i) => {
-                const concours = getConcours(etudiant.role)
-                const couleur = roleCouleur[etudiant.role]
+                const concours = concoursDe(etudiant).map(libelleConcours)
+                const couleur = couleurEleve(etudiant)
                 return (
                   <div key={i}
                     className="bg-white rounded-2xl p-4 cursor-pointer transition-all hover:shadow-lg"
@@ -389,7 +358,7 @@ function SuiviProfesseur({ token }) {
                           </p>
                           <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
                             style={{ background: `${couleur}15`, color: couleur }}>
-                            {roleLabel[etudiant.role]}
+                            {libelleUtilisateur(etudiant)}
                           </span>
                         </div>
                         <p className="text-xs text-gray-400 mt-0.5">
@@ -426,7 +395,7 @@ function SuiviProfesseur({ token }) {
 // ================================
 // SUIVI PROGRESSION ETUDIANT
 // ================================
-function SuiviEtudiant({ user, token }) {
+function SuiviEtudiant({ user }) {
   const [ecoleSelectionnee, setEcoleSelectionnee] = useState(null)
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -444,7 +413,7 @@ function SuiviEtudiant({ user, token }) {
         'Culture Générale': '#7B4CC9',
         'Culture Littéraire': '#C97B4C',
       },
-      roles: ['etudiant_inphb', 'etudiant_both'],
+      code: 'inphb',
     },
     {
       sigle: 'ESATIC',
@@ -459,11 +428,11 @@ function SuiviEtudiant({ user, token }) {
         'Anglais': '#C94C7B',
         'Français': '#4C7BC9',
       },
-      roles: ['etudiant_esatic', 'etudiant_both'],
+      code: 'esatic',
     },
   ]
 
-  const ecolesVisibles = ecolesDispo.filter(e => e.roles.includes(user?.role))
+  const ecolesVisibles = ecolesDispo.filter(e => concoursDe(user).includes(e.code))
   const ecoleActive = ecolesDispo.find(e => e.sigle === ecoleSelectionnee)
 
   useEffect(() => {
@@ -472,10 +441,8 @@ function SuiviEtudiant({ user, token }) {
 
   const chargerNotes = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/notes/mes-notes`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
+      const res = await api.get('/api/notes/mes-notes')
+      const data = res.data
       if (data.notes) setNotes(data.notes)
     } catch (err) {
       console.error(err)
@@ -703,11 +670,11 @@ function SuiviEtudiant({ user, token }) {
 // COMPOSANT PRINCIPAL
 // ========================
 export default function SuiviProgression() {
-  const { user, token } = useAuth()
+  const { user } = useAuth()
 
   if (user?.role === 'professeur' || user?.role === 'admin') {
-    return <SuiviProfesseur token={token} />
+    return <SuiviProfesseur />
   }
 
-  return <SuiviEtudiant user={user} token={token} />
+  return <SuiviEtudiant user={user} />
 }

@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-
-const SESSION_ID = crypto.randomUUID()
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+import api from '../../api'
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([
@@ -22,13 +20,16 @@ export default function Chatbot() {
     setInput('')
     setLoading(true)
     try {
-      const res = await fetch(`${API_URL}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage, sessionId: SESSION_ID })
-      })
-      const data = await res.json()
-      setMessages(prev => [...prev, { role: 'bot', texte: data.reply }])
+      const res = await api.post('/api/chat', { message: userMessage })
+      const data = res.data ?? {}
+      const texte = res.ok
+        ? data.reply
+        : res.status === 429
+          ? '⏳ Trop de messages, patiente une minute.'
+          : res.status === 401
+            ? '🔒 Session expirée, reconnecte-toi.'
+            : (data.message || data.error || '❌ Une erreur est survenue. Réessaie.')
+      setMessages(prev => [...prev, { role: 'bot', texte }])
     } catch {
       setMessages(prev => [...prev, { role: 'bot', texte: '❌ Erreur de connexion. Réessaie.' }])
     } finally {

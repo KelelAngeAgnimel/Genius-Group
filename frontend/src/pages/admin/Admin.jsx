@@ -23,6 +23,8 @@ export default function Admin() {
           { path: 'utilisateurs', label: '👥 Gestion utilisateurs' },
           { path: 'creer', label: '➕ Créer un utilisateur' },
           { path: 'planning', label: '📅 Gestion du planning' },
+          { path: 'competences', label: '🎯 Compétences et options' },
+          { path: 'vue-globale', label: '📊 Vue globale' },
         ].map((page) => (
           <NavLink
             key={page.path}

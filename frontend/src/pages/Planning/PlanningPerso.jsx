@@ -1,6 +1,7 @@
 import { useAuth } from '../../context/AuthContext'
 import { useState, useEffect, useRef } from 'react'
-import API_URL from '../../config'
+import api from '../../api'
+import { libelleUtilisateur } from '../../lib/concours'
 
 // ========================
 // RADAR CHART FIFA-STYLE
@@ -81,7 +82,7 @@ function NiveauBadge({ note }) {
 // ========================
 // VUE ÉTUDIANT
 // ========================
-function VueEtudiant({ user, token }) {
+function VueEtudiant({ user }) {
   const [notes, setNotes] = useState([])
   const [exercices, setExercices] = useState([])
   const [loading, setLoading] = useState(true)
@@ -90,11 +91,11 @@ function VueEtudiant({ user, token }) {
     const charger = async () => {
       try {
         const [notesRes, exRes] = await Promise.all([
-          fetch(`${API_URL}/api/notes/mes-notes`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_URL}/api/exercices/recus`, { headers: { Authorization: `Bearer ${token}` } }),
+          api.get('/api/notes/mes-notes'),
+          api.get('/api/exercices/recus'),
         ])
-        const notesData = await notesRes.json()
-        const exData = await exRes.json()
+        const notesData = notesRes.data
+        const exData = exRes.data
         if (notesData.notes) setNotes(notesData.notes)
         if (exData.exercices) setExercices(exData.exercices)
       } catch (err) { console.error(err) }
@@ -105,11 +106,7 @@ function VueEtudiant({ user, token }) {
 
   const marquerFait = async (id) => {
     try {
-      await fetch(`${API_URL}/api/exercices/${id}/statut`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ statut: 'fait' })
-      })
+      await api.patch(`/api/exercices/${id}/statut`, { statut: 'fait' })
       setExercices(prev => prev.map(e => e.id === id ? { ...e, statut: 'fait' } : e))
     } catch (err) { console.error(err) }
   }
@@ -141,7 +138,7 @@ function VueEtudiant({ user, token }) {
         </div>
         <div className="flex-1">
           <p className="font-bold text-white text-lg">{user?.prenom} {user?.nom || user?.username}</p>
-          <p className="text-xs text-gray-400">{user?.matricule} — {user?.role?.replace('etudiant_', '').toUpperCase()}</p>
+          <p className="text-xs text-gray-400">{user?.matricule} — {libelleUtilisateur(user)}</p>
         </div>
         <div className="text-center">
           <p className="text-3xl font-bold" style={{ color: getCouleurNote(moyenneGlobale) }}>
@@ -288,7 +285,7 @@ function VueEtudiant({ user, token }) {
 // ========================
 // VUE PROFESSEUR / ADMIN
 // ========================
-function VueProfesseur({ user, token }) {
+function VueProfesseur({ user }) {
   const [etudiants, setEtudiants] = useState([])
   const [etudiantSelectionne, setEtudiantSelectionne] = useState(null)
   const [notesEtudiant, setNotesEtudiant] = useState([])
@@ -303,11 +300,11 @@ function VueProfesseur({ user, token }) {
     const charger = async () => {
       try {
         const [usersRes, exRes] = await Promise.all([
-          fetch(`${API_URL}/api/users/all`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_URL}/api/exercices/envoyes`, { headers: { Authorization: `Bearer ${token}` } }),
+          api.get('/api/users/all'),
+          api.get('/api/exercices/envoyes'),
         ])
-        const usersData = await usersRes.json()
-        const exData = await exRes.json()
+        const usersData = usersRes.data
+        const exData = exRes.data
         if (usersData.users) setEtudiants(usersData.users.filter(u => u.role.startsWith('etudiant')))
         if (exData.exercices) setExercicesEnvoyes(exData.exercices)
       } catch (err) { console.error(err) }
@@ -320,10 +317,8 @@ function VueProfesseur({ user, token }) {
     setEtudiantSelectionne(etudiant)
     setLoadingNotes(true)
     try {
-      const res = await fetch(`${API_URL}/api/notes/etudiant/${etudiant.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
+      const res = await api.get(`/api/notes/etudiant/${etudiant.id}`)
+      const data = res.data
       if (data.notes) setNotesEtudiant(data.notes)
       else setNotesEtudiant([])
     } catch (err) { console.error(err); setNotesEtudiant([]) }
@@ -334,15 +329,11 @@ function VueProfesseur({ user, token }) {
     if (!etudiantSelectionne || !envoi.titre || !envoi.matiere) return
     setSending(true)
     try {
-      await fetch(`${API_URL}/api/exercices`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...envoi, etudiant_id: etudiantSelectionne.id })
-      })
+      await api.post('/api/exercices', { ...envoi, etudiant_id: etudiantSelectionne.id })
       setSuccess(true)
       setEnvoi({ titre: '', matiere: '', description: '', url_fichier: '' })
-      const exRes = await fetch(`${API_URL}/api/exercices/envoyes`, { headers: { Authorization: `Bearer ${token}` } })
-      const exData = await exRes.json()
+      const exRes = await api.get('/api/exercices/envoyes')
+      const exData = exRes.data
       if (exData.exercices) setExercicesEnvoyes(exData.exercices)
       setTimeout(() => setSuccess(false), 3000)
     } catch (err) { console.error(err) }
@@ -386,7 +377,7 @@ function VueProfesseur({ user, token }) {
                     <p className="text-xs font-bold truncate" style={{ color: '#071020' }}>
                       {e.prenom || ''} {e.nom || e.username}
                     </p>
-                    <p className="text-xs text-gray-400">{e.role?.replace('etudiant_', '').toUpperCase()}</p>
+                    <p className="text-xs text-gray-400">{libelleUtilisateur(e)}</p>
                   </div>
                   {etudiantSelectionne?.id === e.id && (
                     <div className="w-2 h-2 rounded-full" style={{ background: '#C9A84C' }} />
@@ -571,7 +562,7 @@ function VueProfesseur({ user, token }) {
 // COMPOSANT PRINCIPAL
 // ========================
 export default function PlanningPerso() {
-  const { user, token } = useAuth()
+  const { user } = useAuth()
   const isProfOrAdmin = ['professeur', 'admin'].includes(user?.role)
 
   return (
@@ -591,8 +582,8 @@ export default function PlanningPerso() {
       </div>
 
       {isProfOrAdmin
-        ? <VueProfesseur user={user} token={token} />
-        : <VueEtudiant user={user} token={token} />
+        ? <VueProfesseur user={user} />
+        : <VueEtudiant user={user} />
       }
     </div>
   )

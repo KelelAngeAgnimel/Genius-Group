@@ -1,13 +1,25 @@
 import express from 'express'
 import multer from 'multer'
-import { createClient } from '@supabase/supabase-js'
-import { verifyToken } from './auth.js'
-import dotenv from 'dotenv'
-
-dotenv.config()
+import { z } from 'zod'
+import supabase from '../supabase.js'
+import { verifyToken } from '../middleware/authMiddleware.js'
+import { validate } from '../middleware/validate.js'
+import { peutAcceder, peutPublierPour } from '../lib/concours.js'
+import { contenuVerrouille, MESSAGE_VERROUILLE } from '../lib/autoeval.js'
 
 const router = express.Router()
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
+
+const court = (max) => z.string().trim().max(max)
+// Les champs arrivent en multipart (chaînes)
+const uploadSchema = z.object({
+  titre: court(200).min(1),
+  description: court(2000).nullish(),
+  type: court(50).nullish(),
+  matiere: court(100).min(1),
+  concours: court(30).min(1),
+  est_evaluation: z.union([z.boolean(), z.enum(['true', 'false'])]).nullish()
+}).passthrough()
+const visibiliteSchema = z.object({ visible: z.boolean() })
 
 // Multer en mémoire — 50 Mo max, PDF uniquement
 const upload = multer({
@@ -18,29 +30,6 @@ const upload = multer({
     else cb(new Error('Seuls les fichiers PDF sont acceptés'))
   }
 })
-
-// Rôles par concours (un étudiant "all"/"both" fait plusieurs concours)
-const ROLES_INPHB  = ['etudiant_inphb', 'etudiant_both', 'etudiant_inphb_cme', 'etudiant_all']
-const ROLES_ESATIC = ['etudiant_esatic', 'etudiant_both', 'etudiant_esatic_cme', 'etudiant_all']
-const ROLES_CME    = ['etudiant_cme', 'etudiant_inphb_cme', 'etudiant_esatic_cme', 'etudiant_all']
-
-function peutAcceder(role, concours) {
-  if (role === 'admin' || role === 'professeur') return true
-
-  // Normalisation : insensible à la casse, tolère 'INP-HB', 'inphb', 'inp-hb + esatic', 'all', 'tous'...
-  const c = (concours || '').toString().trim().toLowerCase()
-  if (c === 'tous' || c === 'all') return true
-
-  // Une ressource peut cibler plusieurs concours à la fois (valeur combinée)
-  const cibleINPHB  = c.includes('inp')
-  const cibleESATIC = c.includes('esatic')
-  const cibleCME    = c.includes('cme')
-
-  if (cibleINPHB  && ROLES_INPHB.includes(role))  return true
-  if (cibleESATIC && ROLES_ESATIC.includes(role)) return true
-  if (cibleCME    && ROLES_CME.includes(role))    return true
-  return false
-}
 
 // ══════════════════════════════════════════
 // GET — Liste des ressources (sans URL)
@@ -53,11 +42,11 @@ router.get('/', verifyToken, async (req, res) => {
       .eq('visible', true)
       .order('created_at', { ascending: false })
 
-    if (error) return res.status(500).json({ message: error.message })
+    if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
 
     // Filtrer selon le concours — ne jamais exposer l'URL du fichier.
     // Les évaluations sont exclues de la Bibliothèque : elles vivent dans la page « Évaluation ».
-    const filtrees = data.filter(r => !r.est_evaluation && peutAcceder(req.user.role, r.concours))
+    const filtrees = data.filter(r => !r.est_evaluation && peutAcceder(req.user, r.concours))
     res.json({ ressources: filtrees })
   } catch (err) {
     console.error(err)
@@ -78,9 +67,9 @@ router.get('/toutes', verifyToken, async (req, res) => {
       .select('id, titre, description, type, matiere, concours, visible, est_evaluation, professeur_id, created_at, professeur:professeur_id(username, prenom, nom)')
       .order('created_at', { ascending: false })
 
-    if (error) return res.status(500).json({ message: error.message })
+    if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
     // Les évaluations sont gérées à part (page « Évaluation »), on ne les mélange pas ici.
-    res.json({ ressources: data.filter(r => !r.est_evaluation) })
+    res.json({ ressources: data.filter(r => !r.est_evaluation && peutAcceder(req.user, r.concours)) })
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur' })
   }
@@ -99,9 +88,9 @@ router.get('/evaluations', verifyToken, async (req, res) => {
       .eq('est_evaluation', true)
       .order('created_at', { ascending: false })
 
-    if (error) return res.status(500).json({ message: error.message })
+    if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
 
-    const filtrees = data.filter(r => peutAcceder(req.user.role, r.concours))
+    const filtrees = data.filter(r => peutAcceder(req.user, r.concours))
     res.json({ ressources: filtrees })
   } catch (err) {
     console.error(err)
@@ -130,7 +119,7 @@ router.get('/evaluations/gestion', verifyToken, async (req, res) => {
     }
 
     const { data, error } = await query
-    if (error) return res.status(500).json({ message: error.message })
+    if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
     res.json({ ressources: data })
   } catch (err) {
     console.error(err)
@@ -157,8 +146,11 @@ router.get('/ouvrir/:id', verifyToken, async (req, res) => {
     if (!ressource.visible) {
       return res.status(403).json({ message: 'Cette ressource n\'est pas disponible' })
     }
-    if (!peutAcceder(req.user.role, ressource.concours)) {
+    if (!peutAcceder(req.user, ressource.concours)) {
       return res.status(403).json({ message: 'Accès refusé pour votre concours' })
+    }
+    if (await contenuVerrouille(req.user, ressource.concours)) {
+      return res.status(403).json({ message: MESSAGE_VERROUILLE, code: 'autoeval_requise' })
     }
     if (!ressource.storage_path) {
       return res.status(404).json({ message: 'Fichier non trouvé' })
@@ -207,12 +199,12 @@ router.post('/upload', verifyToken, (req, res, next) => {
   upload.single('fichier')(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ message: 'Fichier trop volumineux (50 Mo max)' })
-      return res.status(400).json({ message: err.message })
+      return res.status(400).json({ message: "Erreur lors de l'envoi du fichier" })
     }
-    if (err) return res.status(400).json({ message: err.message })
+    if (err) return res.status(400).json({ message: 'Fichier invalide, seuls les PDF sont acceptés' })
     next()
   })
-}, async (req, res) => {
+}, validate(uploadSchema), async (req, res) => {
   try {
     const { role, id: professeur_id } = req.user
     if (!['professeur', 'admin'].includes(role)) {
@@ -225,6 +217,9 @@ router.post('/upload', verifyToken, (req, res, next) => {
     const { titre, description, type, matiere, concours } = req.body
     if (!titre || !matiere || !concours) {
       return res.status(400).json({ message: 'titre, matière et concours sont requis' })
+    }
+    if (!peutPublierPour(req.user, concours)) {
+      return res.status(403).json({ message: 'Vous ne pouvez publier que pour vos concours' })
     }
 
     // FormData transmet des chaînes : on convertit proprement en booléen
@@ -243,7 +238,7 @@ router.post('/upload', verifyToken, (req, res, next) => {
       })
 
     if (uploadError) {
-      return res.status(500).json({ message: `Erreur upload : ${uploadError.message}` })
+      return res.status(500).json({ message: "Erreur lors de l'enregistrement du fichier" })
     }
 
     // Sauvegarder dans la table ressources — uniquement le chemin, jamais l'URL
@@ -268,20 +263,20 @@ router.post('/upload', verifyToken, (req, res, next) => {
     if (error) {
       // Supprimer le fichier uploadé si la DB échoue
       await supabase.storage.from('ressources').remove([storagePath])
-      return res.status(500).json({ message: error.message })
+      { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
     }
 
     res.json({ success: true, ressource: data })
   } catch (err) {
     console.error('Erreur upload:', err)
-    res.status(500).json({ message: `Erreur : ${err.message}` })
+    res.status(500).json({ message: 'Erreur serveur' })
   }
 })
 
 // ══════════════════════════════════════════
 // PATCH — Changer la visibilité
 // ══════════════════════════════════════════
-router.patch('/:id/visibilite', verifyToken, async (req, res) => {
+router.patch('/:id/visibilite', verifyToken, validate(visibiliteSchema), async (req, res) => {
   try {
     if (!['professeur', 'admin'].includes(req.user.role)) {
       return res.status(403).json({ message: 'Accès refusé' })
@@ -293,8 +288,9 @@ router.patch('/:id/visibilite', verifyToken, async (req, res) => {
       .select('professeur_id, est_evaluation')
       .eq('id', req.params.id)
       .single()
-    if (existante?.est_evaluation && req.user.role !== 'admin' && existante.professeur_id !== req.user.id) {
-      return res.status(403).json({ message: 'Vous ne pouvez modifier que vos propres évaluations' })
+    if (!existante) return res.status(404).json({ message: 'Ressource introuvable' })
+    if (req.user.role !== 'admin' && existante.professeur_id !== req.user.id) {
+      return res.status(403).json({ message: 'Vous ne pouvez modifier que vos propres ressources' })
     }
 
     const { visible } = req.body
@@ -305,7 +301,7 @@ router.patch('/:id/visibilite', verifyToken, async (req, res) => {
       .select('id, titre, visible, est_evaluation')
       .single()
 
-    if (error) return res.status(500).json({ message: error.message })
+    if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
     res.json({ success: true, ressource: data })
   } catch (err) {
     res.status(500).json({ message: 'Erreur serveur' })
@@ -328,8 +324,9 @@ router.delete('/:id', verifyToken, async (req, res) => {
       .single()
 
     // Un professeur ne peut supprimer que ses propres évaluations
-    if (ressource?.est_evaluation && req.user.role !== 'admin' && ressource.professeur_id !== req.user.id) {
-      return res.status(403).json({ message: 'Vous ne pouvez supprimer que vos propres évaluations' })
+    if (!ressource) return res.status(404).json({ message: 'Ressource introuvable' })
+    if (req.user.role !== 'admin' && ressource.professeur_id !== req.user.id) {
+      return res.status(403).json({ message: 'Vous ne pouvez supprimer que vos propres ressources' })
     }
 
     // Supprimer le fichier de Supabase Storage
@@ -338,7 +335,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
     }
 
     const { error } = await supabase.from('ressources').delete().eq('id', req.params.id)
-    if (error) return res.status(500).json({ message: error.message })
+    if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
     res.json({ success: true })
   } catch (err) {
     console.error(err)
