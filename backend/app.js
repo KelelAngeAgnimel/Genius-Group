@@ -18,6 +18,7 @@ import competencesRoutes from './routes/competences.js'
 import seancesRoutes from './routes/seances.js'
 import autoEvalRoutes from './routes/auto-eval.js'
 import tableauxRoutes from './routes/tableaux.js'
+import renforcementRoutes from './routes/renforcement.js'
 
 const app = express()
 
@@ -55,6 +56,7 @@ app.use('/api/competences', competencesRoutes)
 app.use('/api/seances', seancesRoutes)
 app.use('/api/auto-eval', autoEvalRoutes)
 app.use('/api/tableaux', tableauxRoutes)
+app.use('/api/renforcement', renforcementRoutes)
 
 app.get('/', (req, res) => res.send('API Portail Bacheliers 🚀'))
 

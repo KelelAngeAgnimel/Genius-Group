@@ -4,7 +4,8 @@ import { vi } from 'vitest'
 // Faux client Supabase en mémoire : tables = { users: [...], ressources: [...] }
 export const tables = {
   users: [], ressources: [], inscriptions: [], evaluations: [], copies: [], notes: [], concours: [], meetings: [],
-  competences: [], seances: [], seance_competences: [], auto_evaluations: [], autoeval_deblocages: []
+  competences: [], seances: [], seance_competences: [], auto_evaluations: [], autoeval_deblocages: [],
+  notes_competences: [], scores_competences: [], scores_historique: [], exercices_renforcement: [], exercices: [], messages: []
 }
 export const operations = [] // journal : { table, op, filtres }
 
@@ -44,6 +45,7 @@ function from(table) {
   const q = {
     select: () => q,
     order: () => q,
+    limit: () => q,
     insert: (rows) => { op = 'insert'; inseres = rows.map(r => ({ id: randomUUID(), ...r })); return q },
     update: (v) => { op = 'update'; valeurs = v; return q },
     delete: () => { op = 'delete'; return q },

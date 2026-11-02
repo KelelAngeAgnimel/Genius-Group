@@ -26,6 +26,8 @@ export default function GrilleNotes() {
   const [nouvelle, setNouvelle] = useState({ matiere: '', periode: '' })
   const [erreur, setErreur] = useState('')
   const [version, setVersion] = useState(0) // change à chaque rechargement : réinitialise les cases
+  const [rechargement, setRechargement] = useState(0) // incrémenté pour relire la grille depuis le serveur
+  const [liaison, setLiaison] = useState(null) // { col, liste, choisies, erreur } : fenêtre « Compétences »
   const refs = useRef({})
 
   useEffect(() => {
@@ -44,7 +46,7 @@ export default function GrilleNotes() {
       })
       .catch(() => actif && setErreur('Erreur de connexion au serveur'))
     return () => { actif = false }
-  }, [concours, matiere, periode])
+  }, [concours, matiere, periode, rechargement])
 
   // Changer de concours repart de zéro (matière, période et colonnes ajoutées à la main)
   const changerConcours = (code) => { setConcours(code); setMatiere(''); setPeriode(''); setColonnesAjoutees([]) }
@@ -90,6 +92,24 @@ export default function GrilleNotes() {
     if (!m || !p) return
     setColonnesAjoutees(prev => [...prev, { cle: `${m}|${p}`, matiere: m, periode: p }])
     setNouvelle({ matiere: '', periode: '' })
+  }
+
+  const ouvrirLiaison = async (col) => {
+    const [comp, liees] = await Promise.all([
+      api.get('/api/competences', { params: { concours, matiere: col.matiere } }),
+      api.get('/api/notes/competences', { params: { concours, matiere: col.matiere, periode: col.periode } })
+    ])
+    setLiaison({ col, liste: comp.ok ? comp.data.competences : [], choisies: liees.ok ? liees.data.competence_ids : [], erreur: '' })
+  }
+  const basculerCompetence = (id) => setLiaison(l => ({
+    ...l, choisies: l.choisies.includes(id) ? l.choisies.filter(x => x !== id) : [...l.choisies, id]
+  }))
+  const enregistrerLiaison = async () => {
+    const { col, choisies } = liaison
+    const res = await api.put('/api/notes/competences', { concours, matiere: col.matiere, periode: col.periode, competence_ids: choisies })
+    if (!res.ok) return setLiaison(l => ({ ...l, erreur: res.data?.message || 'Enregistrement impossible' }))
+    setLiaison(null)
+    setRechargement(v => v + 1) // les scores sont recalculés côté serveur : on relit la grille
   }
 
   const lignes = donnees?.lignes ?? []
@@ -150,6 +170,11 @@ export default function GrilleNotes() {
                   <th key={c.cle} className="p-3 whitespace-nowrap">
                     <span className="block uppercase tracking-wide">{c.matiere}</span>
                     <span className="font-normal">{c.periode}</span>
+                    <button type="button" onClick={() => ouvrirLiaison(c)} className="block mt-1 text-[11px] font-semibold underline"
+                      style={{ color: (c.competence_ids?.length ?? 0) > 0 ? VIOLET : '#C94C7B' }}
+                      title="Les notes de cette colonne comptent pour le score des compétences cochées">
+                      {(c.competence_ids?.length ?? 0) > 0 ? `${c.competence_ids.length} compétence(s)` : '⚠ Compétences'}
+                    </button>
                   </th>
                 ))}
                 <th className="p-3">Moyenne</th>
@@ -194,6 +219,28 @@ export default function GrilleNotes() {
               </tr>
             </tfoot>
           </table>
+        </div>
+      )}
+      {liaison && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: 'rgba(7,16,32,0.6)' }} role="dialog" aria-modal="true">
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-5">
+            <h3 className="font-bold" style={{ color: '#071020' }}>Compétences évaluées</h3>
+            <p className="text-xs text-gray-400 mb-3">{liaison.col.matiere} — {liaison.col.periode}. Les notes de cette colonne comptent pour le score des compétences cochées.</p>
+            {liaison.liste.length === 0 && <p className="text-sm text-gray-500">Aucune compétence pour cette matière.</p>}
+            <div className="flex flex-col gap-1">
+              {liaison.liste.map(c => (
+                <label key={c.id} className="flex items-start gap-2 text-sm text-gray-700 p-1">
+                  <input type="checkbox" className="mt-1" checked={liaison.choisies.includes(c.id)} onChange={() => basculerCompetence(c.id)} />
+                  <span><b>{c.code}</b> · {c.libelle}</span>
+                </label>
+              ))}
+            </div>
+            {liaison.erreur && <p className="text-xs mt-2" style={{ color: '#C94C7B' }}>{liaison.erreur}</p>}
+            <div className="flex gap-2 mt-4">
+              <button type="button" onClick={enregistrerLiaison} className="text-xs font-bold px-4 py-2 rounded-xl text-white" style={{ background: VIOLET }}>Enregistrer</button>
+              <button type="button" onClick={() => setLiaison(null)} className="text-xs font-bold px-4 py-2 rounded-xl text-gray-500">Annuler</button>
+            </div>
+          </div>
         </div>
       )}
       <p className="text-xs text-gray-400 mt-3">Saisie rapide : Tab = case suivante, Entrée ou ↓ = élève suivant, ↑ = élève précédent. Chaque note est enregistrée en quittant la case.</p>

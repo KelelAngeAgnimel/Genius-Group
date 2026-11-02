@@ -2,6 +2,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useState, useEffect, useRef } from 'react'
 import api from '../../api'
 import { libelleUtilisateur } from '../../lib/concours'
+import { ouvrirFichierProtege } from '../../lib/fichiers'
 
 // ========================
 // RADAR CHART FIFA-STYLE
@@ -259,6 +260,13 @@ function VueEtudiant({ user }) {
                   <p className="text-xs text-gray-400">{ex.matiere} — De : {ex.professeur_nom || 'Professeur'}</p>
                   {ex.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{ex.description}</p>}
                 </div>
+                {ex.renforcement_id && (
+                  <button onClick={() => ouvrirFichierProtege(`/api/renforcement/envoyes/${ex.id}/fichier`)}
+                    className="text-xs font-semibold px-3 py-1 rounded-lg flex-shrink-0"
+                    style={{ background: 'rgba(76,123,201,0.1)', color: '#4C7BC9', border: '1px solid rgba(76,123,201,0.3)' }}>
+                    Fichier
+                  </button>
+                )}
                 {ex.url_fichier && (
                   <a href={ex.url_fichier} target="_blank" rel="noopener noreferrer"
                     className="text-xs font-semibold px-3 py-1 rounded-lg flex-shrink-0"

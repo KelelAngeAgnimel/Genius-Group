@@ -65,6 +65,12 @@ router.get('/classe', verifyToken, requireRole('professeur', 'admin'), async (re
   }
   colonnes.sort((a, b) => a.matiere.localeCompare(b.matiere) || a.ordre - b.ordre)
 
+  // Compétences rattachées à chaque colonne (les notes comptent pour le score de ces compétences)
+  const liens = await lire(supabase.from('notes_competences').select('*').eq('concours_code', concours))
+  for (const c of colonnes) {
+    c.competence_ids = liens.filter(l => l.matiere === c.matiere && l.periode === c.periode).map(l => l.competence_id)
+  }
+
   const lignes = eleves
     .sort((a, b) => `${a.nom ?? ''}${a.prenom ?? ''}`.localeCompare(`${b.nom ?? ''}${b.prenom ?? ''}`))
     .map(e => {

@@ -25,6 +25,8 @@ import PlanningPerso from './pages/Planning/PlanningPerso'
 import Meetings from './pages/meetings/Meetings'
 import PageNotes from './pages/notes/PageNotes'
 import Seances from './pages/professeur/Seances'
+import MesCompetences from './pages/competences/MesCompetences'
+import Difficultes from './pages/professeur/Difficultes'
 import GestionCompetences from './pages/admin/GestionCompetences'
 import VueGlobale from './pages/admin/VueGlobale'
 import GeniusEval from './pages/eval/GeniusEval'
@@ -82,6 +84,8 @@ export default function App() {
           <Route path="teams" element={<Meetings />} />
           <Route path="notes" element={<PageNotes />} />
           <Route path="seances" element={<Seances />} />
+          <Route path="competences" element={<MesCompetences />} />
+          <Route path="difficultes" element={<Difficultes />} />
           <Route path="genius-eval" element={<GeniusEval />} />
           <Route path="evaluations" element={<Evaluations />} />
           <Route path="evaluations-ensea" element={<EvaluationsEnsea />} />

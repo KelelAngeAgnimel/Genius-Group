@@ -23,7 +23,10 @@ function OptionsConcours({ code }) {
         autoeval_bloquante: o.autoeval_bloquante ?? ensea,
         autoeval_delai_heures: o.autoeval_delai_heures ?? 48,
         autoeval_rappel_heures: o.autoeval_rappel_heures ?? 24,
-        classement_visible: o.classement_visible ?? false
+        classement_visible: o.classement_visible ?? false,
+        score_alpha_pct: Math.round((o.score_alpha ?? 0.3) * 100),
+        score_seuil: o.score_seuil ?? 50,
+        renforcement_mode: o.renforcement_mode ?? 'manuel'
       })
     })
     return () => { actif = false }
@@ -34,7 +37,8 @@ function OptionsConcours({ code }) {
 
   const enregistrer = async () => {
     setMessage('')
-    const res = await api.patch(`/api/concours/${code}/options`, options)
+    const { score_alpha_pct, ...autres } = options
+    const res = await api.patch(`/api/concours/${code}/options`, { ...autres, score_alpha: score_alpha_pct / 100 })
     setMessage(res.ok ? 'Options enregistrées.' : (res.data?.message || 'Enregistrement impossible'))
   }
 
@@ -63,6 +67,28 @@ function OptionsConcours({ code }) {
             onChange={e => maj('autoeval_rappel_heures', Number(e.target.value))} /> h
         </div>
       </div>
+      <h4 className="font-bold text-xs uppercase tracking-wide text-gray-400 mt-5 mb-2">Score de compétence et renforcement</h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600">
+        <div className="flex items-center gap-2">
+          Part de l’auto-évaluation (α)
+          <input type="number" min="0" max="100" value={options.score_alpha_pct} className={CHAMP + ' w-20'} style={STYLE}
+            onChange={e => maj('score_alpha_pct', Number(e.target.value))} /> %
+          <span className="text-xs text-gray-400">(notes : {100 - options.score_alpha_pct} %)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          Seuil de renforcement
+          <input type="number" min="0" max="100" value={options.score_seuil} className={CHAMP + ' w-20'} style={STYLE}
+            onChange={e => maj('score_seuil', Number(e.target.value))} /> / 100
+        </div>
+        <label className="flex items-center gap-2 md:col-span-2">
+          Envoi des exercices
+          <select value={options.renforcement_mode} onChange={e => maj('renforcement_mode', e.target.value)} className={CHAMP} style={STYLE}>
+            <option value="manuel">Manuel : alerte au professeur, envoi en un clic</option>
+            <option value="auto">Automatique : envoi immédiat sous le seuil</option>
+          </select>
+        </label>
+      </div>
+      <p className="text-xs text-gray-400 mt-2">Modifier α ou le seuil recalcule les scores du concours (sans envoyer d’exercice).</p>
       <div className="flex items-center gap-3 mt-4">
         <button type="button" onClick={enregistrer} className="text-xs font-bold px-4 py-2 rounded-xl text-white" style={{ background: VIOLET }}>Enregistrer</button>
         {message && <span className="text-xs text-gray-500">{message}</span>}

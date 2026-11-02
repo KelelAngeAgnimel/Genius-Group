@@ -5,6 +5,7 @@ import { verifyToken } from '../middleware/authMiddleware.js'
 import { validate } from '../middleware/validate.js'
 import { peutAcceder, estEtudiant } from '../lib/concours.js'
 import { statutsEleve } from '../lib/autoeval.js'
+import { recalculerSansBloquer } from '../lib/renforcement.js'
 
 const router = express.Router()
 
@@ -71,6 +72,8 @@ router.post('/', verifyToken, validate(envoiSchema), async (req, res) => {
     if (errInsert.code === '23505') return message(res, 409, 'Auto-évaluation déjà enregistrée')
     throw errInsert
   }
+  // Le score de chaque compétence évaluée est recalculé (et un exercice envoyé si le concours est en mode AUTO)
+  await recalculerSansBloquer(req.user.id)
   res.status(201).json({ success: true })
 })
 
