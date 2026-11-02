@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../../api'
 import { useConcours } from '../../hooks/useConcours'
 import { ouvrirFichierProtege } from '../../lib/fichiers'
+import Loader from '../../components/Loader'
 
 const VIOLET = '#7B4CC9'
 const CHAMP = 'text-sm rounded-xl px-3 py-2 outline-none'
@@ -41,13 +42,13 @@ function ListeDifficultes() {
     setVersion(v => v + 1)
   }
 
-  if (!donnees && !erreur) return <p className="text-sm text-gray-400">Chargement…</p>
+  if (!donnees && !erreur) return <Loader texte="Chargement…" />
   const { parametres, difficultes } = donnees ?? { parametres: null, difficultes: [] }
 
   return (
     <div>
       {parametres && (
-        <p className="text-xs text-gray-400 mb-4">
+        <p className="text-xs text-gray-500 mb-4">
           Seuil de renforcement : {parametres.seuil} / 100 · envoi {parametres.mode === 'auto' ? 'automatique' : 'manuel (en un clic)'}.
           Seuls les scores définitifs (au moins une note rattachée) sont listés.
         </p>
@@ -64,18 +65,18 @@ function ListeDifficultes() {
             <div key={cle} className="bg-white rounded-2xl p-4" style={{ border: '1px solid #f0ece0' }}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-bold text-sm" style={{ color: '#071020' }}>{nomEleve(d.etudiant)} <span className="font-normal text-xs text-gray-400">{d.etudiant.matricule}</span></p>
+                  <p className="font-bold text-sm" style={{ color: '#071020' }}>{nomEleve(d.etudiant)} <span className="font-normal text-xs text-gray-500">{d.etudiant.matricule}</span></p>
                   <p className="text-xs text-gray-600 mt-0.5"><span className="font-semibold" style={{ color: VIOLET }}>{d.competence.code}</span> · {d.competence.libelle}</p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <p className="text-xl font-bold" style={{ color: '#C94C7B' }}>{Math.round(d.score)}<span className="text-xs text-gray-400"> / 100</span></p>
+                  <p className="text-xl font-bold" style={{ color: '#C94C7B' }}>{Math.round(d.score)}<span className="text-xs text-gray-500"> / 100</span></p>
                   <button type="button" onClick={() => envoyer(d)} disabled={!d.peut_envoyer} title={d.raison ?? ''}
                     className="text-xs font-bold px-3 py-2 rounded-xl text-white disabled:opacity-40" style={{ background: VIOLET }}>
                     {d.exercice_suggere ? `Envoyer « ${d.exercice_suggere.titre} »` : 'Aucun exercice'}
                   </button>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-2 mt-2 text-xs text-gray-400">
+              <div className="flex flex-wrap items-center justify-between gap-2 mt-2 text-xs text-gray-500">
                 <span>
                   {d.nb_autoeval} auto-évaluation(s) · {d.nb_notes} note(s)
                   {d.dernier_envoi && ` · dernier envoi le ${formaterDate(d.dernier_envoi)}`}
@@ -156,12 +157,12 @@ function Bibliotheque() {
       <form onSubmit={ajouter} className="bg-white rounded-2xl p-5 mb-5 flex flex-col gap-3" style={{ border: '1px solid #f0ece0' }}>
         <h3 className="font-bold text-sm" style={{ color: '#071020' }}>Ajouter un exercice</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <select value={form.competence_id} onChange={e => setForm({ ...form, competence_id: e.target.value })} className={CHAMP} style={STYLE}>
+          <select aria-label="Compétence" value={form.competence_id} onChange={e => setForm({ ...form, competence_id: e.target.value })} className={CHAMP} style={STYLE}>
             <option value="">— Compétence —</option>
             {competences.map(c => <option key={c.id} value={c.id}>{c.code} · {c.libelle}</option>)}
           </select>
-          <input value={form.titre} onChange={e => setForm({ ...form, titre: e.target.value })} placeholder="Titre" maxLength={200} className={CHAMP} style={STYLE} />
-          <select value={form.niveau} onChange={e => setForm({ ...form, niveau: e.target.value })} className={CHAMP} style={STYLE}>
+          <input value={form.titre} onChange={e => setForm({ ...form, titre: e.target.value })} placeholder="Titre" maxLength={200} className={CHAMP} style={STYLE} aria-label="Titre" />
+          <select aria-label="Niveau" value={form.niveau} onChange={e => setForm({ ...form, niveau: e.target.value })} className={CHAMP} style={STYLE}>
             {NIVEAUX.map(n => <option key={n}>{n}</option>)}
           </select>
         </div>
@@ -177,7 +178,7 @@ function Bibliotheque() {
       <div className="bg-white rounded-2xl overflow-x-auto" style={{ border: '1px solid #f0ece0' }}>
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-gray-400"><th className="p-3">Compétence</th><th className="p-3">Titre</th><th className="p-3">Niveau</th><th className="p-3" /></tr>
+            <tr className="text-left text-xs uppercase tracking-wide text-gray-500"><th className="p-3">Compétence</th><th className="p-3">Titre</th><th className="p-3">Niveau</th><th className="p-3" /></tr>
           </thead>
           <tbody>
             {exercices.map(e => (
@@ -191,7 +192,7 @@ function Bibliotheque() {
                 </td>
               </tr>
             ))}
-            {exercices.length === 0 && <tr><td colSpan={4} className="p-6 text-center text-gray-400">Aucun exercice. Ajoutez-en pour que l’envoi soit possible.</td></tr>}
+            {exercices.length === 0 && <tr><td colSpan={4} className="p-6 text-center text-gray-500">Aucun exercice. Ajoutez-en pour que l’envoi soit possible.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -211,7 +212,7 @@ export default function Difficultes() {
       <div className="mb-6">
         <p className="text-xs tracking-widest uppercase mb-1" style={{ color: VIOLET }}>Outils</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Élèves en difficulté</h1>
-        <p className="text-gray-400 text-sm mt-1">Compétences sous le seuil et exercices de renforcement.</p>
+        <p className="text-gray-500 text-sm mt-1">Compétences sous le seuil et exercices de renforcement.</p>
       </div>
       <div className="flex gap-2 mb-5">
         {[['difficultes', 'Élèves en difficulté'], ['exercices', 'Exercices de renforcement']].map(([id, label]) => (

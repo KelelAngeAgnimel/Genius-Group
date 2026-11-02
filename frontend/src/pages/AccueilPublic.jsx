@@ -158,7 +158,7 @@ export default function AccueilPublic() {
       {/* FIL D'ACTUALITÉS */}
       <section id="actualites" className="max-w-6xl mx-auto px-4 py-12">
         <div className="mb-8">
-          <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>Restez informé</p>
+          <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Restez informé</p>
           <h2 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Fil d'actualité</h2>
         </div>
 
@@ -222,7 +222,7 @@ export default function AccueilPublic() {
       {/* CATALOGUE CONCOURS */}
       <section id="concours" className="max-w-6xl mx-auto px-4 py-12">
         <div className="mb-8">
-          <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>Notre expertise</p>
+          <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Notre expertise</p>
           <h2 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Catalogue La Méthode Genius</h2>
           <p className="text-gray-500 mt-2">Tous les concours que nous préparons</p>
         </div>

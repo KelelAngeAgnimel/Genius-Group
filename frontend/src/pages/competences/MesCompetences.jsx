@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import api from '../../api'
 import { ouvrirFichierProtege } from '../../lib/fichiers'
+import Loader from '../../components/Loader'
+import EmptyState from '../../components/EmptyState'
 
 // recharts est chargé à la demande (module séparé)
 const RadarCompetences = lazy(() => import('../../components/Graphiques').then(m => ({ default: m.RadarCompetences })))
@@ -17,7 +19,7 @@ function Barre({ competence }) {
         <p className="text-sm text-gray-700"><span className="font-semibold" style={{ color: VIOLET }}>{competence.code}</span> · {competence.libelle}</p>
         <p className="text-xs font-bold whitespace-nowrap" style={{ color: couleur }}>
           {score === null ? 'Pas encore évaluée' : `${Math.round(score)} / 100`}
-          {provisoire && <span className="ml-2 font-normal text-gray-400">(provisoire)</span>}
+          {provisoire && <span className="ml-2 font-normal text-gray-500">(provisoire)</span>}
         </p>
       </div>
       <div className="relative h-2 rounded-full mt-1" style={{ background: '#f0ece0' }}>
@@ -63,11 +65,11 @@ export default function MesCompetences() {
       <div className="mb-6">
         <p className="text-xs tracking-widest uppercase mb-1" style={{ color: VIOLET }}>Outils</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Mes compétences</h1>
-        <p className="text-gray-400 text-sm mt-1">Votre niveau sur chaque point du programme, d’après vos auto-évaluations et vos notes.</p>
+        <p className="text-gray-500 text-sm mt-1">Votre niveau sur chaque point du programme, d’après vos auto-évaluations et vos notes.</p>
       </div>
 
       {erreur && <p className="text-sm mb-4" style={{ color: '#C94C7B' }}>{erreur}</p>}
-      {!donnees && !erreur && <p className="text-sm text-gray-400">Chargement…</p>}
+      {!donnees && !erreur && <Loader texte="Chargement…" />}
 
       {donnees && donnees.competences.length === 0 && (
         <p className="text-sm text-gray-500">Aucune compétence n’est encore suivie pour votre concours.</p>
@@ -91,11 +93,11 @@ export default function MesCompetences() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
                     {pointsRadar.length >= 3 ? (
-                      <Suspense fallback={<div className="h-[300px] flex items-center justify-center text-xs text-gray-400">Chargement du graphique…</div>}>
+                      <Suspense fallback={<div className="h-[300px] flex items-center justify-center text-xs text-gray-500">Chargement du graphique…</div>}>
                         <RadarCompetences data={pointsRadar} />
                       </Suspense>
                     ) : (
-                      <p className="text-xs text-gray-400 py-12 text-center">Le radar apparaît dès que 3 compétences ont un score.</p>
+                      <p className="text-xs text-gray-500 py-12 text-center">Le radar apparaît dès que 3 compétences ont un score.</p>
                     )}
                   </div>
                   <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-1">
@@ -106,7 +108,7 @@ export default function MesCompetences() {
             )
           })}
 
-          <p className="text-xs text-gray-400 mb-6">
+          <p className="text-xs text-gray-500 mb-6">
             Le trait rouge marque le seuil de renforcement. Un score « provisoire » ne repose que sur votre auto-évaluation : il devient définitif
             dès qu’une note est rattachée à la compétence.
           </p>
@@ -114,7 +116,7 @@ export default function MesCompetences() {
           <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
             <h2 className="font-bold mb-3" style={{ color: '#071020' }}>Exercices recommandés</h2>
             {donnees.exercices.length === 0 ? (
-              <p className="text-sm text-gray-400">Aucun exercice pour le moment.</p>
+              <EmptyState icone="✏️" titre="Aucun exercice pour le moment" />
             ) : (
               <ul className="flex flex-col gap-3">
                 {donnees.exercices.map(e => (
@@ -122,7 +124,7 @@ export default function MesCompetences() {
                     style={{ background: e.statut === 'fait' ? '#f8f7f4' : 'rgba(201,168,76,0.06)', border: '1px solid #f0ece0' }}>
                     <div>
                       <p className="text-sm font-semibold" style={{ color: '#071020' }}>{e.titre}</p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-500">
                         {e.competence ? `${e.competence.code} · ` : ''}envoyé le {formaterDate(e.envoye_le)}
                         {e.statut === 'fait' && ' · fait ✓'}
                       </p>

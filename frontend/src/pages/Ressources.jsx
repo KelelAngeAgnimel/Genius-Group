@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useConcours } from '../hooks/useConcours'
 import api from '../api'
 import Breadcrumb from '../components/Breadcrumb'
+import { useToast } from '../hooks/useUi'
+import EmptyState from '../components/EmptyState'
 
 // Une ressource correspond-elle à l'école affichée ?
 // Inclusif : une ressource "tous"/"all" ou combinée apparaît sous chaque école concernée.
@@ -88,6 +90,7 @@ function chargerPdfJs() {
 }
 
 function LecteurPDF({ ressource, onFermer }) {
+  const toast = useToast()
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
   const containerRef = useRef(null)
@@ -168,7 +171,7 @@ function LecteurPDF({ ressource, onFermer }) {
       a.remove()
       setTimeout(() => URL.revokeObjectURL(url), 2000)
     } catch {
-      alert('Téléchargement impossible pour le moment.')
+      toast.erreur('Téléchargement impossible pour le moment.')
     }
   }
 
@@ -223,9 +226,15 @@ function LecteurPDF({ ressource, onFermer }) {
 // ══════════════════════════════════════════
 // PAGE PRINCIPALE
 // ══════════════════════════════════════════
-export default function Ressources() {
+function RessourcesContenu() {
   const navigate = useNavigate()
-  const [ecoleSelectionnee, setEcoleSelectionnee] = useState(null)
+  const { peutAcceder: peutVoirContenu } = useConcours()
+  const peutAcceder = (ecole) => peutVoirContenu(ecole.code)
+  // /ressources?ecole=ENSEA présélectionne le concours (seulement s'il est accessible)
+  const [ecoleSelectionnee, setEcoleSelectionnee] = useState(() => {
+    const demandee = new URLSearchParams(window.location.search).get('ecole')
+    return ecoles.find(e => e.sigle === demandee && peutVoirContenu(e.code))?.sigle ?? null
+  })
   const [matiereSelectionnee, setMatiereSelectionnee] = useState(null)
   const [ressources, setRessources] = useState([])
   const [loading, setLoading] = useState(false)
@@ -233,8 +242,8 @@ export default function Ressources() {
   const [ressourceOuverte, setRessourceOuverte] = useState(null)
 
   const ecoleActive = ecoles.find(e => e.sigle === ecoleSelectionnee)
-  const { peutAcceder: peutVoirContenu } = useConcours()
-  const peutAcceder = (ecole) => peutVoirContenu(ecole.code)
+  // Un élève ne voit que les concours auxquels il est inscrit (le personnel voit ceux auxquels il a accès)
+  const ecolesVisibles = ecoles.filter(peutAcceder)
 
   useEffect(() => {
     if (ecoleSelectionnee) chargerRessources()
@@ -281,23 +290,26 @@ export default function Ressources() {
           suivantLabel={!ecoleActive ? 'Mon Planning' : null}
           suivantPath={!ecoleActive ? '/planning/emploi-du-temps' : null}
         />
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>Bibliothèque</p>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Bibliothèque</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           {!ecoleActive && 'Tous les Documents'}
           {ecoleActive && !matiereSelectionnee && `Documents ${ecoleActive.sigle}`}
           {matiereSelectionnee && matiereSelectionnee}
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           {!ecoleActive && 'Sélectionnez votre concours pour accéder aux documents'}
           {ecoleActive && !matiereSelectionnee && `Choisissez une matière — ${ecoleActive.matieres.length} matières disponibles`}
           {matiereSelectionnee && `${ressourcesFiltrees.length} document(s) disponible(s)`}
         </p>
       </div>
 
-      {/* NIVEAU 1 — Choix du concours — TOUS AFFICHÉS, non inscrit grisé */}
-      {!ecoleSelectionnee && (
+      {/* NIVEAU 1 — Choix du concours : uniquement ceux de l'utilisateur */}
+      {!ecoleSelectionnee && ecolesVisibles.length === 0 && (
+        <EmptyState icone="🎓" titre="Aucun concours associé à votre compte" texte="Contactez l’administration pour être inscrit à un concours." />
+      )}
+      {!ecoleSelectionnee && ecolesVisibles.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {ecoles.map((ecole, i) => {
+          {ecolesVisibles.map((ecole, i) => {
             const acces = peutAcceder(ecole)
             return (
               <div key={i}
@@ -388,7 +400,7 @@ export default function Ressources() {
                   <div className="p-5">
                     <p className="font-bold text-sm mb-2" style={{ color: '#071020' }}>{matiere}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-400">{loading ? '...' : `${count} document(s)`}</span>
+                      <span className="text-xs text-gray-500">{loading ? '...' : `${count} document(s)`}</span>
                       <span className="text-xs font-semibold px-2 py-1 rounded-lg"
                         style={{ background: `${ecoleActive.couleur}15`, color: ecoleActive.couleur }}>
                         Consulter →
@@ -430,7 +442,7 @@ export default function Ressources() {
                 <div className="bg-white rounded-2xl p-10 text-center" style={{ border: '1px solid #f0ece0' }}>
                   <p className="text-3xl mb-3">📭</p>
                   <p className="text-sm font-semibold text-gray-500">Aucun document disponible</p>
-                  <p className="text-xs text-gray-400 mt-1">Votre enseignant n'a pas encore publié de contenu ici.</p>
+                  <p className="text-xs text-gray-500 mt-1">Votre enseignant n'a pas encore publié de contenu ici.</p>
                 </div>
               )}
               {ressourcesFiltrees.map((ressource, i) => {
@@ -453,11 +465,11 @@ export default function Ressources() {
                           {config.label}
                         </span>
                         {ressource.professeur && (
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-gray-500">
                             Par {ressource.professeur.prenom || ressource.professeur.username}
                           </span>
                         )}
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-gray-500">
                           {new Date(ressource.created_at).toLocaleDateString('fr-FR')}
                         </span>
                       </div>
@@ -475,4 +487,9 @@ export default function Ressources() {
       )}
     </div>
   )
+}
+
+export default function Ressources() {
+  const { search } = useLocation()
+  return <RessourcesContenu key={search} />
 }

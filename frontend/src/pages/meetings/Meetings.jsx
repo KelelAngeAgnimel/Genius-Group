@@ -1,16 +1,31 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api'
+import { useConfirm } from '../../hooks/useUi'
+import Loader from '../../components/Loader'
+import { useConcours } from '../../hooks/useConcours'
 
 const COULEURS = { or: '#C9A84C', navy: '#071020', vert: '#4CC9A8', rose: '#C94C7B', bleu: '#4C7BC9' }
 
 const concoursConfig = {
   inphb: { label: 'INP-HB', couleur: '#4C7BC9' },
   esatic: { label: 'ESATIC', couleur: '#4CC9A8' },
-  both: { label: 'INP-HB + ESATIC', couleur: '#C9A84C' },
+  cme: { label: 'CME', couleur: '#C97B4C' },
+  ensea: { label: 'ENSEA', couleur: '#7B4CC9' },
+  both: { label: 'Tous les concours', couleur: '#C9A84C' },
 }
 
+// Concours proposables à la publication d'un cours (« both » = visible de tous les élèves)
+const OPTIONS_CONCOURS = [
+  ['both', 'Tous les concours'],
+  ['inphb', 'INP-HB seulement'],
+  ['esatic', 'ESATIC seulement'],
+  ['cme', 'CME seulement'],
+  ['ensea', 'ENSEA seulement'],
+]
+
 export default function Meetings() {
+  const confirmer = useConfirm()
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
   const peutPublier = user?.role === 'admin' || user?.role === 'professeur'
@@ -23,7 +38,11 @@ export default function Meetings() {
   const [editId, setEditId] = useState(null)
   const [filtreActive, setFiltreActive] = useState(false)
 
-  const formVide = { titre: '', prof: '', heure: '', lien: '', concours: 'both' }
+  // Un professeur rattaché à des concours ne publie que pour les siens (le serveur le vérifie aussi)
+  const { concours: miens, estProfesseur } = useConcours()
+  const restreint = estProfesseur && miens.length > 0
+  const optionsConcours = restreint ? OPTIONS_CONCOURS.filter(([valeur]) => miens.includes(valeur)) : OPTIONS_CONCOURS
+  const formVide = { titre: '', prof: '', heure: '', lien: '', concours: restreint ? miens[0] : 'both' }
   const [form, setForm] = useState(formVide)
 
   const charger = async () => {
@@ -77,7 +96,7 @@ export default function Meetings() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Supprimer ce cours ?')) return
+    if (!(await confirmer({ titre: 'Supprimer le cours ?', message: 'Le lien du cours ne sera plus visible des élèves.', confirmer: 'Supprimer', danger: true }))) return
     try {
       await api.delete(`/api/meetings/${id}`)
       if (editId === id) { setForm(formVide); setEditId(null); setShowForm(false) }
@@ -102,11 +121,11 @@ export default function Meetings() {
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
 
       <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: COULEURS.or }}>Outils</p>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Outils</p>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold" style={{ color: COULEURS.navy }}>Cours à distance</h1>
-            <p className="text-gray-400 text-sm mt-1">Rejoignez vos cours en ligne selon votre concours</p>
+            <p className="text-gray-500 text-sm mt-1">Rejoignez vos cours en ligne selon votre concours</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -154,29 +173,27 @@ export default function Meetings() {
               placeholder="Titre du cours *"
               className="text-xs rounded-xl px-3 py-2.5 outline-none"
               style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }}
-            />
+              aria-label="Titre du cours" />
             <input
               value={form.prof}
               onChange={e => handleChange('prof', e.target.value)}
               placeholder="Nom du professeur"
               className="text-xs rounded-xl px-3 py-2.5 outline-none"
               style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }}
-            />
+              aria-label="Nom du professeur" />
             <input
               value={form.heure}
               onChange={e => handleChange('heure', e.target.value)}
               placeholder="Heure (ex : 14:00)"
               className="text-xs rounded-xl px-3 py-2.5 outline-none"
               style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }}
-            />
-            <select
+              aria-label="Heure (ex : 14:00)" />
+            <select aria-label="Concours concerné"
               value={form.concours}
               onChange={e => handleChange('concours', e.target.value)}
               className="text-xs rounded-xl px-3 py-2.5 outline-none"
               style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }}>
-              <option value="both">INP-HB + ESATIC (tous)</option>
-              <option value="inphb">INP-HB seulement</option>
-              <option value="esatic">ESATIC seulement</option>
+              {optionsConcours.map(([valeur, libelle]) => <option key={valeur} value={valeur}>{libelle}</option>)}
             </select>
             <input
               value={form.lien}
@@ -184,7 +201,7 @@ export default function Meetings() {
               placeholder="Lien du cours (Google Meet, Zoom, Teams...) *"
               className="text-xs rounded-xl px-3 py-2.5 outline-none sm:col-span-2"
               style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }}
-            />
+              aria-label="Lien du cours (Google Meet, Zoom, Teams...)" />
           </div>
           <div className="flex gap-2">
             <button
@@ -204,11 +221,11 @@ export default function Meetings() {
       )}
 
       {loading ? (
-        <p className="text-gray-400 text-sm text-center py-10">Chargement des cours...</p>
+        <Loader texte="Chargement des cours…" />
       ) : coursAffiches.length === 0 ? (
         <div className="rounded-2xl p-10 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
           <p className="text-4xl mb-3">📭</p>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-500">
             {filtreActive ? 'Aucun cours en cours pour le moment.' : 'Aucun cours publié pour le moment.'}
           </p>
         </div>
@@ -238,7 +255,7 @@ export default function Meetings() {
               <div>
                 <p className="font-bold text-sm" style={{ color: COULEURS.navy }}>{c.titre}</p>
                 {(c.prof || c.heure) && (
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     {c.prof && <span>{c.prof}</span>}
                     {c.prof && c.heure && <span> · </span>}
                     {c.heure && <span>{c.heure}</span>}
@@ -271,7 +288,7 @@ export default function Meetings() {
                       color: c.live ? COULEURS.rose : COULEURS.vert,
                       border: `1px solid ${c.live ? COULEURS.rose : COULEURS.vert}40`
                     }}>
-                    {c.live ? 'Arreter' : 'Demarrer'}
+                    {c.live ? 'Arrêter' : 'Démarrer'}
                   </button>
                   <button
                     onClick={() => handleEdit(c)}

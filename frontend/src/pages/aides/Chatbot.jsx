@@ -145,7 +145,7 @@ export default function Chatbot() {
               fontSize: '14px', outline: 'none',
               fontFamily: "'Lato', sans-serif"
             }}
-          />
+            aria-label="Écris ta question..." />
           <button
             onClick={envoyer}
             disabled={loading}

@@ -67,13 +67,13 @@ export default function PreparationMentale() {
 
       {/* EN-TETE */}
       <div className="mb-6 md:mb-8">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>
           Aides
         </p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           Preparation mentale
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           Guide complet pour aborder vos concours dans les meilleures conditions
         </p>
       </div>
@@ -187,7 +187,7 @@ export default function PreparationMentale() {
                 }}>
                 Section precedente
               </button>
-              <span className="text-xs text-gray-400">{si + 1} / {sections.length}</span>
+              <span className="text-xs text-gray-500">{si + 1} / {sections.length}</span>
               <button
                 onClick={() => { setSectionOuverte(Math.min(sections.length - 1, si + 1)); setConseilOuvert(null) }}
                 disabled={si === sections.length - 1}

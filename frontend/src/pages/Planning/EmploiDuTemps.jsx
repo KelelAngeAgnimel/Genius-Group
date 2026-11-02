@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../../api'
+import Loader from '../../components/Loader'
+import EmptyState from '../../components/EmptyState'
 
 const heures = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00']
 
@@ -96,7 +98,7 @@ export default function EmploiDuTemps() {
 
       {/* EN-TETE */}
       <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>
           Planning
         </p>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -146,21 +148,21 @@ export default function EmploiDuTemps() {
           <div className="bg-white rounded-2xl p-4" style={{ border: '1px solid #f0ece0' }}>
             <div className="flex items-center justify-between mb-4">
               <button onClick={moisPrecedent}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-50 transition text-sm">
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50 transition text-sm">
                 &lt;
               </button>
               <p className="text-sm font-bold" style={{ color: '#071020' }}>
                 {moisNoms[moisActuel]} {anneeActuelle}
               </p>
               <button onClick={moisSuivant}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-50 transition text-sm">
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50 transition text-sm">
                 &gt;
               </button>
             </div>
 
             <div className="grid grid-cols-7 gap-0.5 mb-2">
               {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((j, i) => (
-                <div key={i} className="text-center text-xs font-semibold text-gray-400 py-1">{j}</div>
+                <div key={i} className="text-center text-xs font-semibold text-gray-500 py-1">{j}</div>
               ))}
             </div>
 
@@ -246,13 +248,13 @@ export default function EmploiDuTemps() {
 
           {loading ? (
             <div className="bg-white rounded-2xl p-10 text-center" style={{ border: '1px solid #f0ece0' }}>
-              <p className="text-gray-400 text-sm">Chargement du planning...</p>
+              <Loader texte="Chargement du planning…" />
             </div>
           ) : vue === 'semaine' ? (
             <div className="bg-white rounded-2xl overflow-hidden" style={{ border: '1px solid #f0ece0' }}>
 
               {/* Indice de défilement horizontal, visible seulement sur petit écran */}
-              <p className="md:hidden text-xs text-gray-400 px-3 pt-2 pb-1">
+              <p className="md:hidden text-xs text-gray-500 px-3 pt-2 pb-1">
                 ← Fais glisser pour voir tous les jours →
               </p>
 
@@ -284,7 +286,7 @@ export default function EmploiDuTemps() {
                         style={{ gridTemplateColumns: '60px repeat(6, 1fr)', minHeight: '60px' }}>
 
                         {/* Heure */}
-                        <div className="p-2 border-r border-b text-xs text-gray-400 font-medium flex-shrink-0"
+                        <div className="p-2 border-r border-b text-xs text-gray-500 font-medium flex-shrink-0"
                           style={{ borderColor: '#f0ece0' }}>
                           {heure}
                         </div>
@@ -310,9 +312,9 @@ export default function EmploiDuTemps() {
                                   <p className="text-xs font-bold leading-tight" style={{ color: ev.couleur }}>
                                     {ev.titre}
                                   </p>
-                                  <p className="text-xs text-gray-400 mt-0.5">{ev.debut} - {ev.fin}</p>
-                                  {ev.salle && <p className="text-xs text-gray-400">{ev.salle}</p>}
-                                  {ev.prof && <p className="text-xs text-gray-400 italic">{ev.prof}</p>}
+                                  <p className="text-xs text-gray-500 mt-0.5">{ev.debut} - {ev.fin}</p>
+                                  {ev.salle && <p className="text-xs text-gray-500">{ev.salle}</p>}
+                                  {ev.prof && <p className="text-xs text-gray-500 italic">{ev.prof}</p>}
                                 </div>
                               )}
                             </div>
@@ -330,7 +332,7 @@ export default function EmploiDuTemps() {
             <div className="flex flex-col gap-3">
               {evenementsFiltres.length === 0 && (
                 <div className="bg-white rounded-2xl p-10 text-center" style={{ border: '1px solid #f0ece0' }}>
-                  <p className="text-gray-400 text-sm">Aucun cours prévu pour le moment.</p>
+                  <EmptyState icone="📅" titre="Aucun cours prévu pour le moment" />
                 </div>
               )}
               {jours.map(jour => {
@@ -352,7 +354,7 @@ export default function EmploiDuTemps() {
                             style={{ background: ev.couleur }} />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-bold text-gray-800">{ev.titre}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">
+                            <p className="text-xs text-gray-500 mt-0.5">
                               {ev.debut} - {ev.fin}{ev.salle ? ` — ${ev.salle}` : ''}{ev.prof ? ` — ${ev.prof}` : ''}
                             </p>
                           </div>

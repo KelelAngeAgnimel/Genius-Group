@@ -2,6 +2,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import api from '../../api'
+import Loader from '../../components/Loader'
 
 // Deux blocs fixes, un par concours, avec leurs matières officielles.
 // Ce sont ces mêmes matières qui sont proposées lors de la création d'un quiz
@@ -79,7 +80,7 @@ export default function MesNotes() {
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
       <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>Outils</p>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Outils</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Mes notes</h1>
         <p className="text-gray-400 text-sm mt-1">Bulletin de notes — {user?.prenom} {user?.nom || user?.username}</p>
       </div>
@@ -97,7 +98,7 @@ export default function MesNotes() {
 
       {loading ? (
         <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
-          <p className="text-xs text-gray-400 text-center py-8">Chargement...</p>
+          <Loader texte="Chargement…" />
         </div>
       ) : (
         <div className="flex flex-col gap-5">
@@ -126,15 +127,15 @@ export default function MesNotes() {
                     <div key={matiere}>
                       <p className="text-xs font-bold mb-2" style={{ color: '#071020' }}>{matiere}</p>
                       {notesMatiere.length === 0 ? (
-                        <p className="text-xs text-gray-400 italic pl-2">Aucune note pour le moment</p>
+                        <p className="text-xs text-gray-500 italic pl-2">Aucune note pour le moment</p>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full text-xs">
                             <thead>
                               <tr style={{ borderBottom: '1px solid #f0ece0' }}>
-                                <th className="text-left py-1.5 px-2 text-gray-400 font-semibold">Évaluation</th>
-                                <th className="text-right py-1.5 px-2 text-gray-400 font-semibold">Note</th>
-                                <th className="text-right py-1.5 px-2 text-gray-400 font-semibold">Appréciation</th>
+                                <th className="text-left py-1.5 px-2 text-gray-500 font-semibold">Évaluation</th>
+                                <th className="text-right py-1.5 px-2 text-gray-500 font-semibold">Note</th>
+                                <th className="text-right py-1.5 px-2 text-gray-500 font-semibold">Appréciation</th>
                               </tr>
                             </thead>
                             <tbody>

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import api from '../../../api'
 import { LIMITES, TYPES_ACCEPTES, compresserImage, formaterTaille, ouvrirFichierProtege } from '../../../lib/fichiers'
+import Loader from '../../../components/Loader'
+import EmptyState from '../../../components/EmptyState'
 
 const VIOLET = '#7B4CC9'
 const ONGLETS = [
@@ -104,7 +106,7 @@ function FormulaireDepot({ evaluation, onDepose }) {
     <div className="mt-4 rounded-xl p-4" style={{ background: '#f8f7f4', border: '1px dashed #d9d4c3' }}>
       <p className="text-xs font-semibold text-gray-600 mb-3">
         {evaluation.copie ? 'Remplacer ma copie' : 'Déposer ma copie'}
-        <span className="font-normal text-gray-400"> — PDF, JPG ou PNG · 10 fichiers max · 20 Mo au total</span>
+        <span className="font-normal text-gray-500"> — PDF, JPG ou PNG · 10 fichiers max · 20 Mo au total</span>
       </p>
 
       <div className="flex flex-wrap gap-2 mb-3">
@@ -126,13 +128,13 @@ function FormulaireDepot({ evaluation, onDepose }) {
         <ol className="flex flex-col gap-2 mb-3">
           {fichiers.map((f, i) => (
             <li key={f.id} className="flex items-center gap-3 bg-white rounded-xl p-2" style={{ border: '1px solid #f0ece0' }}>
-              <span className="text-xs font-bold text-gray-400 w-5 text-center">{i + 1}</span>
+              <span className="text-xs font-bold text-gray-500 w-5 text-center">{i + 1}</span>
               {f.apercu
                 ? <img src={f.apercu} alt="" className="w-12 h-12 object-cover rounded-lg" />
                 : <div className="w-12 h-12 rounded-lg flex items-center justify-center text-lg bg-gray-100">📄</div>}
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-700 truncate">{f.fichier.name}</p>
-                <p className="text-xs text-gray-400">{formaterTaille(f.fichier.size)}</p>
+                <p className="text-xs text-gray-500">{formaterTaille(f.fichier.size)}</p>
               </div>
               <button type="button" onClick={() => deplacer(i, -1)} disabled={i === 0} className="text-xs px-2 disabled:opacity-30" aria-label="Monter">↑</button>
               <button type="button" onClick={() => deplacer(i, 1)} disabled={i === fichiers.length - 1} className="text-xs px-2 disabled:opacity-30" aria-label="Descendre">↓</button>
@@ -195,11 +197,11 @@ function CarteEvaluation({ evaluation, maintenant, onChange }) {
       )}
 
       {!evaluation.ouverte ? (
-        <p className="text-sm text-gray-400 mt-3">Ouverture le {formaterDate(evaluation.date_ouverture)}.</p>
+        <p className="text-sm text-gray-500 mt-3">Ouverture le {formaterDate(evaluation.date_ouverture)}.</p>
       ) : (
         <>
           {evaluation.consignes && <p className="text-sm text-gray-600 mt-3 whitespace-pre-line">{evaluation.consignes}</p>}
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-xs text-gray-500 mt-2">
             À rendre avant le {formaterDate(evaluation.date_limite)}
             {!evaluation.retard_autorise && ' (aucun dépôt après cette date)'}
           </p>
@@ -238,7 +240,7 @@ function CarteEvaluation({ evaluation, maintenant, onChange }) {
 
       {evaluation.etat === 'corrigee' && (
         <div className="mt-4 rounded-xl p-4" style={{ background: 'rgba(76,201,168,0.08)', border: '1px solid rgba(76,201,168,0.3)' }}>
-          <p className="text-2xl font-bold" style={{ color: '#2a9d7f' }}>{copie.note} <span className="text-sm text-gray-400">/ 20</span></p>
+          <p className="text-2xl font-bold" style={{ color: '#2a9d7f' }}>{copie.note} <span className="text-sm text-gray-500">/ 20</span></p>
           {copie.commentaire && <p className="text-sm text-gray-600 mt-2 whitespace-pre-line">{copie.commentaire}</p>}
         </div>
       )}
@@ -291,9 +293,9 @@ export default function VueEleveEnsea() {
 
       {erreur && <p className="text-sm mb-4" style={{ color: '#C94C7B' }}>{erreur}</p>}
       {loading ? (
-        <p className="text-sm text-gray-400">Chargement…</p>
+        <Loader texte="Chargement…" />
       ) : visibles.length === 0 ? (
-        <p className="text-sm text-gray-400">Aucune évaluation dans cette catégorie.</p>
+        <EmptyState icone="📝" titre="Aucune évaluation dans cette catégorie" />
       ) : (
         <div className="flex flex-col gap-4">
           {visibles.map(e => <CarteEvaluation key={e.id} evaluation={e} maintenant={maintenant} onChange={charger} />)}

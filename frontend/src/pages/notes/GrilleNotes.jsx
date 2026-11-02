@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import api from '../../api'
 import { CODES_CONCOURS, libelleConcours } from '../../lib/concours'
 import { telechargerCsv } from '../../lib/csv'
+import EmptyState from '../../components/EmptyState'
 
 const VIOLET = '#7B4CC9'
 const SELECT = 'text-sm rounded-xl px-3 py-2 outline-none bg-white'
@@ -148,23 +149,23 @@ export default function GrilleNotes() {
 
       <form onSubmit={ajouterColonne} className="flex flex-wrap gap-2 mb-4 items-center">
         <span className="text-xs text-gray-500">Nouvelle évaluation :</span>
-        <select value={nouvelle.matiere} onChange={e => setNouvelle({ ...nouvelle, matiere: e.target.value })} className={SELECT} style={STYLE}>
+        <select aria-label="Matière de la nouvelle évaluation" value={nouvelle.matiere} onChange={e => setNouvelle({ ...nouvelle, matiere: e.target.value })} className={SELECT} style={STYLE}>
           {(donnees?.matieres ?? []).map(m => <option key={m}>{m}</option>)}
         </select>
         <input value={nouvelle.periode} onChange={e => setNouvelle({ ...nouvelle, periode: e.target.value })} list="periodes-connues"
-          placeholder="Période (ex. Nov 2026)" maxLength={50} className={SELECT} style={STYLE} />
+          placeholder="Période (ex. Nov 2026)" maxLength={50} className={SELECT} style={STYLE} aria-label="Période (ex. Nov 2026)" />
         <datalist id="periodes-connues">{donnees?.periodes.map(p => <option key={p} value={p} />)}</datalist>
         <button type="submit" className="text-xs font-bold px-3 py-2 rounded-xl" style={{ color: VIOLET, border: `1px solid ${VIOLET}60` }}>+ Ajouter la colonne</button>
       </form>
 
       {erreur && <p className="text-sm mb-3" style={{ color: '#C94C7B' }}>{erreur}</p>}
-      {donnees && lignes.length === 0 && <p className="text-sm text-gray-400">Aucun élève inscrit à ce concours.</p>}
+      {donnees && lignes.length === 0 && <EmptyState icone="🎓" titre="Aucun élève inscrit à ce concours" />}
 
       {lignes.length > 0 && (
         <div className="bg-white rounded-2xl overflow-x-auto" style={{ border: '1px solid #f0ece0' }}>
           <table className="text-sm min-w-full">
             <thead>
-              <tr className="text-left text-xs text-gray-400">
+              <tr className="text-left text-xs text-gray-500">
                 <th className="p-3 sticky left-0 bg-white">Élève</th>
                 {colonnes.map(c => (
                   <th key={c.cle} className="p-3 whitespace-nowrap">
@@ -185,7 +186,7 @@ export default function GrilleNotes() {
                 <tr key={l.etudiant.id} style={{ borderTop: '1px solid #f8f7f4' }}>
                   <td className="p-3 sticky left-0 bg-white whitespace-nowrap">
                     <span className="font-semibold" style={{ color: '#071020' }}>{nomEleve(l.etudiant)}</span>
-                    <span className="block text-xs text-gray-400">{l.etudiant.matricule}</span>
+                    <span className="block text-xs text-gray-500">{l.etudiant.matricule}</span>
                   </td>
                   {colonnes.map((c, j) => {
                     const k = cle(l.etudiant, c)
@@ -225,7 +226,7 @@ export default function GrilleNotes() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: 'rgba(7,16,32,0.6)' }} role="dialog" aria-modal="true">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-5">
             <h3 className="font-bold" style={{ color: '#071020' }}>Compétences évaluées</h3>
-            <p className="text-xs text-gray-400 mb-3">{liaison.col.matiere} — {liaison.col.periode}. Les notes de cette colonne comptent pour le score des compétences cochées.</p>
+            <p className="text-xs text-gray-500 mb-3">{liaison.col.matiere} — {liaison.col.periode}. Les notes de cette colonne comptent pour le score des compétences cochées.</p>
             {liaison.liste.length === 0 && <p className="text-sm text-gray-500">Aucune compétence pour cette matière.</p>}
             <div className="flex flex-col gap-1">
               {liaison.liste.map(c => (
@@ -243,7 +244,7 @@ export default function GrilleNotes() {
           </div>
         </div>
       )}
-      <p className="text-xs text-gray-400 mt-3">Saisie rapide : Tab = case suivante, Entrée ou ↓ = élève suivant, ↑ = élève précédent. Chaque note est enregistrée en quittant la case.</p>
+      <p className="text-xs text-gray-500 mt-3">Saisie rapide : Tab = case suivante, Entrée ou ↓ = élève suivant, ↑ = élève précédent. Chaque note est enregistrée en quittant la case.</p>
     </div>
   )
 }

@@ -3,6 +3,9 @@ import { useState, useEffect, useRef } from 'react'
 import api from '../../api'
 import { Link } from 'react-router-dom'
 import { useConcours } from '../../hooks/useConcours'
+import { useToast, useConfirm } from '../../hooks/useUi'
+import Loader from '../../components/Loader'
+import EmptyState from '../../components/EmptyState'
 
 
 // Matières par concours — doivent correspondre exactement aux matières dans la table notes
@@ -114,8 +117,8 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
 
   const choisir = (qid, idx) => setReponses(prev => ({ ...prev, [qid]: idx }))
 
-  if (loading) return <p className="text-xs text-gray-400 text-center py-10">Chargement du quiz...</p>
-  if (!data) return <p className="text-xs text-gray-400 text-center py-10">Quiz introuvable</p>
+  if (loading) return <Loader texte="Chargement du quiz…" />
+  if (!data) return <p className="text-xs text-gray-500 text-center py-10">Quiz introuvable</p>
 
   const toutesRepondues = data.questions.length > 0 && data.questions.every(q => reponses[q.id] !== undefined)
   const tentatives = data.tentatives || []
@@ -149,7 +152,7 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
 
       <div className="rounded-2xl p-5 mb-4 flex items-center justify-between" style={{ background: `linear-gradient(135deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${COULEURS.or}4D` }}>
         <div>
-          <p className="text-xs tracking-widest uppercase" style={{ color: COULEURS.or }}>{data.quiz.matiere}</p>
+          <p className="text-xs tracking-widest uppercase" style={{ color: '#C9A84C' }}>{data.quiz.matiere}</p>
           <p className="font-bold text-white text-lg">{data.quiz.titre}</p>
           <p className="text-xs text-gray-400 mt-1">Durée : {data.quiz.duree_minutes} min — {data.questions.length} question(s)</p>
         </div>
@@ -210,7 +213,7 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
                     </div>
                   ))}
                   {c.choisi === null && (
-                    <p className="text-xs italic text-gray-400 mt-1">Question non répondue (temps écoulé)</p>
+                    <p className="text-xs italic text-gray-500 mt-1">Question non répondue (temps écoulé)</p>
                   )}
                 </div>
               </div>
@@ -268,7 +271,7 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
                       style={{ background: '#f8f7f4' }}>
                       <div>
                         <p className="text-xs font-bold" style={{ color: COULEURS.navy }}>Tentative #{t.tentative_numero}</p>
-                        <p className="text-xs text-gray-400">{new Date(t.created_at).toLocaleString('fr-FR')}</p>
+                        <p className="text-xs text-gray-500">{new Date(t.created_at).toLocaleString('fr-FR')}</p>
                       </div>
                       <span className="text-sm font-bold" style={{ color: couleur }}>{t.score}/{t.total}</span>
                     </div>
@@ -314,11 +317,11 @@ function VueEtudiant() {
   return (
     <div>
       {loading ? (
-        <p className="text-xs text-gray-400 text-center py-10">Chargement des quiz...</p>
+        <Loader texte="Chargement des quiz…" />
       ) : quizzes.length === 0 ? (
         <div className="rounded-2xl p-8 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
           <p className="text-3xl mb-2">📭</p>
-          <p className="text-sm text-gray-400">Aucun quiz disponible pour le moment</p>
+          <EmptyState icone="❓" titre="Aucun quiz disponible pour le moment" />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -327,7 +330,7 @@ function VueEtudiant() {
               className="rounded-2xl p-5 cursor-pointer transition hover:shadow-lg"
               style={{ background: `linear-gradient(145deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${q.deja_fait ? COULEURS.vert + '4D' : COULEURS.or + '4D'}` }}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs tracking-widest uppercase" style={{ color: COULEURS.or }}>{q.matiere}</span>
+                <span className="text-xs tracking-widest uppercase" style={{ color: '#C9A84C' }}>{q.matiere}</span>
                 {q.deja_fait ? (
                   <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '20px', background: `${COULEURS.vert}26`, color: COULEURS.vert, border: `1px solid ${COULEURS.vert}` }}>
                     Meilleur : {q.score}/{q.total_score}
@@ -354,6 +357,8 @@ function VueEtudiant() {
 // VUE PROF / ADMIN
 // ========================
 function VueProf() {
+  const toast = useToast()
+  const confirmer = useConfirm()
   // Un professeur rattaché uniquement à des concours sans génération automatique (ENSEA) ne la voit pas
   const { concours: mesConcours, generationAutoTests, estProfesseur } = useConcours()
   const generationPossible = !(estProfesseur && mesConcours.length > 0 && !mesConcours.some(generationAutoTests))
@@ -472,7 +477,7 @@ function VueProf() {
   }
 
   const supprimer = async (id) => {
-    if (!window.confirm('Supprimer ce quiz ?')) return
+    if (!(await confirmer({ titre: 'Supprimer le quiz ?', message: 'Les questions et les résultats associés seront perdus.', confirmer: 'Supprimer', danger: true }))) return
     try {
       await api.delete(`/api/quiz/${id}`)
       charger()
@@ -490,10 +495,10 @@ function VueProf() {
       if (res.ok && data.quiz) {
         setQuizzes(prev => prev.map(x => x.id === q.id ? { ...x, titre: data.quiz.titre } : x))
       } else {
-        alert(data.error || "Impossible de renommer. Vérifie que le serveur (Render) est à jour.")
+        toast.erreur(data.error || "Impossible de renommer. Vérifie que le serveur (Render) est à jour.")
       }
     } catch {
-      alert('Erreur réseau lors du renommage.')
+      toast.erreur('Erreur réseau lors du renommage.')
     }
   }
 
@@ -505,10 +510,10 @@ function VueProf() {
         // Mise à jour immédiate du bouton à partir de la réponse du serveur
         setQuizzes(prev => prev.map(x => x.id === q.id ? { ...x, publie: data.quiz.publie } : x))
       } else {
-        alert(data.error || "Impossible de changer la visibilité. Vérifie que le serveur (Render) est bien à jour.")
+        toast.erreur(data.error || "Impossible de changer la visibilité. Vérifie que le serveur (Render) est bien à jour.")
       }
     } catch {
-      alert('Erreur réseau lors du changement de visibilité.')
+      toast.erreur('Erreur réseau lors du changement de visibilité.')
     }
   }
 
@@ -529,18 +534,18 @@ function VueProf() {
       </div>
 
       {vue === 'liste' && (
-        loading ? <p className="text-xs text-gray-400 text-center py-10">Chargement...</p> :
+        loading ? <Loader texte="Chargement…" /> :
         quizzes.length === 0 ? (
           <div className="rounded-2xl p-8 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
             <p className="text-3xl mb-2">📭</p>
-            <p className="text-sm text-gray-400">Aucun quiz créé pour le moment</p>
+            <EmptyState icone="❓" titre="Aucun quiz créé pour le moment" />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {quizzes.map((q, i) => (
               <div key={i} className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs tracking-widest uppercase" style={{ color: COULEURS.or }}>{q.matiere}</span>
+                  <span className="text-xs tracking-widest uppercase" style={{ color: '#8A6D1A' }}>{q.matiere}</span>
                   <div className="flex items-center gap-1.5">
                     {q.publie === false && (
                       <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: `${COULEURS.rose}1A`, color: COULEURS.rose }}>🚫 Masqué</span>
@@ -553,7 +558,7 @@ function VueProf() {
                   <span>👥</span>
                   <span>Visible par : {audienceQuiz(q.concours, q.modalite)}</span>
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-gray-500 mt-1">
                   {q.nb_questions} questions · {q.nb_tentatives} tentative{q.nb_tentatives !== '1' ? 's' : ''}{q.moyenne_pct ? ` · moy. ${q.moyenne_pct}%` : ''}
                 </p>
                 <div className="flex gap-2 mt-3">
@@ -662,14 +667,14 @@ function VueProf() {
               {/* Ligne 4 — Titre, niveau, durée */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <input value={form.titre} onChange={e => setForm(p => ({ ...p, titre: e.target.value }))}
-                  placeholder="Titre du quiz *" className="text-xs rounded-xl px-3 py-2 outline-none" style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} />
+                  placeholder="Titre du quiz *" className="text-xs rounded-xl px-3 py-2 outline-none" style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} aria-label="Titre du quiz" />
                 <input value={form.niveau} onChange={e => setForm(p => ({ ...p, niveau: e.target.value }))}
-                  placeholder="Niveau (optionnel)" className="text-xs rounded-xl px-3 py-2 outline-none" style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} />
+                  placeholder="Niveau (optionnel)" className="text-xs rounded-xl px-3 py-2 outline-none" style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} aria-label="Niveau (optionnel)" />
                 <div className="flex items-center gap-2">
                   <input type="number" min="1" value={form.duree_minutes}
                     onChange={e => setForm(p => ({ ...p, duree_minutes: e.target.value }))}
-                    placeholder="Durée *" className="w-full text-xs rounded-xl px-3 py-2 outline-none" style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} />
-                  <span className="text-xs text-gray-400 whitespace-nowrap">min *</span>
+                    placeholder="Durée *" className="w-full text-xs rounded-xl px-3 py-2 outline-none" style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} aria-label="Durée" />
+                  <span className="text-xs text-gray-500 whitespace-nowrap">min *</span>
                 </div>
               </div>
             </div>
@@ -683,8 +688,8 @@ function VueProf() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
               <input value={iaForm.theme} onChange={e => setIaForm(p => ({ ...p, theme: e.target.value }))}
                 placeholder="Thème précis (optionnel)" className="text-xs rounded-xl px-3 py-2 outline-none md:col-span-2"
-                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'white' }} />
-              <input type="number" min="1" max="20" value={iaForm.nombre_questions}
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'white' }} aria-label="Thème précis (optionnel)" />
+              <input aria-label="Nombre de questions" type="number" min="1" max="20" value={iaForm.nombre_questions}
                 onChange={e => setIaForm(p => ({ ...p, nombre_questions: e.target.value }))}
                 className="text-xs rounded-xl px-3 py-2 outline-none"
                 style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'white' }} />
@@ -721,7 +726,7 @@ function VueProf() {
 
             </>
           ) : (
-            <p className="text-xs text-gray-400">La génération automatique de tests n’est pas disponible pour vos concours : saisissez les questions manuellement.</p>
+            <p className="text-xs text-gray-500">La génération automatique de tests n’est pas disponible pour vos concours : saisissez les questions manuellement.</p>
           )}
 
           <div className="flex flex-col gap-3">
@@ -735,13 +740,13 @@ function VueProf() {
                 </div>
                 <input value={q.question} onChange={e => majQuestion(i, 'question', e.target.value)}
                   placeholder="Texte de la question" className="w-full text-xs rounded-xl px-3 py-2 outline-none mb-2"
-                  style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} />
+                  style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }} aria-label="Texte de la question" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {q.options.map((opt, oi) => (
                     <div key={oi} className="flex items-center gap-2">
                       <input type="radio" checked={q.bonne_reponse === oi} onChange={() => majQuestion(i, 'bonne_reponse', oi)}
                         style={{ accentColor: COULEURS.vert }} />
-                      <input value={opt} onChange={e => majOption(i, oi, e.target.value)}
+                      <input aria-label={`Option ${oi + 1}`} value={opt} onChange={e => majOption(i, oi, e.target.value)}
                         placeholder={`Option ${oi + 1}`} className="flex-1 text-xs rounded-xl px-3 py-1.5 outline-none"
                         style={{ background: q.bonne_reponse === oi ? `${COULEURS.vert}0D` : '#f8f7f4', border: `1px solid ${q.bonne_reponse === oi ? COULEURS.vert : '#e8e4da'}` }} />
                     </div>
@@ -767,7 +772,7 @@ function VueProf() {
         <div>
           <button onClick={() => setVue('liste')} className="text-xs font-semibold mb-4" style={{ color: COULEURS.or }}>← Retour aux quiz</button>
           <div className="rounded-2xl p-5 mb-4" style={{ background: `linear-gradient(135deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${COULEURS.or}4D` }}>
-            <p className="text-xs tracking-widest uppercase" style={{ color: COULEURS.or }}>{resultats.quiz.matiere}</p>
+            <p className="text-xs tracking-widest uppercase" style={{ color: '#C9A84C' }}>{resultats.quiz.matiere}</p>
             <p className="font-bold text-white text-lg">{resultats.quiz.titre}</p>
             <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
               👥 Visible par : {audienceQuiz(resultats.quiz.concours, resultats.quiz.modalite)}
@@ -792,10 +797,10 @@ function VueProf() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-bold truncate" style={{ color: COULEURS.navy }}>{r.prenom || r.username} {r.nom || ''}</p>
-                          <p className="text-xs text-gray-400">{r.matricule} — {r.tentatives.length} tentative(s)</p>
+                          <p className="text-xs text-gray-500">{r.matricule} — {r.tentatives.length} tentative(s)</p>
                         </div>
                         <span className="text-sm font-bold" style={{ color: couleur }}>Meilleur : {r.meilleur_score}/{r.meilleur_total}</span>
-                        <span className="text-xs text-gray-400">{estOuvert ? '▲' : '▼'}</span>
+                        <span className="text-xs text-gray-500">{estOuvert ? '▲' : '▼'}</span>
                       </div>
                       {estOuvert && (
                         <div className="px-3 pb-3 flex flex-col gap-1.5">
@@ -806,7 +811,7 @@ function VueProf() {
                               <div key={ti} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
                                 <div>
                                   <span className="text-xs font-semibold" style={{ color: COULEURS.navy }}>Tentative #{t.tentative_numero}</span>
-                                  <span className="text-xs text-gray-400 ml-2">{new Date(t.created_at).toLocaleString('fr-FR')}</span>
+                                  <span className="text-xs text-gray-500 ml-2">{new Date(t.created_at).toLocaleString('fr-FR')}</span>
                                 </div>
                                 <span className="text-xs font-bold" style={{ color: tcouleur }}>{t.score}/{t.total}</span>
                               </div>
@@ -848,9 +853,9 @@ export default function GeniusEval() {
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
       <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: COULEURS.or }}>Outils</p>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Outils</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: COULEURS.navy }}>Quiz</h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           {isProfOrAdmin ? 'Créez et suivez des QCM auto-corrigés' : 'Vos quiz auto-corrigés'}
         </p>
       </div>

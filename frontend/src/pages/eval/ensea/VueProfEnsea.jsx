@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import api from '../../../api'
 import { ouvrirFichierProtege } from '../../../lib/fichiers'
+import Loader from '../../../components/Loader'
+import EmptyState from '../../../components/EmptyState'
 
 const VIOLET = '#7B4CC9'
 const MATIERES = ['Français', 'Mathématiques'] // docs/pole-educatif.md
@@ -60,13 +62,13 @@ function FormulaireEvaluation({ onCree, onAnnuler }) {
     <form onSubmit={soumettre} className="bg-white rounded-2xl p-5 mb-6 flex flex-col gap-3" style={{ border: '1px solid #f0ece0' }}>
       <h3 className="font-bold text-sm" style={{ color: '#071020' }}>Nouvelle évaluation ENSEA</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <select value={form.matiere} onChange={e => maj('matiere', e.target.value)} className={champ} style={STYLE_CHAMP}>
+        <select aria-label="Matière" value={form.matiere} onChange={e => maj('matiere', e.target.value)} className={champ} style={STYLE_CHAMP}>
           {MATIERES.map(m => <option key={m}>{m}</option>)}
         </select>
-        <input value={form.titre} onChange={e => maj('titre', e.target.value)} placeholder="Titre *" maxLength={200} className={champ} style={STYLE_CHAMP} />
+        <input value={form.titre} onChange={e => maj('titre', e.target.value)} placeholder="Titre *" maxLength={200} className={champ} style={STYLE_CHAMP} aria-label="Titre" />
       </div>
       <textarea value={form.consignes} onChange={e => maj('consignes', e.target.value)} rows={3} maxLength={5000}
-        placeholder="Consignes (facultatif)" className={champ} style={STYLE_CHAMP} />
+        placeholder="Consignes (facultatif)" className={champ} style={STYLE_CHAMP} aria-label="Consignes (facultatif)" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <label className="text-xs text-gray-500">Ouverture (vide = maintenant)
           <input type="datetime-local" value={form.date_ouverture} onChange={e => maj('date_ouverture', e.target.value)} className={champ + ' mt-1'} style={STYLE_CHAMP} />
@@ -76,7 +78,7 @@ function FormulaireEvaluation({ onCree, onAnnuler }) {
         </label>
       </div>
       <input value={form.competences} onChange={e => maj('competences', e.target.value)}
-        placeholder="Compétences évaluées, ex. FR-RES-1, FR-RES-4 (facultatif)" className={champ} style={STYLE_CHAMP} />
+        placeholder="Compétences évaluées, ex. FR-RES-1, FR-RES-4 (facultatif)" className={champ} style={STYLE_CHAMP} aria-label="Compétences évaluées, ex. FR-RES-1, FR-RES-4 (facultatif)" />
       <label className="text-xs text-gray-500 flex items-center gap-2">
         <input type="checkbox" checked={form.retard_autorise} onChange={e => maj('retard_autorise', e.target.checked)} />
         Dépôt autorisé après la date limite (signalé « en retard »)
@@ -128,14 +130,14 @@ function FormulaireCorrection({ copie, onFait }) {
     <form onSubmit={enregistrer} className="mt-3 rounded-xl p-4 flex flex-col gap-3" style={{ background: '#f8f7f4', border: '1px solid #e8e4da' }}>
       <div className="flex items-center gap-2">
         <input type="number" min="0" max="20" step="0.25" value={note} onChange={e => setNote(e.target.value)}
-          placeholder="Note" className="w-24 text-sm rounded-xl px-3 py-2 outline-none bg-white" style={{ border: '1px solid #e8e4da' }} />
-        <span className="text-sm text-gray-400">/ 20</span>
+          placeholder="Note" className="w-24 text-sm rounded-xl px-3 py-2 outline-none bg-white" style={{ border: '1px solid #e8e4da' }} aria-label="Note" />
+        <span className="text-sm text-gray-500">/ 20</span>
       </div>
       <textarea value={commentaire} onChange={e => setCommentaire(e.target.value)} rows={3} maxLength={5000}
-        placeholder="Commentaire pour l’élève" className="w-full text-sm rounded-xl px-3 py-2 outline-none bg-white" style={{ border: '1px solid #e8e4da' }} />
+        placeholder="Commentaire pour l’élève" className="w-full text-sm rounded-xl px-3 py-2 outline-none bg-white" style={{ border: '1px solid #e8e4da' }} aria-label="Commentaire pour l’élève" />
       <label className="text-xs text-gray-500">Corrigé annoté (PDF, JPG ou PNG — facultatif)
         <input type="file" accept="application/pdf,image/jpeg,image/png" onChange={e => setCorrige(e.target.files?.[0] ?? null)} className="block mt-1 text-xs" />
-        {copie.a_corrige && !corrige && <span className="text-gray-400"> Un corrigé est déjà enregistré ; un nouveau fichier le remplacera.</span>}
+        {copie.a_corrige && !corrige && <span className="text-gray-500"> Un corrigé est déjà enregistré ; un nouveau fichier le remplacera.</span>}
       </label>
       {erreur && <p className="text-xs" style={{ color: '#C94C7B' }}>{erreur}</p>}
       <button type="submit" disabled={envoi} className="self-start text-xs font-bold px-4 py-2 rounded-xl text-white disabled:opacity-50" style={{ background: '#4CC9A8' }}>
@@ -181,7 +183,7 @@ function ListeCopies({ evaluation, onRetour, onChange }) {
     <div>
       <button type="button" onClick={onRetour} className="text-xs font-semibold mb-3" style={{ color: VIOLET }}>← Retour aux évaluations</button>
       <h2 className="font-bold text-lg" style={{ color: '#071020' }}>{evaluation.titre}</h2>
-      <p className="text-xs text-gray-400 mb-4">{evaluation.matiere} · limite {formaterDate(evaluation.date_limite)}</p>
+      <p className="text-xs text-gray-500 mb-4">{evaluation.matiere} · limite {formaterDate(evaluation.date_limite)}</p>
 
       <div className="flex gap-2 mb-4 flex-wrap">
         {FILTRES.map(f => (
@@ -193,8 +195,8 @@ function ListeCopies({ evaluation, onRetour, onChange }) {
       </div>
 
       {erreur && <p className="text-sm mb-3" style={{ color: '#C94C7B' }}>{erreur}</p>}
-      {loading ? <p className="text-sm text-gray-400">Chargement…</p>
-        : copies.length === 0 ? <p className="text-sm text-gray-400">Aucune copie.</p>
+      {loading ? <Loader texte="Chargement…" />
+        : copies.length === 0 ? <EmptyState icone="📄" titre="Aucune copie" />
         : (
           <div className="flex flex-col gap-3">
             {copies.map(c => (
@@ -202,7 +204,7 @@ function ListeCopies({ evaluation, onRetour, onChange }) {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-bold" style={{ color: '#071020' }}>{nomEleve(c)}</p>
-                    <p className="text-xs text-gray-400">{c.etudiant?.matricule} · déposée le {formaterDate(c.deposee_le)}</p>
+                    <p className="text-xs text-gray-500">{c.etudiant?.matricule} · déposée le {formaterDate(c.deposee_le)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     {c.en_retard && <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ background: 'rgba(201,76,123,0.1)', color: '#C94C7B' }}>En retard</span>}
@@ -266,8 +268,8 @@ export default function VueProfEnsea() {
       {creation && <FormulaireEvaluation onCree={() => { setCreation(false); charger() }} onAnnuler={() => setCreation(false)} />}
 
       {erreur && <p className="text-sm mb-3" style={{ color: '#C94C7B' }}>{erreur}</p>}
-      {loading ? <p className="text-sm text-gray-400">Chargement…</p>
-        : evaluations.length === 0 ? <p className="text-sm text-gray-400">Aucune évaluation pour le moment.</p>
+      {loading ? <Loader texte="Chargement…" />
+        : evaluations.length === 0 ? <EmptyState icone="📝" titre="Aucune évaluation pour le moment" />
         : (
           <div className="flex flex-col gap-3">
             {evaluations.map(e => (
@@ -276,7 +278,7 @@ export default function VueProfEnsea() {
                   <div>
                     <p className="text-xs uppercase tracking-widest" style={{ color: VIOLET }}>{e.matiere}</p>
                     <p className="font-bold" style={{ color: '#071020' }}>{e.titre}</p>
-                    <p className="text-xs text-gray-400 mt-1">Limite : {formaterDate(e.date_limite)}{e.ouverte ? '' : ' · pas encore ouverte'}</p>
+                    <p className="text-xs text-gray-500 mt-1">Limite : {formaterDate(e.date_limite)}{e.ouverte ? '' : ' · pas encore ouverte'}</p>
                   </div>
                   <div className="flex gap-2 text-xs font-bold">
                     <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-600">{e.nb_copies} copie(s)</span>

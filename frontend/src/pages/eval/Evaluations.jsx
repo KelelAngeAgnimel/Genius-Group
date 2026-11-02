@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api'
+import { useToast, useConfirm } from '../../hooks/useUi'
+import Loader from '../../components/Loader'
+import EmptyState from '../../components/EmptyState'
 
 const COULEURS = { or: '#C9A84C', bleu: '#4C7BC9', vert: '#4CC9A8', rose: '#C94C7B', navy: '#071020', violet: '#7B4CC9' }
 
@@ -39,6 +42,7 @@ function chargerPdfJs() {
 }
 
 function LecteurPDF({ ressource, onFermer }) {
+  const toast = useToast()
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
   const containerRef = useRef(null)
@@ -116,7 +120,7 @@ function LecteurPDF({ ressource, onFermer }) {
       a.remove()
       setTimeout(() => URL.revokeObjectURL(url), 2000)
     } catch {
-      alert('Téléchargement impossible pour le moment.')
+      toast.erreur('Téléchargement impossible pour le moment.')
     }
   }
 
@@ -215,14 +219,14 @@ function VueEtudiant() {
       )}
 
       {loading ? (
-        <p className="text-xs text-gray-400 text-center py-10">Chargement...</p>
+        <Loader texte="Chargement…" />
       ) : erreur ? (
         <p className="text-xs text-center py-10" style={{ color: COULEURS.rose }}>{erreur}</p>
       ) : liste.length === 0 ? (
         <div className="rounded-2xl p-10 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
           <p className="text-3xl mb-3">📭</p>
           <p className="text-sm font-semibold text-gray-500">Aucune évaluation disponible</p>
-          <p className="text-xs text-gray-400 mt-1">Vos enseignants n'ont pas encore publié d'évaluation pour vos concours.</p>
+          <p className="text-xs text-gray-500 mt-1">Vos enseignants n'ont pas encore publié d'évaluation pour vos concours.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -241,8 +245,8 @@ function VueEtudiant() {
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: `${COULEURS.or}15`, color: '#b8891e' }}>{ev.matiere}</span>
                   <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: `${COULEURS.bleu}15`, color: COULEURS.bleu }}>{labelConcours(ev.concours)}</span>
-                  {ev.professeur && <span className="text-xs text-gray-400">Par {ev.professeur.prenom || ev.professeur.username}</span>}
-                  <span className="text-xs text-gray-400">{new Date(ev.created_at).toLocaleDateString('fr-FR')}</span>
+                  {ev.professeur && <span className="text-xs text-gray-500">Par {ev.professeur.prenom || ev.professeur.username}</span>}
+                  <span className="text-xs text-gray-500">{new Date(ev.created_at).toLocaleDateString('fr-FR')}</span>
                 </div>
               </div>
               <span className="text-xs font-semibold px-3 py-2 rounded-xl flex-shrink-0"
@@ -262,6 +266,8 @@ function VueEtudiant() {
 // (le prof ne voit que les siennes, l'admin voit tout)
 // ══════════════════════════════════════════
 function VueProf({ role }) {
+  const toast = useToast()
+  const confirmer = useConfirm()
   const [evaluations, setEvaluations] = useState([])
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -284,17 +290,17 @@ function VueProf({ role }) {
     try {
       const res = await api.patch(`/api/ressources/${ev.id}/visibilite`, { visible: !ev.visible })
       if (res.ok) setEvaluations(prev => prev.map(x => x.id === ev.id ? { ...x, visible: !ev.visible } : x))
-      else { const d = res.data ?? {}; alert(d.message || 'Action impossible') }
-    } catch { alert('Erreur réseau') }
+      else { const d = res.data ?? {}; toast.erreur(d.message || 'Action impossible') }
+    } catch { toast.erreur('Erreur réseau') }
   }
 
   const supprimer = async (ev) => {
-    if (!window.confirm('Supprimer cette évaluation ?')) return
+    if (!(await confirmer({ titre: 'Supprimer l’évaluation ?', message: 'Cette action est définitive.', confirmer: 'Supprimer', danger: true }))) return
     try {
       const res = await api.delete(`/api/ressources/${ev.id}`)
       if (res.ok) setEvaluations(prev => prev.filter(x => x.id !== ev.id))
-      else { const d = res.data ?? {}; alert(d.message || 'Suppression impossible') }
-    } catch { alert('Erreur réseau') }
+      else { const d = res.data ?? {}; toast.erreur(d.message || 'Suppression impossible') }
+    } catch { toast.erreur('Erreur réseau') }
   }
 
   return (
@@ -311,20 +317,20 @@ function VueProf({ role }) {
       </div>
 
       {loading ? (
-        <p className="text-xs text-gray-400 text-center py-10">Chargement...</p>
+        <Loader texte="Chargement…" />
       ) : erreur ? (
         <p className="text-xs text-center py-10" style={{ color: COULEURS.rose }}>{erreur}</p>
       ) : evaluations.length === 0 ? (
         <div className="rounded-2xl p-8 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
           <p className="text-3xl mb-2">📭</p>
-          <p className="text-sm text-gray-400">Aucune évaluation publiée pour le moment</p>
+          <EmptyState icone="📝" titre="Aucune évaluation publiée pour le moment" />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {evaluations.map((ev, i) => (
             <div key={i} className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs tracking-widest uppercase" style={{ color: COULEURS.or }}>{ev.matiere}</span>
+                <span className="text-xs tracking-widest uppercase" style={{ color: '#8A6D1A' }}>{ev.matiere}</span>
                 {!ev.visible && (
                   <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: `${COULEURS.rose}1A`, color: COULEURS.rose }}>🚫 Masquée</span>
                 )}
@@ -336,7 +342,7 @@ function VueProf({ role }) {
                 <span>Visible par : {labelConcours(ev.concours)}</span>
               </p>
               {role === 'admin' && ev.professeur && (
-                <p className="text-xs text-gray-400 mt-1">Publiée par {ev.professeur.prenom || ev.professeur.username}</p>
+                <p className="text-xs text-gray-500 mt-1">Publiée par {ev.professeur.prenom || ev.professeur.username}</p>
               )}
               <div className="flex gap-2 mt-3 flex-wrap">
                 <button onClick={() => setOuverte(ev)} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
@@ -372,9 +378,9 @@ export default function Evaluations() {
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
       <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: COULEURS.or }}>Outils</p>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Outils</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: COULEURS.navy }}>Évaluation</h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           {isProfOrAdmin ? 'Gérez les évaluations publiées' : 'Les évaluations publiées pour vos concours'}
         </p>
       </div>

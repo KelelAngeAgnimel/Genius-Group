@@ -73,9 +73,9 @@ export default function CreerUtilisateur() {
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
       <div className="mb-6 md:mb-8">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>Administration</p>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Administration</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Créer un compte</h1>
-        <p className="text-gray-400 text-sm mt-1">Le matricule est généré automatiquement dans l'ordre d'inscription</p>
+        <p className="text-gray-500 text-sm mt-1">Le matricule est généré automatiquement dans l'ordre d'inscription</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -110,7 +110,7 @@ export default function CreerUtilisateur() {
                   style={{ borderColor: '#f0ece0' }}
                   onFocus={e => e.target.style.borderColor = '#C9A84C'}
                   onBlur={e => e.target.style.borderColor = '#f0ece0'}
-                />
+                  aria-label="Prénom" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Nom</label>
@@ -122,7 +122,7 @@ export default function CreerUtilisateur() {
                   style={{ borderColor: '#f0ece0' }}
                   onFocus={e => e.target.style.borderColor = '#C9A84C'}
                   onBlur={e => e.target.style.borderColor = '#f0ece0'}
-                />
+                  aria-label="Nom" />
               </div>
             </div>
 
@@ -140,8 +140,8 @@ export default function CreerUtilisateur() {
                   style={{ borderColor: '#f0ece0' }}
                   onFocus={e => e.target.style.borderColor = '#C9A84C'}
                   onBlur={e => e.target.style.borderColor = '#f0ece0'}
-                />
-                <p className="text-xs text-gray-400 mt-1">Cet identifiant sera utilisé pour se connecter</p>
+                  aria-label="Identifiant de connexion" />
+                <p className="text-xs text-gray-500 mt-1">Cet identifiant sera utilisé pour se connecter</p>
               </div>
             )}
 
@@ -176,7 +176,7 @@ export default function CreerUtilisateur() {
                 style={{ borderColor: '#f0ece0' }}
                 onFocus={e => e.target.style.borderColor = '#C9A84C'}
                 onBlur={e => e.target.style.borderColor = '#f0ece0'}
-              />
+                aria-label="Mot de passe initial" />
             </div>
 
             {/* Rôle */}
@@ -199,7 +199,7 @@ export default function CreerUtilisateur() {
                         {role.label}
                       </p>
                     </div>
-                    <p className="text-xs text-gray-400 ml-5">{role.description}</p>
+                    <p className="text-xs text-gray-500 ml-5">{role.description}</p>
                   </button>
                 ))}
               </div>
@@ -211,7 +211,7 @@ export default function CreerUtilisateur() {
                 <label className="block text-xs font-semibold text-gray-600 mb-2">
                   Concours {estEtudiant && <span className="text-red-400">*</span>}
                 </label>
-                <p className="text-xs text-gray-400 mb-3">
+                <p className="text-xs text-gray-500 mb-3">
                   {estEtudiant
                     ? "L'étudiant n'accède qu'aux contenus des concours cochés."
                     : "Aucun concours coché : le professeur voit tous les concours. Cocher des concours le limite à leurs élèves."}
@@ -226,7 +226,7 @@ export default function CreerUtilisateur() {
                 <label className="block text-xs font-semibold text-gray-600 mb-2">
                   Modalité des cours <span className="text-red-400">*</span>
                 </label>
-                <p className="text-xs text-gray-400 mb-3">
+                <p className="text-xs text-gray-500 mb-3">
                   L'emploi du temps de l'étudiant sera adapté selon sa modalité.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -243,7 +243,7 @@ export default function CreerUtilisateur() {
                         En ligne
                       </p>
                     </div>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-500">
                       L'étudiant suit les cours à distance via la plateforme. Emploi du temps adapté aux sessions virtuelles.
                     </p>
                   </button>
@@ -261,7 +261,7 @@ export default function CreerUtilisateur() {
                         Présentiel
                       </p>
                     </div>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-500">
                       L'étudiant suit les cours en classe. Emploi du temps adapté aux sessions en salle.
                     </p>
                   </button>
@@ -292,7 +292,7 @@ export default function CreerUtilisateur() {
               <p className="text-2xl font-black" style={{ color: '#C9A84C', letterSpacing: '0.1em' }}>
                 26GEN####
               </p>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-gray-500 mt-2">
                 Le matricule est généré automatiquement dans l'ordre d'inscription. Le premier étudiant obtient <strong>26GEN0001</strong>, le suivant <strong>26GEN0002</strong>, etc.
               </p>
             </div>
@@ -301,7 +301,7 @@ export default function CreerUtilisateur() {
           {/* Rôle sélectionné */}
           {roleActif && (
             <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
-              <p className="text-xs font-bold uppercase tracking-widest mb-3 text-gray-400">Rôle sélectionné</p>
+              <p className="text-xs font-bold uppercase tracking-widest mb-3 text-gray-500">Rôle sélectionné</p>
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-4 h-4 rounded-full" style={{ background: roleActif.couleur }} />
                 <p className="font-bold text-sm" style={{ color: roleActif.couleur }}>{roleActif.label}</p>

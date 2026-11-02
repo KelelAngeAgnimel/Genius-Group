@@ -16,9 +16,10 @@ export default function Admin() {
   }
 
   return (
-    <div className="flex gap-6">
-      <div className="w-64 flex flex-col gap-3 shrink-0">
-        <h2 className="text-xl font-bold text-gray-800 mb-2">⚙️ Administration</h2>
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+      <nav aria-label="Administration" className="md:w-64 flex flex-col gap-2 md:gap-3 shrink-0">
+        <h2 className="text-xl font-bold text-gray-800 md:mb-2">⚙️ Administration</h2>
+        <div className="flex md:flex-col gap-2 md:gap-3 overflow-x-auto pb-1 md:pb-0">
         {[
           { path: 'utilisateurs', label: '👥 Gestion utilisateurs' },
           { path: 'creer', label: '➕ Créer un utilisateur' },
@@ -30,7 +31,7 @@ export default function Admin() {
             key={page.path}
             to={page.path}
             className={({ isActive }) =>
-              `bg-gray-800 hover:bg-gray-900 text-white px-4 py-3 rounded-xl font-semibold transition ${
+              `bg-gray-800 hover:bg-gray-900 text-white px-4 py-3 rounded-xl font-semibold transition whitespace-nowrap md:whitespace-normal shrink-0 ${
                 isActive ? 'ring-2 ring-yellow-400' : ''
               }`
             }
@@ -38,9 +39,10 @@ export default function Admin() {
             {page.label}
           </NavLink>
         ))}
-      </div>
+        </div>
+      </nav>
 
-      <div className="flex-1 bg-white rounded-2xl shadow p-6">
+      <div className="flex-1 min-w-0 bg-white rounded-2xl shadow p-3 sm:p-6">
         <Outlet />
       </div>
     </div>

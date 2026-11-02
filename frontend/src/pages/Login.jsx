@@ -221,7 +221,7 @@ export default function Login() {
                 }}
                 onFocus={e => e.target.style.borderColor = '#C9A84C'}
                 onBlur={e => e.target.style.borderColor = '#e5e7eb'}
-              />
+                aria-label="Matricule" />
             </div>
 
             <div>
@@ -229,7 +229,7 @@ export default function Login() {
                 Mot de passe
               </label>
               <div style={{ position: 'relative' }}>
-                <input
+                <input aria-label="Mot de passe"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}

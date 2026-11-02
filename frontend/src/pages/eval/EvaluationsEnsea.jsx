@@ -13,7 +13,7 @@ export default function EvaluationsEnsea() {
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           {estPersonnel ? 'Évaluations ENSEA' : 'Mes évaluations'}
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           {estPersonnel
             ? 'Créez des évaluations, consultez les copies et saisissez les corrections.'
             : 'Téléchargez le sujet, déposez votre copie en photo ou en PDF, puis consultez votre note.'}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../../api'
 import SelecteurConcours from '../../components/SelecteurConcours'
 import { CODES_CONCOURS, concoursDe, libelleConcours, libelleUtilisateur, couleurConcours, roleDeBase } from '../../lib/concours'
+import { useToast, useConfirm } from '../../hooks/useUi'
 
 // Rôles de l'application ; les concours sont gérés séparément (inscriptions)
 const roleConfig = {
@@ -16,6 +17,8 @@ const modaliteConfig = {
 }
 
 export default function GestionUtilisateurs() {
+  const toast = useToast()
+  const confirmer = useConfirm()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -44,28 +47,28 @@ export default function GestionUtilisateurs() {
   }
 
   const supprimerUtilisateur = async (id) => {
-    if (!confirm('Supprimer cet utilisateur ?')) return
+    if (!(await confirmer({ titre: 'Supprimer l’utilisateur ?', message: 'Le compte sera supprimé définitivement.', confirmer: 'Supprimer', danger: true }))) return
     try {
       await api.delete(`/api/users/${id}`)
       setUsers(prev => prev.filter(u => u.id !== id))
     } catch {
-      alert('Erreur lors de la suppression')
+      toast.erreur('Erreur lors de la suppression')
     }
   }
 
   const basculerBlocage = async (u) => {
     const bloquer = !u.bloque
-    if (bloquer && !confirm(`Bloquer le compte de ${u.prenom || ''} ${u.nom || u.username} ?\nCette personne ne pourra plus se connecter.`)) return
+    if (bloquer && !(await confirmer({ titre: 'Bloquer ce compte ?', message: `${u.prenom || ''} ${u.nom || u.username} ne pourra plus se connecter.`, confirmer: 'Bloquer', danger: true }))) return
     try {
       const res = await api.patch(`/api/users/${u.id}`, { bloque: bloquer })
       const data = res.data
       if (res.ok) {
         setUsers(prev => prev.map(x => x.id === u.id ? { ...x, bloque: bloquer } : x))
       } else {
-        alert(data.message || 'Erreur lors du blocage')
+        toast.erreur(data.message || 'Erreur lors du blocage')
       }
     } catch {
-      alert('Erreur serveur lors du blocage')
+      toast.erreur('Erreur serveur lors du blocage')
     }
   }
 
@@ -94,10 +97,10 @@ export default function GestionUtilisateurs() {
         setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data.user } : u))
         setEditingId(null)
       } else {
-        alert(data.message || 'Erreur lors de la modification')
+        toast.erreur(data.message || 'Erreur lors de la modification')
       }
     } catch {
-      alert('Erreur serveur lors de la modification')
+      toast.erreur('Erreur serveur lors de la modification')
     } finally {
       setEnregistrement(false)
     }
@@ -129,13 +132,13 @@ export default function GestionUtilisateurs() {
 
       {/* EN-TETE */}
       <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#C9A84C' }}>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>
           Administration
         </p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
           Gestion des utilisateurs
         </h1>
-        <p className="text-gray-400 text-sm mt-1">
+        <p className="text-gray-500 text-sm mt-1">
           {filtreActif
             ? `${usersFiltres.length} résultat${usersFiltres.length > 1 ? 's' : ''} sur ${users.length}`
             : `${users.length} utilisateur${users.length > 1 ? 's' : ''} inscrit${users.length > 1 ? 's' : ''}`}
@@ -152,7 +155,7 @@ export default function GestionUtilisateurs() {
           <div key={i} className="bg-white rounded-2xl p-3 text-center"
             style={{ border: `1px solid ${s.couleur}20` }}>
             <p className="text-2xl font-bold" style={{ color: s.couleur }}>{s.valeur}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
@@ -168,8 +171,8 @@ export default function GestionUtilisateurs() {
           style={{ borderColor: '#f0ece0' }}
           onFocus={e => e.target.style.borderColor = '#C9A84C'}
           onBlur={e => e.target.style.borderColor = '#f0ece0'}
-        />
-        <select
+          aria-label="Rechercher par nom ou identifiant..." />
+        <select aria-label="Filtrer par rôle ou concours"
           value={filtreRole}
           onChange={e => setFiltreRole(e.target.value)}
           className="border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none bg-white"
@@ -182,7 +185,7 @@ export default function GestionUtilisateurs() {
             <option key={code} value={`concours:${code}`}>Concours {libelleConcours(code)}</option>
           ))}
         </select>
-        <select
+        <select aria-label="Filtrer par modalité"
           value={filtreModalite}
           onChange={e => setFiltreModalite(e.target.value)}
           className="border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none bg-white"
@@ -215,17 +218,17 @@ export default function GestionUtilisateurs() {
             <table className="w-full text-xs">
               <thead>
                 <tr style={{ borderBottom: '2px solid #f0ece0' }}>
-                  <th className="text-left p-4 font-semibold text-gray-400 uppercase tracking-widest">Nom complet</th>
-                  <th className="text-left p-4 font-semibold text-gray-400 uppercase tracking-widest">Identifiant</th>
-                  <th className="text-left p-4 font-semibold text-gray-400 uppercase tracking-widest">Role</th>
-                  <th className="text-left p-4 font-semibold text-gray-400 uppercase tracking-widest">Inscrit le</th>
-                  <th className="text-left p-4 font-semibold text-gray-400 uppercase tracking-widest">Actions</th>
+                  <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Nom complet</th>
+                  <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Identifiant</th>
+                  <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Role</th>
+                  <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Inscrit le</th>
+                  <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {usersFiltres.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="text-center py-8 text-gray-400">
+                    <td colSpan={5} className="text-center py-8 text-gray-500">
                       Aucun utilisateur trouvé
                     </td>
                   </tr>
@@ -261,7 +264,7 @@ export default function GestionUtilisateurs() {
                                   placeholder="Prénom"
                                   className="w-24 border rounded-lg px-2 py-1 text-xs focus:outline-none"
                                   style={{ borderColor: '#C9A84C' }}
-                                />
+                                  aria-label="Prénom" />
                                 <input
                                   type="text"
                                   value={editForm.nom}
@@ -269,14 +272,14 @@ export default function GestionUtilisateurs() {
                                   placeholder="Nom"
                                   className="w-24 border rounded-lg px-2 py-1 text-xs focus:outline-none"
                                   style={{ borderColor: '#C9A84C' }}
-                                />
+                                  aria-label="Nom" />
                               </div>
                               {(estEtudiant || roleDeBase(u.role) === 'professeur') && (
                                 <SelecteurConcours compact value={editForm.concours}
                                   onChange={concours => setEditForm({ ...editForm, concours })} />
                               )}
                               {estEtudiant && (
-                                <select
+                                <select aria-label="Modalité"
                                   value={editForm.modalite}
                                   onChange={e => setEditForm({ ...editForm, modalite: e.target.value })}
                                   className="border rounded-lg px-2 py-1 text-xs bg-white focus:outline-none"
@@ -294,7 +297,7 @@ export default function GestionUtilisateurs() {
                                 autoComplete="new-password"
                                 className="w-full border rounded-lg px-2 py-1 text-xs focus:outline-none"
                                 style={{ borderColor: '#C9A84C' }}
-                              />
+                                aria-label="Nouveau mot de passe (laisser vide)" />
                             </div>
                           </div>
                         ) : (
@@ -315,7 +318,7 @@ export default function GestionUtilisateurs() {
                               </p>
                               {/* Modalité sous le nom pour les étudiants */}
                               {u.modalite && modaliteConfig[u.modalite] && (
-                                <p className="text-xs text-gray-400 mt-0.5">
+                                <p className="text-xs text-gray-500 mt-0.5">
                                   {modaliteConfig[u.modalite].icone} {modaliteConfig[u.modalite].label}
                                 </p>
                               )}
@@ -340,7 +343,7 @@ export default function GestionUtilisateurs() {
                       </td>
 
                       {/* Date inscription */}
-                      <td className="p-4 text-gray-400">
+                      <td className="p-4 text-gray-500">
                         {new Date(u.created_at).toLocaleDateString('fr-FR')}
                       </td>
 
