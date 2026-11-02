@@ -1,51 +1,54 @@
-import AccueilPublic from './pages/AccueilPublic'
-import Admin from './pages/admin/Admin'
-import GestionUtilisateurs from './pages/admin/GestionUtilisateurs'
-import CreerUtilisateur from './pages/admin/CreerUtilisateur'
-import GestionPlanning from './pages/admin/GestionPlanning'
-import EspaceProfesseur from './pages/professeur/EspaceProfesseur'
+import { lazy, Suspense } from 'react'
+import Loader from './components/Loader'
+const AccueilPublic = lazy(() => import('./pages/AccueilPublic'))
+const Admin = lazy(() => import('./pages/admin/Admin'))
+const GestionUtilisateurs = lazy(() => import('./pages/admin/GestionUtilisateurs'))
+const CreerUtilisateur = lazy(() => import('./pages/admin/CreerUtilisateur'))
+const GestionPlanning = lazy(() => import('./pages/admin/GestionPlanning'))
+const EspaceProfesseur = lazy(() => import('./pages/professeur/EspaceProfesseur'))
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
-import Accueil from './pages/Accueil'
-import Planning from './pages/Planning'
-import Ressources from './pages/Ressources'
-import Aides from './pages/Aides'
-import Outils from './pages/Outils'
-import TableauDeBord from './pages/accueil/TableauDeBord'
-import Actualites from './pages/accueil/Actualites'
-import Fiches from './pages/accueil/Fiches'
-import Guide from './pages/accueil/Guide'
-import Statistiques from './pages/accueil/Statistiques'
-import Calendrier from './pages/accueil/Calendrier'
-import Ecoles from './pages/accueil/Ecoles'
-import Tendances from './pages/accueil/Tendances'
-import EmploiDuTemps from './pages/Planning/EmploiDuTemps'
-import SuiviProgression from './pages/Planning/SuiviProgression'
-import PlanningPerso from './pages/Planning/PlanningPerso'
-import Meetings from './pages/meetings/Meetings'
-import PageNotes from './pages/notes/PageNotes'
-import Seances from './pages/professeur/Seances'
-import MesCompetences from './pages/competences/MesCompetences'
-import Difficultes from './pages/professeur/Difficultes'
-import GestionCompetences from './pages/admin/GestionCompetences'
-import VueGlobale from './pages/admin/VueGlobale'
-import GeniusEval from './pages/eval/GeniusEval'
-import Evaluations from './pages/eval/Evaluations'
-import EvaluationsEnsea from './pages/eval/EvaluationsEnsea'
-import FaqGenerale from './pages/aides/FaqGenerales'
-import FaqConcours from './pages/aides/FaqConcours'
-import Contacts from './pages/aides/Contacts'
-import Orientation from './pages/aides/Orientation'
-import PreparationMentale from './pages/aides/PreparationMentale'
-import Forum from './pages/aides/Forum'
-import Chatbot from './pages/aides/Chatbot'
+const Accueil = lazy(() => import('./pages/Accueil'))
+const Planning = lazy(() => import('./pages/Planning'))
+const Ressources = lazy(() => import('./pages/Ressources'))
+const Aides = lazy(() => import('./pages/Aides'))
+const Outils = lazy(() => import('./pages/Outils'))
+const TableauDeBord = lazy(() => import('./pages/accueil/TableauDeBord'))
+const Actualites = lazy(() => import('./pages/accueil/Actualites'))
+const Fiches = lazy(() => import('./pages/accueil/Fiches'))
+const Guide = lazy(() => import('./pages/accueil/Guide'))
+const Statistiques = lazy(() => import('./pages/accueil/Statistiques'))
+const Calendrier = lazy(() => import('./pages/accueil/Calendrier'))
+const Ecoles = lazy(() => import('./pages/accueil/Ecoles'))
+const Tendances = lazy(() => import('./pages/accueil/Tendances'))
+const EmploiDuTemps = lazy(() => import('./pages/Planning/EmploiDuTemps'))
+const SuiviProgression = lazy(() => import('./pages/Planning/SuiviProgression'))
+const PlanningPerso = lazy(() => import('./pages/Planning/PlanningPerso'))
+const Meetings = lazy(() => import('./pages/meetings/Meetings'))
+const PageNotes = lazy(() => import('./pages/notes/PageNotes'))
+const Seances = lazy(() => import('./pages/professeur/Seances'))
+const MesCompetences = lazy(() => import('./pages/competences/MesCompetences'))
+const Difficultes = lazy(() => import('./pages/professeur/Difficultes'))
+const GestionCompetences = lazy(() => import('./pages/admin/GestionCompetences'))
+const VueGlobale = lazy(() => import('./pages/admin/VueGlobale'))
+const GeniusEval = lazy(() => import('./pages/eval/GeniusEval'))
+const Evaluations = lazy(() => import('./pages/eval/Evaluations'))
+const EvaluationsEnsea = lazy(() => import('./pages/eval/EvaluationsEnsea'))
+const FaqGenerale = lazy(() => import('./pages/aides/FaqGenerales'))
+const FaqConcours = lazy(() => import('./pages/aides/FaqConcours'))
+const Contacts = lazy(() => import('./pages/aides/Contacts'))
+const Orientation = lazy(() => import('./pages/aides/Orientation'))
+const PreparationMentale = lazy(() => import('./pages/aides/PreparationMentale'))
+const Forum = lazy(() => import('./pages/aides/Forum'))
+const Chatbot = lazy(() => import('./pages/aides/Chatbot'))
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
+      <Suspense fallback={<Loader plein />}>
+        <Routes>
 
         <Route path="/public" element={<AccueilPublic />} />
         <Route path="/" element={<Login />} />
@@ -124,6 +127,7 @@ export default function App() {
         </Route>
 
       </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }

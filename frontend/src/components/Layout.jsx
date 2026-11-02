@@ -1,4 +1,6 @@
+import { Suspense } from 'react'
 import Navbar from './Navbar'
+import Loader from './Loader'
 import AutoEvaluation from './AutoEvaluation'
 
 export default function Layout({ children }) {
@@ -12,7 +14,9 @@ export default function Layout({ children }) {
       <AutoEvaluation />
       {/* Marge réduite sur mobile : les pages ont déjà leur propre espacement */}
       <main id="contenu" tabIndex={-1} className="px-1 py-2 sm:p-6 outline-none">
-        {children}
+        <Suspense fallback={<Loader plein />}>
+          {children}
+        </Suspense>
       </main>
     </div>
   )
