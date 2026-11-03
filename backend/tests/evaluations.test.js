@@ -330,7 +330,8 @@ describe('Résumé des évaluations par concours', () => {
   it('un élève INP-HB ne voit pas ENSEA et ne compte que ses PDF', async () => {
     const r = await request(app).get('/api/evaluations/resume').set(bearer(12))
     expect(codes(r)).toEqual(['inphb'])
-    expect(r.body.concours[0]).toMatchObject({ total: 2, generation_auto_tests: true })
+    // pas de suivi « à faire » pour les PDF : seul le total est renvoyé
+    expect(r.body.concours[0]).toMatchObject({ total: 2, a_faire: 0, a_rendre: 0, generation_auto_tests: true })
   })
 
   it('un élève INP-HB + ESATIC ne reçoit jamais ENSEA', async () => {

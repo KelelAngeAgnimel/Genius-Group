@@ -308,18 +308,18 @@ router.get('/resume', verifyToken, async (req, res) => {
   if (codesCopies.length > 0) {
     const { data: evaluations, error } = await supabase.from('evaluations').select('*').in('concours_code', codesCopies)
     if (error) throw error
-    let copies = []
+    let copies = new Set() // evaluation_id déjà déposés par l'élève
     if (eleve) {
       const { data, error: errCopies } = await supabase.from('copies').select('evaluation_id').eq('etudiant_id', req.user.id)
       if (errCopies) throw errCopies
-      copies = data || []
+      copies = new Set((data || []).map(c => String(c.evaluation_id)))
     }
     for (const e of evaluations || []) {
       const r = resume[e.concours_code]
       if (!r || !peutAcceder(req.user, e.concours_code)) continue
       r.total += 1
       const ouverte = new Date(e.date_ouverture) <= new Date(maintenant)
-      const faite = copies.some(c => c.evaluation_id === e.id)
+      const faite = copies.has(String(e.id))
       if (eleve && ouverte && !faite) {
         r.a_faire += 1
         const fin = new Date(e.date_limite).getTime()
@@ -336,8 +336,8 @@ router.get('/resume', verifyToken, async (req, res) => {
       const cibles = codesDepuisContenu(ressource.concours)
       for (const code of codesPdf) {
         if (cibles === null || cibles.includes(code)) {
+          // Pas de suivi « fait / à faire » pour ces PDF : seul le total est renvoyé (a_faire reste à 0)
           resume[code].total += 1
-          if (eleve) resume[code].a_faire += 1
         }
       }
     }

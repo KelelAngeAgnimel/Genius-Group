@@ -38,7 +38,7 @@ export default function EvaluationsHub() {
     const r = resume?.[code]
     if (!r) return []
     const liste = []
-    if (estPersonnel) liste.push({ texte: `${r.total} évaluation${r.total > 1 ? 's' : ''}` })
+    if (estPersonnel || (r.a_faire === 0 && r.total > 0 && !r.a_rendre)) liste.push({ texte: `${r.total} évaluation${r.total > 1 ? 's' : ''}` })
     else if (r.a_faire > 0) liste.push({ texte: `${r.a_faire} à faire` })
     if (r.a_rendre > 0) liste.push({ texte: `${r.a_rendre} à rendre`, alerte: true })
     return liste
