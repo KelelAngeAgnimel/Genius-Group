@@ -301,3 +301,54 @@ describe('lib/fichiers', () => {
     expect(detecterType(Buffer.from('<script>alert(1)</script>'))).toBeNull()
   })
 })
+
+// ── Cartes de /outils/evaluations ───────────────────────────────────────────
+describe('Résumé des évaluations par concours', () => {
+  const codes = (r) => r.body.concours.map(c => c.code)
+
+  beforeEach(() => {
+    tables.ressources.push(
+      { id: 1, titre: 'PDF INP-HB', concours: 'INP-HB', visible: true, est_evaluation: true },
+      { id: 2, titre: 'PDF pour tous', concours: 'tous', visible: true, est_evaluation: true }
+    )
+  })
+
+  it('un élève ENSEA seul ne reçoit que la carte ENSEA, avec ses évaluations à faire', async () => {
+    const r = await request(app).get('/api/evaluations/resume').set(bearer(10))
+    expect(r.status).toBe(200)
+    expect(codes(r)).toEqual(['ensea'])
+    // ouverte, retardOk, retardKo sont ouvertes ; futur ne l'est pas
+    expect(r.body.concours[0]).toMatchObject({ total: 4, a_faire: 3, generation_auto_tests: false })
+  })
+
+  it('compte « à rendre » seulement les échéances dans les 3 jours', async () => {
+    tables.evaluations.push(evaluation('55555555-5555-4555-8555-555555555555', { date_limite: jours(2) }))
+    const r = await request(app).get('/api/evaluations/resume').set(bearer(10))
+    expect(r.body.concours[0].a_rendre).toBe(1)
+  })
+
+  it('un élève INP-HB ne voit pas ENSEA et ne compte que ses PDF', async () => {
+    const r = await request(app).get('/api/evaluations/resume').set(bearer(12))
+    expect(codes(r)).toEqual(['inphb'])
+    expect(r.body.concours[0]).toMatchObject({ total: 2, generation_auto_tests: true })
+  })
+
+  it('un élève INP-HB + ESATIC ne reçoit jamais ENSEA', async () => {
+    tables.inscriptions.push({ user_id: 12, concours_code: 'esatic' })
+    invalidateUserCache()
+    const r = await request(app).get('/api/evaluations/resume').set(bearer(12))
+    expect(codes(r)).toEqual(['inphb', 'esatic'])
+  })
+
+  it('un administrateur voit tous les concours', async () => {
+    const r = await request(app).get('/api/evaluations/resume').set(bearer(30))
+    expect(codes(r)).toEqual(['inphb', 'esatic', 'cme', 'ensea'])
+  })
+
+  it('/api/ressources/evaluations?concours= refuse un concours non inscrit', async () => {
+    expect((await request(app).get('/api/ressources/evaluations?concours=ensea').set(bearer(12))).status).toBe(403)
+    expect((await request(app).get('/api/ressources/evaluations?concours=zzz').set(bearer(12))).status).toBe(400)
+    const ok = await request(app).get('/api/ressources/evaluations?concours=inphb').set(bearer(12))
+    expect(ok.body.ressources).toHaveLength(2)
+  })
+})

@@ -5,7 +5,8 @@ import supabase from '../supabase.js'
 import { verifyToken, requireRole, estEtudiant } from '../middleware/authMiddleware.js'
 import { depotLimiter } from '../middleware/rateLimit.js'
 import { validate } from '../middleware/validate.js'
-import { peutAcceder, peutPublierPour, CODES_CONCOURS, LIBELLES } from '../lib/concours.js'
+import { peutAcceder, peutPublierPour, codesDepuisContenu, genAutoPermise, CODES_CONCOURS, LIBELLES } from '../lib/concours.js'
+import { optionsConcours } from '../lib/inscriptions.js'
 import { assurerRattachement, recalculerSansBloquer } from '../lib/renforcement.js'
 import {
   LIMITES, detecterType, fusionnerEnPdf, urlSignee, supprimerFichiers, deposerPdf, nomAffichable, FichierInvalide
@@ -287,6 +288,63 @@ router.put('/copies/:copieId/correction', verifyToken, requireRole('professeur',
 // ═══════════════════════════════════════════════════════════════════════════
 // ÉLÈVE
 // ═══════════════════════════════════════════════════════════════════════════
+
+// Une évaluation « à rendre » a sa date limite dans les JOURS_A_RENDRE prochains jours
+const JOURS_A_RENDRE = 3
+
+// GET /api/evaluations/resume — une entrée par concours que l'utilisateur peut voir (cartes de /outils/evaluations)
+//  - concours sans génération automatique (ENSEA) : table evaluations + copies de l'élève
+//  - autres concours : évaluations publiées en PDF (ressources), sans notion d'échéance
+router.get('/resume', verifyToken, async (req, res) => {
+  const codes = CODES_CONCOURS.filter(code => peutAcceder(req.user, code))
+  const options = await optionsConcours()
+  const codesCopies = codes.filter(code => !genAutoPermise(options, code))
+  const codesPdf = codes.filter(code => genAutoPermise(options, code))
+  const eleve = estEtudiant(req.user.role)
+  const maintenant = Date.now()
+  const limite = maintenant + JOURS_A_RENDRE * 86400_000
+  const resume = Object.fromEntries(codes.map(code => [code, { code, total: 0, a_faire: 0, a_rendre: 0 }]))
+
+  if (codesCopies.length > 0) {
+    const { data: evaluations, error } = await supabase.from('evaluations').select('*').in('concours_code', codesCopies)
+    if (error) throw error
+    let copies = []
+    if (eleve) {
+      const { data, error: errCopies } = await supabase.from('copies').select('evaluation_id').eq('etudiant_id', req.user.id)
+      if (errCopies) throw errCopies
+      copies = data || []
+    }
+    for (const e of evaluations || []) {
+      const r = resume[e.concours_code]
+      if (!r || !peutAcceder(req.user, e.concours_code)) continue
+      r.total += 1
+      const ouverte = new Date(e.date_ouverture) <= new Date(maintenant)
+      const faite = copies.some(c => c.evaluation_id === e.id)
+      if (eleve && ouverte && !faite) {
+        r.a_faire += 1
+        const fin = new Date(e.date_limite).getTime()
+        if (fin > maintenant && fin <= limite) r.a_rendre += 1
+      }
+    }
+  }
+
+  if (codesPdf.length > 0) {
+    const { data, error } = await supabase
+      .from('ressources').select('concours').eq('visible', true).eq('est_evaluation', true)
+    if (error) throw error
+    for (const ressource of data || []) {
+      const cibles = codesDepuisContenu(ressource.concours)
+      for (const code of codesPdf) {
+        if (cibles === null || cibles.includes(code)) {
+          resume[code].total += 1
+          if (eleve) resume[code].a_faire += 1
+        }
+      }
+    }
+  }
+
+  res.json({ concours: codes.map(code => ({ ...resume[code], generation_auto_tests: genAutoPermise(options, code) })) })
+})
 
 // GET /api/evaluations/mes — « Mes évaluations » : à faire / déposées / corrigées
 router.get('/mes', verifyToken, async (req, res) => {
