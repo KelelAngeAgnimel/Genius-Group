@@ -66,4 +66,12 @@ describe('GET /api/tableaux/eleve — filtrage par concours', () => {
     expect(r.body.moyennes_concours).toEqual({ inphb: 12, esatic: 16 })
     expect(r.body.moyenne_generale).toBe(14)
   })
+
+  it('une note « tous » compte pour chaque concours de l’élève (même critère que l’interface)', async () => {
+    const { tables } = await import('./helpers/supabaseMock.js')
+    tables.notes.push(note(12, 'tous', 'Français', 12))
+    const r = await request(app).get('/api/tableaux/eleve').set(bearer(12))
+    expect(r.body.moyennes_concours).toEqual({ ensea: 11 })
+    expect(r.body.moyenne_generale).toBe(11)
+  })
 })

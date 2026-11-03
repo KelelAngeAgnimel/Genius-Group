@@ -196,7 +196,8 @@ router.get('/mes-competences', verifyToken, async (req, res) => {
   if (req.user.role !== 'etudiant') return message(res, 403, 'Réservé aux élèves')
   const codes = req.user.concours ?? []
 
-  const competences = (await lire(supabase.from('competences').select('*')))
+  const toutesCompetences = await lire(supabase.from('competences').select('*'))
+  const competences = toutesCompetences
     .filter(c => c.actif && codes.includes(c.concours_code))
     .sort((a, b) => a.matiere.localeCompare(b.matiere) || a.ordre - b.ordre)
   const scores = await lire(supabase.from('scores_competences').select('*').eq('etudiant_id', req.user.id))
@@ -221,8 +222,12 @@ router.get('/mes-competences', verifyToken, async (req, res) => {
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       .map(e => ({
         id: e.id, titre: e.titre, statut: e.statut ?? null, envoye_le: e.created_at, mode: e.envoye_par_mode,
+        // Concours de l'exercice : même si la compétence est désactivée (absente de `liste`)
+        concours_code: toutesCompetences.find(c => memeId(c.id, e.competence_id))?.concours_code ?? null,
         competence: liste.find(c => memeId(c.id, e.competence_id)) ?? null
       }))
+      // Un concours quitté ou une compétence supprimée : l'exercice n'est plus affiché
+      .filter(e => e.concours_code !== null && codes.includes(e.concours_code))
   })
 })
 

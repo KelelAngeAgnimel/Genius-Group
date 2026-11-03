@@ -136,8 +136,11 @@ router.get('/eleve', verifyToken, async (req, res) => {
 
   // Moyenne générale de chaque concours (clé = code : « inphb », « ensea »…)
   const moyennes_concours = {}
-  for (const code of CODES_CONCOURS) {
-    const notesCode = siennes.filter(n => codesDepuisContenu(n.concours)?.includes(code))
+  for (const code of req.user.concours ?? []) {
+    const notesCode = siennes.filter(n => {
+      const cibles = codesDepuisContenu(n.concours)
+      return cibles === null || cibles.includes(code) // même critère que viseConcours() côté interface
+    })
     if (notesCode.length) moyennes_concours[code] = moyenne(notesCode.map(n => n.note))
   }
 
