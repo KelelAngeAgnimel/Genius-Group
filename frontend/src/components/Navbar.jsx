@@ -69,9 +69,8 @@ const menuItems = [
     label: 'Mes évaluations',
     icon: 'target',
     dropdown: [
-      { label: 'Évaluation', icon: 'fileText', path: '/outils/evaluations' },
+      { label: 'Évaluations', icon: 'fileText', path: '/outils/evaluations' },
       { label: 'Quiz', icon: 'checkSquare', path: '/outils/genius-eval', id: 'quiz' },
-      { label: 'Évaluations ENSEA', icon: 'clipboard', path: '/outils/evaluations-ensea', id: 'ensea' },
     ]
   },
   {
@@ -117,7 +116,6 @@ const menuItems = [
 function visible(sub, ctx) {
   switch (sub.id) {
     case 'quiz': return ctx.peutVoirQuiz
-    case 'ensea': return ctx.aConcours('ensea') || ctx.estPersonnel
     case 'seances':
     case 'difficultes': return ctx.estPersonnel
     case 'competences': return ctx.aConcours('ensea') && !ctx.estPersonnel
