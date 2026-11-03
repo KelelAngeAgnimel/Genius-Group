@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react'
+import { lazy, Suspense, useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../api'
-import { concoursDe, libelleConcours, libelleUtilisateur, couleurConcours as couleurCode, CODES_CONCOURS } from '../../lib/concours'
+import { concoursDe, libelleConcours, libelleUtilisateur, couleurConcours as couleurCode, viseConcours, CODES_CONCOURS, CONCOURS } from '../../lib/concours'
+import { cleMatiere, couleurNote, profilDepuisNotes } from '../../lib/profil'
+import { useConcoursActif } from '../../hooks/useConcoursActif'
+import SelecteurConcours from '../../components/SelecteurConcours'
+import Loader from '../../components/Loader'
+import EmptyState from '../../components/EmptyState'
 
 // ================================
 // SUIVI PROGRESSION PROFESSEUR
@@ -107,11 +112,6 @@ function SuiviProfesseur() {
     if (note >= 14) return '#4CC9A8'
     if (note >= 10) return '#C9A84C'
     return '#C94C7B'
-  }
-
-  // Moyenne rapide pour la liste
-  const getMoyenneRapide = (etudiantId, concours) => {
-    return null // sera remplacé quand on ouvre l'étudiant
   }
 
   return (
@@ -393,274 +393,121 @@ function SuiviProfesseur() {
 }
 
 // ================================
-// SUIVI PROGRESSION ETUDIANT
+// SUIVI PROGRESSION ETUDIANT — un concours à la fois (?concours=), uniquement ceux de l'élève
 // ================================
-function SuiviEtudiant({ user }) {
-  const [ecoleSelectionnee, setEcoleSelectionnee] = useState(null)
+const CourbeNotes = lazy(() => import('../../components/Graphiques').then(m => ({ default: m.CourbeNotes })))
+const COULEURS_MATIERES = ['#C9A84C', '#4C7BC9', '#4CC9A8', '#7B4CC9', '#C94C7B', '#C97B4C']
+
+function SuiviEtudiant() {
+  const { codes, actif, choisir } = useConcoursActif()
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
-
-  const ecolesDispo = [
-    {
-      sigle: 'INP-HB',
-      nom: 'Institut National Polytechnique Houphouët-Boigny',
-      logo: 'https://inphb.edu.ci/wp-content/uploads/2020/03/INPHB.png',
-      couleur: '#C9A84C',
-      site: 'https://inphb.ci',
-      matieres: ['Culture Scientifique', 'Culture Générale', 'Culture Littéraire'],
-      couleursMatieres: {
-        'Culture Scientifique': '#4CC9A8',
-        'Culture Générale': '#7B4CC9',
-        'Culture Littéraire': '#C97B4C',
-      },
-      code: 'inphb',
-    },
-    {
-      sigle: 'ESATIC',
-      nom: 'Ecole Supérieure Africaine des TIC',
-      logo: 'https://esatic.ci/wp-content/uploads/2024/07/esatic_logo.jpg',
-      couleur: '#4C7BC9',
-      site: 'https://esatic.ci',
-      matieres: ['Mathématiques', 'Physique', 'Anglais', 'Français'],
-      couleursMatieres: {
-        'Mathématiques': '#C9A84C',
-        'Physique': '#4CC9A8',
-        'Anglais': '#C94C7B',
-        'Français': '#4C7BC9',
-      },
-      code: 'esatic',
-    },
-  ]
-
-  const ecolesVisibles = ecolesDispo.filter(e => concoursDe(user).includes(e.code))
-  const ecoleActive = ecolesDispo.find(e => e.sigle === ecoleSelectionnee)
+  const [erreur, setErreur] = useState('')
 
   useEffect(() => {
-    chargerNotes()
+    let vivant = true
+    api.get('/api/notes/mes-notes')
+      .then(res => {
+        if (!vivant) return
+        if (res.ok) setNotes(res.data.notes ?? [])
+        else setErreur(res.data?.message || 'Impossible de charger vos notes')
+      })
+      .catch(() => vivant && setErreur('Erreur de connexion au serveur'))
+      .finally(() => vivant && setLoading(false))
+    return () => { vivant = false }
   }, [])
 
-  const chargerNotes = async () => {
-    try {
-      const res = await api.get('/api/notes/mes-notes')
-      const data = res.data
-      if (data.notes) setNotes(data.notes)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const couleur = couleurCode(actif)
+  const notesConcours = notes.filter(n => viseConcours(n.concours, actif))
+  const { moyenneGenerale } = profilDepuisNotes(notesConcours)
+  // Matières officielles du concours d'abord (même sans note), puis celles trouvées dans les notes
+  const matieres = [...(CONCOURS[actif]?.matieres ?? [])]
+  for (const n of notesConcours) if (!matieres.some(m => cleMatiere(m) === cleMatiere(n.matiere))) matieres.push(n.matiere)
 
-  const getNotesMatiere = (matiere, concours) => {
-    return notes
-      .filter(n => n.matiere === matiere && n.concours === concours)
-      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-  }
-
-  const getDerniereNote = (matiere, concours) => {
-    const notesMatiere = getNotesMatiere(matiere, concours)
-    return notesMatiere.length > 0 ? notesMatiere[notesMatiere.length - 1].note : null
-  }
-
-  const getMoyenneConcours = (ecole) => {
-    const notesEcole = ecole.matieres
-      .map(m => getDerniereNote(m, ecole.sigle))
-      .filter(n => n !== null)
-    if (notesEcole.length === 0) return null
-    return (notesEcole.reduce((a, b) => a + b, 0) / notesEcole.length).toFixed(1)
-  }
-
-  const couleurNote = (note) => {
-    if (note >= 14) return '#4CC9A8'
-    if (note >= 10) return '#C9A84C'
-    return '#C94C7B'
-  }
+  const notesMatiere = (matiere) => notesConcours
+    .filter(n => cleMatiere(n.matiere) === cleMatiere(matiere))
+    .sort((x, y) => new Date(x.created_at) - new Date(y.created_at))
 
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
-
       <div className="mb-6 md:mb-8">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>
-          Planning
-        </p>
-        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
-          Suivi de progression
-        </h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Sélectionnez un concours pour voir votre progression
-        </p>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Mes progrès</p>
+        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Suivi de progression</h1>
+        <p className="text-gray-500 text-sm mt-1">Votre évolution, matière par matière{codes.length > 1 ? ', concours par concours' : ''}</p>
       </div>
 
-      {/* CARTES ÉCOLES */}
-      {!ecoleSelectionnee && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {ecolesVisibles.map((ecole, i) => {
-            const moyenne = getMoyenneConcours(ecole)
-            return (
-              <div key={i}
-                onClick={() => setEcoleSelectionnee(ecole.sigle)}
-                className="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-2xl"
-                style={{
-                  background: 'linear-gradient(135deg, #071020, #0d1f3c)',
-                  border: `2px solid ${ecole.couleur}40`,
-                }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+      {!actif ? (
+        <EmptyState icone="🎓" titre="Aucun concours associé à votre compte" texte="Contactez l’administration pour être inscrit à un concours." />
+      ) : (
+        <>
+          <SelecteurConcours codes={codes} actif={actif} onChoisir={choisir} />
+          {erreur && <p className="text-sm mb-4" style={{ color: '#C94C7B' }}>{erreur}</p>}
 
-                <div className="flex items-center justify-center py-14 px-8">
-                  <img src={ecole.logo} alt={ecole.sigle}
-                    className="object-contain"
-                    style={{ maxHeight: '130px', maxWidth: '240px' }}
-                    onError={(e) => {
-                      e.target.style.display = 'none'
-                      e.target.parentNode.innerHTML = `<span style="font-size:48px;font-weight:bold;color:#C9A84C">${ecole.sigle}</span>`
-                    }} />
-                </div>
-
-                <div className="h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${ecole.couleur}, transparent)` }} />
-
-                <div className="px-6 py-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-white font-bold text-sm">{ecole.sigle}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{ecole.matieres.length} matières</p>
-                  </div>
-                  {moyenne ? (
-                    <div className="text-right">
-                      <p className="text-2xl font-bold" style={{ color: ecole.couleur }}>{moyenne}</p>
-                      <p className="text-xs text-gray-500">/20 moy.</p>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-gray-500 italic">Aucune note</span>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* DÉTAIL PROGRESSION */}
-      {ecoleActive && (
-        <div>
-          <button onClick={() => setEcoleSelectionnee(null)}
-            className="flex items-center gap-2 mb-6 text-xs font-semibold"
-            style={{ color: '#C9A84C' }}>
-            &lt; Retour aux concours
-          </button>
-
-          <div className="rounded-2xl overflow-hidden mb-6" style={{ border: '1px solid #f0ece0' }}>
-            <div className="flex flex-col sm:flex-row items-center gap-5 p-6"
-              style={{
-                background: 'linear-gradient(135deg, #071020, #0d1f3c)',
-                borderBottom: `2px solid ${ecoleActive.couleur}`
-              }}>
-              <div className="w-24 h-24 rounded-xl bg-white flex items-center justify-center p-2 flex-shrink-0">
-                <img src={ecoleActive.logo} alt={ecoleActive.sigle}
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    e.target.style.display = 'none'
-                    e.target.parentNode.innerHTML = `<span style="font-weight:bold;color:#C9A84C;font-size:14px">${ecoleActive.sigle}</span>`
-                  }} />
-              </div>
-              <div className="text-center sm:text-left">
-                <h2 className="text-xl font-bold text-white">{ecoleActive.sigle}</h2>
-                <p className="text-xs text-gray-400 mt-0.5">{ecoleActive.nom}</p>
-                <a href={ecoleActive.site} target="_blank" rel="noopener noreferrer"
-                  className="text-xs font-semibold mt-2 inline-block"
-                  style={{ color: ecoleActive.couleur }}>
-                  Visiter le site officiel
-                </a>
-              </div>
-              <div className="sm:ml-auto text-center">
-                <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Moyenne générale</p>
-                <p className="text-5xl font-bold" style={{ color: ecoleActive.couleur }}>
-                  {getMoyenneConcours(ecoleActive) || '—'}
-                </p>
-                {getMoyenneConcours(ecoleActive) && (
-                  <p className="text-xs text-gray-500">/20</p>
-                )}
-              </div>
+          <div className="rounded-2xl mb-6 p-5 flex items-center justify-between gap-4"
+            style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', borderBottom: `2px solid ${couleur}` }}>
+            <div>
+              <h2 className="text-xl font-bold text-white">{libelleConcours(actif)}</h2>
+              <p className="text-xs text-gray-400 mt-0.5">{CONCOURS[actif]?.nom}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Moyenne générale</p>
+              <p className="text-4xl font-bold" style={{ color: couleur }}>{notesConcours.length ? moyenneGenerale.toFixed(1) : '—'}</p>
+              {notesConcours.length > 0 && <p className="text-xs text-gray-400">/20</p>}
             </div>
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
-                style={{ borderColor: '#C9A84C', borderTopColor: 'transparent' }} />
-            </div>
+            <Loader texte="Chargement…" />
           ) : (
             <div className="flex flex-col gap-4">
-              {ecoleActive.matieres.map((matiere, i) => {
-                const notesMatiere = getNotesMatiere(matiere, ecoleActive.sigle)
-                const derniereNote = getDerniereNote(matiere, ecoleActive.sigle)
-                const couleurMatiere = ecoleActive.couleursMatieres[matiere] || ecoleActive.couleur
-
+              {matieres.map((matiere, i) => {
+                const liste = notesMatiere(matiere)
+                const derniere = liste.length ? liste[liste.length - 1].note : null
+                const points = liste.map(n => ({ periode: n.periode, note: Number(n.note) }))
                 return (
-                  <div key={i} className="bg-white rounded-2xl p-5"
-                    style={{ border: '1px solid #f0ece0' }}>
-
+                  <div key={cleMatiere(matiere)} className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-bold text-sm" style={{ color: '#071020' }}>{matiere}</h3>
-                      {derniereNote !== null ? (
-                        <span className="text-lg font-bold"
-                          style={{ color: couleurNote(derniereNote) }}>
-                          {derniereNote}/20
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-500 italic">Pas encore de note</span>
-                      )}
+                      {derniere !== null
+                        ? <span className="text-lg font-bold" style={{ color: couleurNote(derniere) }}>{derniere}/20</span>
+                        : <span className="text-xs text-gray-500 italic">Pas encore de note</span>}
                     </div>
 
-                    {derniereNote !== null && (
-                      <div className="mb-3">
-                        <div className="w-full h-2.5 rounded-full bg-gray-100">
-                          <div className="h-2.5 rounded-full transition-all duration-700"
-                            style={{
-                              width: `${(derniereNote / 20) * 100}%`,
-                              background: `linear-gradient(90deg, ${couleurNote(derniereNote)}66, ${couleurNote(derniereNote)})`
-                            }} />
-                        </div>
-                        <div className="flex justify-between mt-1">
-                          <span className="text-xs text-gray-300">0</span>
-                          <span className="text-xs text-gray-300">20</span>
-                        </div>
+                    {derniere !== null && (
+                      <div className="w-full h-2.5 rounded-full bg-gray-100 mb-3">
+                        <div className="h-2.5 rounded-full transition-all duration-700"
+                          style={{ width: `${(derniere / 20) * 100}%`, background: `linear-gradient(90deg, ${couleurNote(derniere)}66, ${couleurNote(derniere)})` }} />
                       </div>
                     )}
 
-                    {notesMatiere.length > 0 && (
-                      <div>
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
-                          Historique
-                        </p>
+                    {points.length > 1 && (
+                      <Suspense fallback={<div className="h-[180px] flex items-center justify-center text-xs text-gray-500">Chargement du graphique…</div>}>
+                        <CourbeNotes points={points} couleur={COULEURS_MATIERES[i % COULEURS_MATIERES.length]} />
+                      </Suspense>
+                    )}
+
+                    {liste.length > 0 ? (
+                      <div className="mt-3">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Historique</p>
                         <div className="flex flex-wrap gap-2">
-                          {notesMatiere.map((n, j) => (
+                          {liste.map((n, j) => (
                             <div key={j} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
-                              style={{
-                                background: `${couleurNote(n.note)}10`,
-                                border: `1px solid ${couleurNote(n.note)}30`
-                              }}>
+                              style={{ background: `${couleurNote(n.note)}10`, border: `1px solid ${couleurNote(n.note)}30` }}>
                               <span className="text-xs text-gray-500">{n.periode}</span>
-                              <span className="text-xs font-bold"
-                                style={{ color: couleurNote(n.note) }}>
-                                {n.note}/20
-                              </span>
+                              <span className="text-xs font-bold" style={{ color: couleurNote(n.note) }}>{n.note}/20</span>
                             </div>
                           ))}
                         </div>
                       </div>
-                    )}
-
-                    {notesMatiere.length === 0 && (
-                      <p className="text-xs text-gray-300 italic mt-1">
-                        Aucune note publiée par votre professeur pour cette matière
-                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-500 italic mt-1">Aucune note publiée par votre professeur pour cette matière</p>
                     )}
                   </div>
                 )
               })}
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   )
@@ -676,5 +523,5 @@ export default function SuiviProgression() {
     return <SuiviProfesseur />
   }
 
-  return <SuiviEtudiant user={user} />
+  return <SuiviEtudiant />
 }

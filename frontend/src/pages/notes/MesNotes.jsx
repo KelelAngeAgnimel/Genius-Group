@@ -1,171 +1,84 @@
-import { useAuth } from '../../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import api from '../../api'
 import Loader from '../../components/Loader'
+import { CONCOURS, viseConcours } from '../../lib/concours'
+import { cleMatiere, couleurNote, profilDepuisNotes } from '../../lib/profil'
 
-// Deux blocs fixes, un par concours, avec leurs matières officielles.
-// Ce sont ces mêmes matières qui sont proposées lors de la création d'un quiz
-// dans Genius Eval (voir MATIERES_PAR_CONCOURS dans GeniusEval.jsx) : la note
-// d'un quiz atterrit donc automatiquement dans le bon bloc, sous la bonne matière.
-const BLOCS_CONCOURS = [
-  {
-    val: 'INP-HB',
-    label: 'INP-HB',
-    couleur: '#C9A84C',
-    matieres: ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire']
-  },
-  {
-    val: 'ESATIC',
-    label: 'ESATIC',
-    couleur: '#4C7BC9',
-    matieres: ['Mathématiques', 'Physique', 'Anglais', 'Français']
-  }
-]
-
-export default function MesNotes() {
-  const { user } = useAuth()
-  const navigate = useNavigate()
-  const isProfOrAdmin = ['professeur', 'admin'].includes(user?.role)
-  const [notes, setNotes] = useState([])
-  const [loading, setLoading] = useState(true)
+// Bulletin d'un concours : notes détaillées et moyenne par matière (la moyenne générale est dans TableauNotesEleve).
+// Le serveur ne renvoie déjà que les notes des concours de l'élève ; on isole ici le concours affiché.
+export default function MesNotes({ concours }) {
+  const [notes, setNotes] = useState(null)
+  const [erreur, setErreur] = useState('')
 
   useEffect(() => {
-    if (isProfOrAdmin) { setLoading(false); return }
-    const charger = async () => {
-      try {
-        const res = await api.get('/api/notes/mes-notes')
-        const data = res.data
-        if (data.notes) setNotes(data.notes)
-      } catch (err) { console.error(err) }
-      finally { setLoading(false) }
-    }
-    charger()
+    let actif = true
+    api.get('/api/notes/mes-notes')
+      .then(res => {
+        if (!actif) return
+        if (res.ok) setNotes(res.data.notes ?? [])
+        else setErreur(res.data?.message || 'Impossible de charger vos notes')
+      })
+      .catch(() => actif && setErreur('Erreur de connexion au serveur'))
+    return () => { actif = false }
   }, [])
 
-  const getCouleur = (note) => note >= 14 ? '#4CC9A8' : note >= 10 ? '#C9A84C' : '#C94C7B'
-  const moyenne = notes.length > 0 ? notes.reduce((s, n) => s + n.note, 0) / notes.length : 0
+  if (erreur) return <p className="text-sm" style={{ color: '#C94C7B' }}>{erreur}</p>
+  if (!notes) return <Loader texte="Chargement…" />
 
-  // On classe chaque note dans le bon bloc uniquement à partir de sa matière
-  // (les matières INP-HB et ESATIC ne se recoupent pas), ce qui fonctionne
-  // automatiquement quel que soit le concours technique enregistré sur la note.
-  const blocsAvecNotes = BLOCS_CONCOURS.map(bloc => ({
-    ...bloc,
-    matieresAvecNotes: bloc.matieres.map(matiere => ({
-      matiere,
-      notes: notes.filter(n => n.matiere === matiere)
-    }))
-  }))
-
-  if (isProfOrAdmin) {
-    return (
-      <div className="p-4 md:p-6 min-h-screen flex items-center justify-center" style={{ background: '#f8f7f4' }}>
-        <div className="rounded-2xl p-8 text-center max-w-md"
-          style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', border: '1px solid rgba(201,168,76,0.3)' }}>
-          <p className="text-3xl mb-3">📝</p>
-          <p className="font-bold text-white mb-2">Gestion des notes</p>
-          <p className="text-xs text-gray-400 mb-5">
-            La saisie et la gestion des notes des étudiants se fait depuis l'espace professeur.
-          </p>
-          <button onClick={() => navigate('/professeur')}
-            className="px-5 py-2.5 rounded-xl text-sm font-bold"
-            style={{ background: 'linear-gradient(135deg, #b8891e, #C9A84C)', color: '#071020' }}>
-            Aller à l'espace professeur →
-          </button>
-        </div>
-      </div>
-    )
-  }
+  const notesConcours = notes.filter(n => viseConcours(n.concours, concours))
+  // Matières officielles du concours d'abord (même sans note), puis celles trouvées dans les notes
+  const matieres = [...(CONCOURS[concours]?.matieres ?? [])]
+  for (const n of notesConcours) if (!matieres.some(m => cleMatiere(m) === cleMatiere(n.matiere))) matieres.push(n.matiere)
 
   return (
-    <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
-      <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Outils</p>
-        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Mes notes</h1>
-        <p className="text-gray-400 text-sm mt-1">Bulletin de notes — {user?.prenom} {user?.nom || user?.username}</p>
-      </div>
-
-      <div className="rounded-2xl p-5 mb-6 flex items-center justify-between"
-        style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', border: '1px solid rgba(201,168,76,0.3)' }}>
-        <div>
-          <p className="text-xs tracking-widest uppercase" style={{ color: 'rgba(201,168,76,0.7)' }}>Moyenne générale</p>
-          <p className="text-4xl font-bold" style={{ color: getCouleur(moyenne) }}>
-            {loading ? '...' : moyenne.toFixed(2)}/20
-          </p>
-        </div>
-        <span className="text-5xl">🎓</span>
-      </div>
-
-      {loading ? (
-        <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
-          <Loader texte="Chargement…" />
-        </div>
-      ) : (
-        <div className="flex flex-col gap-5">
-          {blocsAvecNotes.map(bloc => {
-            const toutesNotesDuBloc = bloc.matieresAvecNotes.flatMap(m => m.notes)
-            const moyenneBloc = toutesNotesDuBloc.length > 0
-              ? toutesNotesDuBloc.reduce((s, n) => s + n.note, 0) / toutesNotesDuBloc.length
-              : null
-
-            return (
-              <div key={bloc.val} className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-bold px-3 py-1 rounded-full"
-                    style={{ background: `${bloc.couleur}1A`, color: bloc.couleur, border: `1px solid ${bloc.couleur}4D` }}>
-                    {bloc.label}
-                  </span>
-                  {moyenneBloc !== null && (
-                    <span className="text-sm font-bold" style={{ color: getCouleur(moyenneBloc) }}>
-                      Moy. {moyenneBloc.toFixed(2)}/20
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  {bloc.matieresAvecNotes.map(({ matiere, notes: notesMatiere }) => (
-                    <div key={matiere}>
-                      <p className="text-xs font-bold mb-2" style={{ color: '#071020' }}>{matiere}</p>
-                      {notesMatiere.length === 0 ? (
-                        <p className="text-xs text-gray-500 italic pl-2">Aucune note pour le moment</p>
-                      ) : (
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-xs">
-                            <thead>
-                              <tr style={{ borderBottom: '1px solid #f0ece0' }}>
-                                <th className="text-left py-1.5 px-2 text-gray-500 font-semibold">Évaluation</th>
-                                <th className="text-right py-1.5 px-2 text-gray-500 font-semibold">Note</th>
-                                <th className="text-right py-1.5 px-2 text-gray-500 font-semibold">Appréciation</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {notesMatiere.map((n, i) => (
-                                <tr key={i} style={{ borderBottom: '1px solid #f8f7f4' }}>
-                                  <td className="py-2 px-2 text-gray-500">{n.periode || '—'}</td>
-                                  <td className="py-2 px-2 text-right font-bold" style={{ color: getCouleur(n.note) }}>{n.note}/20</td>
-                                  <td className="py-2 px-2 text-right">
-                                    <span style={{
-                                      fontSize: '10px', padding: '2px 8px', borderRadius: '20px',
-                                      background: `${getCouleur(n.note)}1A`, color: getCouleur(n.note),
-                                      border: `1px solid ${getCouleur(n.note)}55`
-                                    }}>
-                                      {n.note >= 14 ? 'Très bien' : n.note >= 10 ? 'Satisfaisant' : 'À améliorer'}
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+    <div>
+      <div className="rounded-2xl p-5 flex flex-col gap-4" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
+        {matieres.map(matiere => {
+          const notesMatiere = notesConcours.filter(n => cleMatiere(n.matiere) === cleMatiere(matiere))
+          const moyenneMatiere = notesMatiere.length ? profilDepuisNotes(notesMatiere).moyenneGenerale : null
+          return (
+            <div key={cleMatiere(matiere)}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-bold" style={{ color: '#071020' }}>{matiere}</p>
+                {moyenneMatiere !== null && (
+                  <span className="text-xs font-bold" style={{ color: couleurNote(moyenneMatiere) }}>Moy. {moyenneMatiere.toFixed(2)}/20</span>
+                )}
               </div>
-            )
-          })}
-        </div>
-      )}
+              {notesMatiere.length === 0 ? (
+                <p className="text-xs text-gray-500 italic pl-2">Aucune note pour le moment</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid #f0ece0' }}>
+                        <th className="text-left py-1.5 px-2 text-gray-500 font-semibold">Évaluation</th>
+                        <th className="text-right py-1.5 px-2 text-gray-500 font-semibold">Note</th>
+                        <th className="text-right py-1.5 px-2 text-gray-500 font-semibold">Appréciation</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {notesMatiere.map((n, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid #f8f7f4' }}>
+                          <td className="py-2 px-2 text-gray-500">{n.periode || '—'}</td>
+                          <td className="py-2 px-2 text-right font-bold" style={{ color: couleurNote(n.note) }}>{n.note}/20</td>
+                          <td className="py-2 px-2 text-right">
+                            <span style={{
+                              fontSize: 10, padding: '2px 8px', borderRadius: 20,
+                              background: `${couleurNote(n.note)}1A`, color: couleurNote(n.note), border: `1px solid ${couleurNote(n.note)}55`
+                            }}>
+                              {n.note >= 14 ? 'Très bien' : n.note >= 10 ? 'Satisfaisant' : 'À améliorer'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

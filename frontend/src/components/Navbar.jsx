@@ -110,7 +110,7 @@ const menuItems = [
 
 // Ce qui ne concerne pas l'utilisateur est masqué :
 //  - Quiz : seulement si un de ses concours propose des quiz automatiques
-//  - ENSEA / compétences : élèves ENSEA (le personnel voit « Évaluations ENSEA »)
+//  - Mes compétences : élèves (le personnel suit les élèves depuis son espace)
 //  - Séances, élèves en difficulté : personnel
 //  - Ressources par concours : les concours de l'élève (le personnel voit ceux auxquels il a accès)
 function visible(sub, ctx) {
@@ -118,7 +118,7 @@ function visible(sub, ctx) {
     case 'quiz': return ctx.peutVoirQuiz
     case 'seances':
     case 'difficultes': return ctx.estPersonnel
-    case 'competences': return ctx.aConcours('ensea') && !ctx.estPersonnel
+    case 'competences': return ctx.estEtudiant
     default: return sub.concours ? ctx.peutAcceder(sub.concours) : true
   }
 }

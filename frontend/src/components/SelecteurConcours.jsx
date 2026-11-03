@@ -1,26 +1,23 @@
-import { CODES_CONCOURS, libelleConcours, couleurConcours } from '../lib/concours'
+import { libelleConcours, couleurConcours } from '../lib/concours'
 
-// Cases à cocher des concours (création / modification d'un élève ou d'un professeur)
-export default function SelecteurConcours({ value, onChange, compact = false }) {
-  const bascule = (code) =>
-    onChange(value.includes(code) ? value.filter(c => c !== code) : [...value, code])
-
+// Onglets de concours. Rien n'est affiché quand il n'y a qu'un seul concours.
+export default function SelecteurConcours({ codes, actif, onChoisir }) {
+  if (codes.length <= 1) return null
   return (
-    <div className={`flex flex-wrap ${compact ? 'gap-1.5' : 'gap-2'}`}>
-      {CODES_CONCOURS.map(code => {
-        const actif = value.includes(code)
+    <div role="tablist" aria-label="Concours" className="flex gap-2 flex-wrap mb-5">
+      {codes.map(code => {
+        const selectionne = code === actif
         const couleur = couleurConcours(code)
         return (
-          <label key={code}
-            className={`flex items-center gap-2 rounded-xl cursor-pointer select-none ${compact ? 'px-2 py-1 text-xs' : 'px-3 py-2 text-sm'} font-semibold`}
+          <button key={code} type="button" role="tab" aria-selected={selectionne} onClick={() => onChoisir(code)}
+            className="px-4 py-2 rounded-xl text-xs font-bold transition"
             style={{
-              border: `1px solid ${actif ? couleur : '#f0ece0'}`,
-              background: actif ? `${couleur}15` : 'white',
-              color: actif ? couleur : '#6b7280'
+              background: selectionne ? '#071020' : '#fff',
+              color: selectionne ? couleur : '#6b7280',
+              border: `1px solid ${selectionne ? couleur : '#f0ece0'}`
             }}>
-            <input type="checkbox" checked={actif} onChange={() => bascule(code)} />
             {libelleConcours(code)}
-          </label>
+          </button>
         )
       })}
     </div>
