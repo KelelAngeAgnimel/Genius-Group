@@ -40,6 +40,13 @@ const couleurConcours = {
   'CME': '#4CC9A8',
 }
 
+// Concours absents des tables ci-dessus (ENSEA…) : matières et couleur viennent du référentiel lib/concours.js
+const PALETTE_MATIERES = ['#C9A84C', '#4C7BC9', '#4CC9A8', '#C94C7B', '#7B4CC9']
+for (const c of Object.values(CONCOURS)) {
+  if (!matieres[c.label]) matieres[c.label] = c.matieres.map((nom, i) => ({ nom, couleur: PALETTE_MATIERES[i % PALETTE_MATIERES.length] }))
+  if (!couleurConcours[c.label]) couleurConcours[c.label] = c.couleur
+}
+
 function SuiviProfesseur() {
   const [etudiants, setEtudiants] = useState([])
   const [notesEtudiant, setNotesEtudiant] = useState([])
