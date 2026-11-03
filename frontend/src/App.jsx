@@ -77,7 +77,7 @@ export default function App() {
           <Route path="planning-perso" element={<PlanningPerso />} />
         </Route>
 
-        <Route path="/ressources" element={
+        <Route path="/ressources/*" element={
           <ProtectedRoute><Layout><Ressources /></Layout></ProtectedRoute>
         } />
 
