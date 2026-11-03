@@ -43,16 +43,22 @@ function LogoConcours({ code }) {
     : <span style={{ fontSize: 34, fontWeight: 900, color: couleurConcours(code) }}>{libelleConcours(code)}</span>
 }
 
+// Documents sans matière : regroupés dans une carte « Autres documents » pour rester accessibles
+const AUTRES = 'Autres documents'
+const sansMatiere = (r) => !String(r.matiere ?? '').trim()
+
 // Matières d'un concours : liste officielle, puis celles qui n'apparaissent que dans les documents
 function matieresDuConcours(code, ressources) {
   const matieres = [...(CONCOURS[code]?.matieres ?? [])]
   for (const r of ressources) {
-    if (r.matiere && viseConcours(r.concours, code) && !matieres.some(m => cleMatiere(m) === cleMatiere(r.matiere))) matieres.push(r.matiere)
+    if (!sansMatiere(r) && viseConcours(r.concours, code) && !matieres.some(m => cleMatiere(m) === cleMatiere(r.matiere))) matieres.push(r.matiere)
   }
+  if (ressources.some(r => sansMatiere(r) && viseConcours(r.concours, code))) matieres.push(AUTRES)
   return matieres
 }
 const documentsDe = (ressources, code, matiere) =>
-  ressources.filter(r => viseConcours(r.concours, code) && cleMatiere(r.matiere) === cleMatiere(matiere))
+  ressources.filter(r => viseConcours(r.concours, code)
+    && (matiere === AUTRES ? sansMatiere(r) : cleMatiere(r.matiere) === cleMatiere(matiere)))
 
 // ══════════════════════════════════════════
 // NIVEAU 1 — /ressources : les concours
