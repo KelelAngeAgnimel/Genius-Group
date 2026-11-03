@@ -1,22 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { libelleContenu as labelConcours, codesDepuisContenu } from '../../lib/concours'
 import api from '../../api'
 import { useToast, useConfirm } from '../../hooks/useUi'
 import Loader from '../../components/Loader'
 import EmptyState from '../../components/EmptyState'
 
 const COULEURS = { or: '#C9A84C', bleu: '#4C7BC9', vert: '#4CC9A8', rose: '#C94C7B', navy: '#071020', violet: '#7B4CC9' }
-
-// Libellé lisible du concours ciblé par une évaluation
-function labelConcours(concours) {
-  const c = (concours || '').toString().trim().toLowerCase()
-  if (c === 'tous' || c === 'all') return 'Tous les concours'
-  const parts = []
-  if (c.includes('inp')) parts.push('INP-HB')
-  if (c.includes('esatic')) parts.push('ESATIC')
-  if (c.includes('cme')) parts.push('CME')
-  return parts.length ? parts.join(' + ') : concours
-}
 
 // ══════════════════════════════════════════
 // LECTEUR PDF INTÉGRÉ (identique à la Bibliothèque)
@@ -174,7 +164,7 @@ function LecteurPDF({ ressource, onFermer }) {
 // ══════════════════════════════════════════
 // VUE ÉTUDIANT — évaluations filtrées par son concours
 // ══════════════════════════════════════════
-function VueEtudiant() {
+function VueEtudiant({ concours }) {
   const [evaluations, setEvaluations] = useState([])
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -185,7 +175,7 @@ function VueEtudiant() {
     const charger = async () => {
       setLoading(true)
       try {
-        const res = await api.get('/api/ressources/evaluations')
+        const res = await api.get(`/api/ressources/evaluations?concours=${concours}`)
         const data = res.data
         if (data.ressources) setEvaluations(data.ressources)
         else setErreur('Erreur lors du chargement')
@@ -193,7 +183,7 @@ function VueEtudiant() {
       finally { setLoading(false) }
     }
     charger()
-  }, [])
+  }, [concours])
 
   const matieres = ['toutes', ...Array.from(new Set(evaluations.map(e => e.matiere).filter(Boolean)))]
   const liste = matiere === 'toutes' ? evaluations : evaluations.filter(e => e.matiere === matiere)
@@ -265,7 +255,7 @@ function VueEtudiant() {
 // VUE PROF / ADMIN — gestion des évaluations
 // (le prof ne voit que les siennes, l'admin voit tout)
 // ══════════════════════════════════════════
-function VueProf({ role }) {
+function VueProf({ role, concours }) {
   const toast = useToast()
   const confirmer = useConfirm()
   const [evaluations, setEvaluations] = useState([])
@@ -278,13 +268,17 @@ function VueProf({ role }) {
     try {
       const res = await api.get('/api/ressources/evaluations/gestion')
       const data = res.data
-      if (data.ressources) setEvaluations(data.ressources)
-      else setErreur(data.message || 'Erreur lors du chargement')
+      if (data.ressources) {
+        setEvaluations(data.ressources.filter(r => {
+          const cibles = codesDepuisContenu(r.concours)
+          return cibles === null || cibles.includes(concours)
+        }))
+      } else setErreur(data.message || 'Erreur lors du chargement')
     } catch { setErreur('Erreur serveur') }
     finally { setLoading(false) }
   }
 
-  useEffect(() => { charger() }, [])
+  useEffect(() => { charger() }, [concours])
 
   const basculerVisibilite = async (ev) => {
     try {
@@ -369,22 +363,10 @@ function VueProf({ role }) {
 }
 
 // ══════════════════════════════════════════
-// COMPOSANT PRINCIPAL
+// LISTE D'UN CONCOURS (évaluations PDF) — l'en-tête et le fil d'Ariane sont dans EvaluationsConcours
 // ══════════════════════════════════════════
-export default function Evaluations() {
+export default function Evaluations({ concours }) {
   const { user } = useAuth()
   const isProfOrAdmin = ['professeur', 'admin'].includes(user?.role)
-
-  return (
-    <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
-      <div className="mb-6">
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Outils</p>
-        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: COULEURS.navy }}>Évaluation</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          {isProfOrAdmin ? 'Gérez les évaluations publiées' : 'Les évaluations publiées pour vos concours'}
-        </p>
-      </div>
-      {isProfOrAdmin ? <VueProf role={user?.role} /> : <VueEtudiant />}
-    </div>
-  )
+  return isProfOrAdmin ? <VueProf role={user?.role} concours={concours} /> : <VueEtudiant concours={concours} />
 }

@@ -22,7 +22,7 @@ const STYLE_CHAMP = { background: '#f8f7f4', border: '1px solid #e8e4da' }
 const champ = 'w-full text-sm rounded-xl px-3 py-2 outline-none'
 
 // ── Formulaire de création ───────────────────────────────────────────────────
-function FormulaireEvaluation({ onCree, onAnnuler }) {
+function FormulaireEvaluation({ concours, onCree, onAnnuler }) {
   const [form, setForm] = useState({
     matiere: 'Français', titre: '', consignes: '', date_ouverture: '', date_limite: '', retard_autorise: true, competences: ''
   })
@@ -38,7 +38,7 @@ function FormulaireEvaluation({ onCree, onAnnuler }) {
     setEnvoi(true)
     try {
       const donnees = new FormData()
-      donnees.append('concours_code', 'ensea')
+      donnees.append('concours_code', concours)
       donnees.append('matiere', form.matiere)
       donnees.append('titre', form.titre.trim())
       if (form.consignes.trim()) donnees.append('consignes', form.consignes.trim())
@@ -233,7 +233,7 @@ function ListeCopies({ evaluation, onRetour, onChange }) {
 }
 
 // ── Vue professeur / admin ───────────────────────────────────────────────────
-export default function VueProfEnsea() {
+export default function VueProfEnsea({ concours = 'ensea' }) {
   const [evaluations, setEvaluations] = useState([])
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -243,14 +243,14 @@ export default function VueProfEnsea() {
   const charger = useCallback(async () => {
     try {
       const res = await api.get('/api/evaluations/gestion')
-      if (res.ok) setEvaluations(res.data.evaluations)
+      if (res.ok) setEvaluations(res.data.evaluations.filter(e => e.concours_code === concours))
       else setErreur(res.data?.message || 'Chargement impossible')
     } catch {
       setErreur('Erreur de connexion au serveur')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [concours])
 
   useEffect(() => { charger() }, [charger])
 
@@ -265,7 +265,7 @@ export default function VueProfEnsea() {
           + Nouvelle évaluation
         </button>
       )}
-      {creation && <FormulaireEvaluation onCree={() => { setCreation(false); charger() }} onAnnuler={() => setCreation(false)} />}
+      {creation && <FormulaireEvaluation concours={concours} onCree={() => { setCreation(false); charger() }} onAnnuler={() => setCreation(false)} />}
 
       {erreur && <p className="text-sm mb-3" style={{ color: '#C94C7B' }}>{erreur}</p>}
       {loading ? <Loader texte="Chargement…" />
