@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import api from '../api'
 import { useToast } from '../hooks/useUi'
+import { libelleContenu } from '../lib/concours'
 
 // ══════════════════════════════════════════
 // LECTEUR PDF INTÉGRÉ
@@ -26,7 +27,9 @@ function chargerPdfJs() {
   return pdfjsPromise
 }
 
-export default function LecteurPDF({ ressource, onFermer }) {
+// `nature` : « document » (Bibliothèque) ou « évaluation » (page Évaluations) — libellés et icône
+export default function LecteurPDF({ ressource, onFermer, nature = 'document' }) {
+  const evaluation = nature === 'évaluation'
   const toast = useToast()
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -102,7 +105,7 @@ export default function LecteurPDF({ ressource, onFermer }) {
       const url = URL.createObjectURL(new Blob([buffer], { type: 'application/pdf' }))
       const a = document.createElement('a')
       a.href = url
-      a.download = `${ressource.titre || 'document'}.pdf`
+      a.download = `${ressource.titre || nature}.pdf`
       document.body.appendChild(a)
       a.click()
       a.remove()
@@ -116,10 +119,10 @@ export default function LecteurPDF({ ressource, onFermer }) {
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(7,16,32,0.97)', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', flexShrink: 0, background: '#071020', borderBottom: '1px solid rgba(201,168,76,0.2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-          <span style={{ fontSize: 24 }}>📄</span>
+          <span style={{ fontSize: 24 }}>{evaluation ? '📝' : '📄'}</span>
           <div style={{ minWidth: 0 }}>
             <p style={{ color: 'white', fontWeight: 700, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ressource.titre}</p>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: 0 }}>{ressource.matiere} · {ressource.concours}</p>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: 0 }}>{ressource.matiere} · {libelleContenu(ressource.concours)}</p>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
@@ -138,7 +141,7 @@ export default function LecteurPDF({ ressource, onFermer }) {
         {loading && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, background: 'rgba(7,16,32,0.85)' }}>
             <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid rgba(201,168,76,0.3)', borderTopColor: '#C9A84C', animation: 'spin 1s linear infinite' }} />
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>Chargement du document...</p>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>{evaluation ? "Chargement de l'évaluation..." : 'Chargement du document...'}</p>
           </div>
         )}
         {erreur && !loading && (
