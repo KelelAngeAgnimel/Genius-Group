@@ -2,7 +2,7 @@ import express from 'express'
 import { z } from 'zod'
 import supabase from '../supabase.js'
 import { verifyToken, requireRole } from '../middleware/authMiddleware.js'
-import { peutAcceder, peutGererEleve, CODES_CONCOURS, LIBELLES, OPTIONS_PAR_DEFAUT } from '../lib/concours.js'
+import { peutAcceder, peutGererEleve, codesDepuisContenu, CODES_CONCOURS, LIBELLES, OPTIONS_PAR_DEFAUT } from '../lib/concours.js'
 import { elevesDuConcours, reglesAutoEval } from '../lib/autoeval.js'
 import { optionsConcours } from '../lib/inscriptions.js'
 
@@ -95,7 +95,9 @@ router.get('/classe', verifyToken, requireRole('professeur', 'admin'), async (re
 // ═══ ÉLÈVE : courbes, moyennes, dernières corrections, rang (optionnel) ═════
 router.get('/eleve', verifyToken, async (req, res) => {
   if (req.user.role !== 'etudiant') return message(res, 403, 'Réservé aux élèves')
+  // Seulement les notes des concours actuels de l'élève (celles d'un concours quitté restent en base)
   const siennes = (await lire(supabase.from('notes').select('*').eq('etudiant_id', req.user.id)))
+    .filter(n => peutAcceder(req.user, n.concours))
 
   const parMatiere = new Map()
   for (const n of siennes) {
@@ -132,7 +134,14 @@ router.get('/eleve', verifyToken, async (req, res) => {
     if (maMoyenne != null) rangs.push({ concours_code: code, rang: 1 + moyennes.filter(([, m]) => m > maMoyenne).length, sur: moyennes.length })
   }
 
-  res.json({ matieres, moyenne_generale: moyenne(siennes.map(n => n.note)), dernieres, rangs })
+  // Moyenne générale de chaque concours (clé = code : « inphb », « ensea »…)
+  const moyennes_concours = {}
+  for (const code of CODES_CONCOURS) {
+    const notesCode = siennes.filter(n => codesDepuisContenu(n.concours)?.includes(code))
+    if (notesCode.length) moyennes_concours[code] = moyenne(notesCode.map(n => n.note))
+  }
+
+  res.json({ matieres, moyenne_generale: moyenne(siennes.map(n => n.note)), moyennes_concours, dernieres, rangs })
 })
 
 // ═══ ADMIN : vue globale par concours ═══════════════════════════════════════
