@@ -87,7 +87,8 @@ export default function MesCompetences() {
   if (estPersonnel) return <Navigate to="/outils/difficultes" replace />
 
   const competences = donnees ? donnees.competences.filter(c => c.concours_code === actif) : []
-  const exercices = donnees ? donnees.exercices.filter(e => !e.competence || e.competence.concours_code === actif) : []
+  // Le serveur indique le concours de chaque exercice (même si sa compétence est désactivée)
+  const exercices = donnees ? donnees.exercices.filter(e => e.concours_code === actif) : []
   const matieres = [...new Set(competences.map(c => c.matiere))]
   const aRenforcer = competences.filter(c => c.a_renforcer)
   const notesConcours = (notes ?? []).filter(n => viseConcours(n.concours, actif))
@@ -117,9 +118,9 @@ export default function MesCompetences() {
 
       {!donnees && !erreur && <Loader texte="Chargement…" />}
 
-      {donnees && competences.length > 0 && (
+      {donnees && (competences.length > 0 || exercices.length > 0) && (
         <>
-          <h2 className="text-lg font-bold mb-3" style={{ color: '#071020' }}>Compétences détaillées {libelleConcours(actif)}</h2>
+          {competences.length > 0 && <h2 className="text-lg font-bold mb-3" style={{ color: '#071020' }}>Compétences détaillées {libelleConcours(actif)}</h2>}
           {aRenforcer.length > 0 && (
             <div className="rounded-2xl p-4 mb-5" style={{ background: 'rgba(201,76,123,0.08)', border: '1px solid rgba(201,76,123,0.25)' }}>
               <p className="text-sm font-bold" style={{ color: '#a8335c' }}>À renforcer</p>
@@ -151,10 +152,12 @@ export default function MesCompetences() {
             )
           })}
 
-          <p className="text-xs text-gray-500 mb-6">
-            Le trait rouge marque le seuil de renforcement. Un score « provisoire » ne repose que sur votre auto-évaluation : il devient définitif
-            dès qu’une note est rattachée à la compétence.
-          </p>
+          {competences.length > 0 && (
+            <p className="text-xs text-gray-500 mb-6">
+              Le trait rouge marque le seuil de renforcement. Un score « provisoire » ne repose que sur votre auto-évaluation : il devient définitif
+              dès qu’une note est rattachée à la compétence.
+            </p>
+          )}
 
           <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
             <h2 className="font-bold mb-3" style={{ color: '#071020' }}>Exercices recommandés</h2>
