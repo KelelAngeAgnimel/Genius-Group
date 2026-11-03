@@ -1,7 +1,9 @@
 import { useAuth } from '../../context/AuthContext'
 import { useState, useEffect } from 'react'
 import api from '../../api'
-import { libelleUtilisateur } from '../../lib/concours'
+import { libelleUtilisateur, libelleConcours, viseConcours } from '../../lib/concours'
+import { useConcoursActif } from '../../hooks/useConcoursActif'
+import SelecteurConcours from '../../components/SelecteurConcours'
 import { ouvrirFichierProtege } from '../../lib/fichiers'
 import Loader from '../../components/Loader'
 import CarteProfilCompetences from '../../components/CarteProfilCompetences'
@@ -10,6 +12,7 @@ import CarteProfilCompetences from '../../components/CarteProfilCompetences'
 // VUE ÉTUDIANT
 // ========================
 function VueEtudiant({ user }) {
+  const { codes, actif, choisir } = useConcoursActif()
   const [notes, setNotes] = useState([])
   const [exercices, setExercices] = useState([])
   const [loading, setLoading] = useState(true)
@@ -42,11 +45,13 @@ function VueEtudiant({ user }) {
 
   return (
     <div>
+      <SelecteurConcours codes={codes} actif={actif} onChoisir={choisir} />
       <div className="mb-6">
+        {/* Notes du concours choisi seulement : la moyenne et le radar ne mélangent pas les concours */}
         <CarteProfilCompetences
           nom={`${user?.prenom ?? ''} ${user?.nom || user?.username || ''}`.trim()}
-          matricule={[user?.matricule, libelleUtilisateur(user)].filter(Boolean).join(' — ')}
-          notes={notes}
+          matricule={[user?.matricule, actif ? libelleConcours(actif) : libelleUtilisateur(user)].filter(Boolean).join(' — ')}
+          notes={actif ? notes.filter(n => viseConcours(n.concours, actif)) : notes}
           chargement={loading} />
       </div>
 
