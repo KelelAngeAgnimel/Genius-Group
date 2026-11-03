@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { libelleUtilisateur } from '../lib/concours'
+import { libelleUtilisateur, CODES_CONCOURS } from '../lib/concours'
 import { useConcours } from '../hooks/useConcours'
 
 // ── Icônes SVG monochromes (héritent de la couleur du texte via currentColor) ──
@@ -87,11 +87,11 @@ const menuItems = [
     label: 'Ressources',
     icon: 'book',
     dropdown: [
-      { label: 'Documents', icon: 'fileText', path: '/ressources' },
-      { label: 'INP-HB', icon: 'cap', path: '/ressources?ecole=INP-HB', concours: 'inphb' },
-      { label: 'ESATIC', icon: 'cap', path: '/ressources?ecole=ESATIC', concours: 'esatic' },
-      { label: 'CME', icon: 'cap', path: '/ressources?ecole=CME', concours: 'cme' },
-      { label: 'ENSEA', icon: 'cap', path: '/ressources?ecole=ENSEA', concours: 'ensea' },
+      { label: 'Tous mes documents', icon: 'fileText', path: '/ressources', id: 'documents' },
+      { label: 'INP-HB', icon: 'cap', path: '/ressources/inphb', concours: 'inphb' },
+      { label: 'ESATIC', icon: 'cap', path: '/ressources/esatic', concours: 'esatic' },
+      { label: 'CME', icon: 'cap', path: '/ressources/cme', concours: 'cme' },
+      { label: 'ENSEA', icon: 'cap', path: '/ressources/ensea', concours: 'ensea' },
     ]
   },
   {
@@ -119,6 +119,8 @@ function visible(sub, ctx) {
     case 'seances':
     case 'difficultes': return ctx.estPersonnel
     case 'competences': return ctx.estEtudiant
+    // « Tous mes documents » double l'entrée du concours quand il n'y en a qu'un seul
+    case 'documents': return CODES_CONCOURS.filter(code => ctx.peutAcceder(code)).length > 1
     default: return sub.concours ? ctx.peutAcceder(sub.concours) : true
   }
 }
