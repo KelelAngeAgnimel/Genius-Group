@@ -2,10 +2,11 @@
 // Le backend reste la source de vérité des droits ; ceci sert à l'affichage et au filtrage d'interface.
 
 export const CONCOURS = {
-  inphb:  { label: 'INP-HB', couleur: '#C9A84C' },
-  esatic: { label: 'ESATIC', couleur: '#4C7BC9' },
-  cme:    { label: 'CME',    couleur: '#4CC9A8' },
-  ensea:  { label: 'ENSEA',  couleur: '#7B4CC9' }
+  inphb:  { label: 'INP-HB', couleur: '#C9A84C', matieres: ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire'], nom: 'Institut National Polytechnique Houphouët-Boigny', logo: 'https://inphb.edu.ci/wp-content/uploads/2020/03/INPHB.png' },
+  esatic: { label: 'ESATIC', couleur: '#4C7BC9', matieres: ['Mathématiques', 'Physique', 'Anglais', 'Français'], nom: 'Ecole Supérieure Africaine des TIC', logo: 'https://esatic.ci/wp-content/uploads/2024/07/esatic_logo.jpg' },
+  cme:    { label: 'CME',    couleur: '#4CC9A8', matieres: ['Culture Générale', 'Culture Scientifique', 'Anglais', 'Français'], nom: 'Concours des Meilleurs Etudiants', logo: '/cme-logo.png' },
+  // logo à déposer dans frontend/public ; à défaut, le sigle est affiché
+  ensea:  { label: 'ENSEA',  couleur: '#7B4CC9', matieres: ['Français', 'Mathématiques'], nom: 'École Nationale Supérieure de Statistique et d’Économie Appliquée', logo: '/ensea-logo.png' }
 }
 export const CODES_CONCOURS = Object.keys(CONCOURS)
 
@@ -58,4 +59,17 @@ export function peutAcceder(user, valeurContenu) {
   const miens = concoursDe(user)
   if (role === 'professeur' && miens.length === 0) return true
   return cibles.some(c => miens.includes(c))
+}
+
+// Libellé d'une valeur de contenu (« tous », « inp-hb + esatic »…), ENSEA compris
+export function libelleContenu(valeur) {
+  const cibles = codesDepuisContenu(valeur)
+  if (cibles === null) return 'Tous les concours'
+  return cibles.length ? cibles.map(libelleConcours).join(' + ') : String(valeur)
+}
+
+// Une note / un contenu (« INP-HB », « tous »…) concerne-t-il ce concours ?
+export function viseConcours(valeur, code) {
+  const cibles = codesDepuisContenu(valeur)
+  return cibles === null || cibles.includes(code)
 }

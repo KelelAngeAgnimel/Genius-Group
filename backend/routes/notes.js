@@ -119,7 +119,8 @@ router.get('/mes-notes', verifyToken, async (req, res) => {
     .order('created_at', { ascending: false })
 
   if (error) throw error
-  res.json({ notes: data })
+  // Un élève ne voit que les notes des concours auxquels il est inscrit (les notes d'un concours quitté restent en base)
+  res.json({ notes: (data ?? []).filter(n => peutAcceder(req.user, n.concours)) })
 })
 
 // GET — Notes d'un étudiant spécifique (prof et admin)

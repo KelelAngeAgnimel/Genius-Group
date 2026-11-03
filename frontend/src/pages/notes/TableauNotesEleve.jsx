@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import api from '../../api'
-import { libelleConcours } from '../../lib/concours'
+import { libelleConcours, viseConcours } from '../../lib/concours'
 import Loader from '../../components/Loader'
 import EmptyState from '../../components/EmptyState'
 
@@ -12,7 +12,7 @@ const couleurNote = (n) => (n >= 14 ? '#2a9d7f' : n >= 10 ? '#a8872f' : '#C94C7B
 const formaterDate = (iso) => (iso ? new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '')
 
 // Tableau de bord des notes de l'élève : moyenne, courbes par matière, dernières corrections, rang (optionnel)
-export default function TableauNotesEleve() {
+export default function TableauNotesEleve({ concours }) {
   const [donnees, setDonnees] = useState(null)
   const [erreur, setErreur] = useState('')
 
@@ -30,18 +30,25 @@ export default function TableauNotesEleve() {
 
   if (erreur) return <p className="text-sm" style={{ color: '#C94C7B' }}>{erreur}</p>
   if (!donnees) return <Loader texte="Chargement…" />
-  if (donnees.matieres.length === 0) return <EmptyState icone="📊" titre="Aucune note pour le moment" />
+  // Le serveur ne renvoie déjà que les concours de l'élève ; on isole ici celui qui est affiché
+  const matieres = donnees.matieres.filter(m => viseConcours(m.concours, concours))
+  const dernieres = donnees.dernieres.filter(n => viseConcours(n.concours, concours))
+  const rangs = donnees.rangs.filter(r => r.concours_code === concours)
+  // Le serveur applique le même critère que viseConcours() ; repli sur la moyenne des matières si la valeur manque
+  const moyenneGenerale = donnees.moyennes_concours?.[concours]
+    ?? (matieres.length ? Math.round((matieres.reduce((s, m) => s + m.moyenne, 0) / matieres.length) * 100) / 100 : 0)
+  if (matieres.length === 0) return <EmptyState icone="📊" titre={`Aucune note ${libelleConcours(concours)} pour le moment`} />
 
   return (
     <div className="mb-8">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
         <div className="bg-white rounded-2xl p-4" style={{ border: '1px solid #f0ece0' }}>
           <p className="text-xs text-gray-500 uppercase tracking-widest">Moyenne générale</p>
-          <p className="text-3xl font-bold mt-1" style={{ color: couleurNote(donnees.moyenne_generale) }}>
-            {donnees.moyenne_generale}<span className="text-sm text-gray-500"> / 20</span>
+          <p className="text-3xl font-bold mt-1" style={{ color: couleurNote(moyenneGenerale) }}>
+            {moyenneGenerale}<span className="text-sm text-gray-500"> / 20</span>
           </p>
         </div>
-        {donnees.rangs.map(r => (
+        {rangs.map(r => (
           <div key={r.concours_code} className="bg-white rounded-2xl p-4" style={{ border: '1px solid #f0ece0' }}>
             <p className="text-xs text-gray-500 uppercase tracking-widest">Rang {libelleConcours(r.concours_code)}</p>
             <p className="text-3xl font-bold mt-1" style={{ color: '#7B4CC9' }}>{r.rang}<span className="text-sm text-gray-500"> / {r.sur}</span></p>
@@ -50,7 +57,7 @@ export default function TableauNotesEleve() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
-        {donnees.matieres.map((m, i) => (
+        {matieres.map((m, i) => (
           <div key={`${m.concours}|${m.matiere}`} className="bg-white rounded-2xl p-4" style={{ border: '1px solid #f0ece0' }}>
             <div className="flex items-baseline justify-between mb-2">
               <div>
@@ -73,7 +80,7 @@ export default function TableauNotesEleve() {
       <div className="bg-white rounded-2xl p-4" style={{ border: '1px solid #f0ece0' }}>
         <h3 className="font-bold text-sm mb-3" style={{ color: '#071020' }}>Dernières corrections</h3>
         <ul className="flex flex-col gap-2">
-          {donnees.dernieres.map((n, i) => (
+          {dernieres.map((n, i) => (
             <li key={i} className="flex items-center justify-between text-sm">
               <span className="text-gray-600">{n.matiere} <span className="text-xs text-gray-500">· {n.periode} · {formaterDate(n.date)}</span></span>
               <span className="font-bold" style={{ color: couleurNote(n.note) }}>{n.note} / 20</span>

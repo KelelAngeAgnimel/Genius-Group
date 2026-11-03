@@ -1,5 +1,12 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import api from '../../api'
+import { useAuth } from '../../context/AuthContext'
+import { useConcours } from '../../hooks/useConcours'
+import { useConcoursActif } from '../../hooks/useConcoursActif'
+import { viseConcours, libelleConcours } from '../../lib/concours'
+import SelecteurConcours from '../../components/SelecteurConcours'
+import CarteProfilCompetences from '../../components/CarteProfilCompetences'
 import { ouvrirFichierProtege } from '../../lib/fichiers'
 import Loader from '../../components/Loader'
 import EmptyState from '../../components/EmptyState'
@@ -30,23 +37,42 @@ function Barre({ competence }) {
   )
 }
 
-// « Mes compétences » : radar par matière, compétences à renforcer, exercices recommandés
+// « Mes compétences » : même carte de profil que l'espace professeur (radar et barres par matière, d'après les notes),
+// puis, pour les concours qui suivent des compétences détaillées : radar, compétences à renforcer, exercices recommandés
 export default function MesCompetences() {
+  const { user } = useAuth()
+  const { estPersonnel } = useConcours()
+  const { codes, actif, choisir } = useConcoursActif()
   const [donnees, setDonnees] = useState(null)
+  const [notes, setNotes] = useState(null)
   const [erreur, setErreur] = useState('')
   const [version, setVersion] = useState(0)
 
   useEffect(() => {
-    let actif = true
+    if (estPersonnel) return
+    let vivant = true
+    api.get('/api/notes/mes-notes')
+      .then(res => {
+        if (!vivant) return
+        if (res.ok) setNotes(res.data.notes ?? [])
+        else setErreur(res.data?.message || 'Impossible de charger vos notes')
+      })
+      .catch(() => vivant && setErreur('Erreur de connexion au serveur'))
+    return () => { vivant = false }
+  }, [estPersonnel])
+
+  useEffect(() => {
+    if (estPersonnel) return
+    let vivant = true
     api.get('/api/renforcement/mes-competences')
       .then(res => {
-        if (!actif) return
+        if (!vivant) return
         if (res.ok) setDonnees(res.data)
         else setErreur(res.data?.message || 'Impossible de charger vos compétences')
       })
-      .catch(() => actif && setErreur('Erreur de connexion au serveur'))
-    return () => { actif = false }
-  }, [version])
+      .catch(() => vivant && setErreur('Erreur de connexion au serveur'))
+    return () => { vivant = false }
+  }, [version, estPersonnel])
 
   const ouvrir = async (id) => {
     const message = await ouvrirFichierProtege(`/api/renforcement/envoyes/${id}/fichier`)
@@ -57,8 +83,15 @@ export default function MesCompetences() {
     if (res.ok) setVersion(v => v + 1)
   }
 
-  const matieres = donnees ? [...new Set(donnees.competences.map(c => c.matiere))] : []
-  const aRenforcer = donnees?.competences.filter(c => c.a_renforcer) ?? []
+  // Le personnel n'a pas de profil élève : il consulte les élèves depuis l'espace professeur
+  if (estPersonnel) return <Navigate to="/outils/difficultes" replace />
+
+  const competences = donnees ? donnees.competences.filter(c => c.concours_code === actif) : []
+  // Le serveur indique le concours de chaque exercice (même si sa compétence est désactivée)
+  const exercices = donnees ? donnees.exercices.filter(e => e.concours_code === actif) : []
+  const matieres = [...new Set(competences.map(c => c.matiere))]
+  const aRenforcer = competences.filter(c => c.a_renforcer)
+  const notesConcours = (notes ?? []).filter(n => viseConcours(n.concours, actif))
 
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
@@ -69,14 +102,25 @@ export default function MesCompetences() {
       </div>
 
       {erreur && <p className="text-sm mb-4" style={{ color: '#C94C7B' }}>{erreur}</p>}
+      {!actif ? (
+        <EmptyState icone="🎓" titre="Aucun concours associé à votre compte" texte="Contactez l’administration pour être inscrit à un concours." />
+      ) : (
+      <>
+      <SelecteurConcours codes={codes} actif={actif} onChoisir={choisir} />
+
+      <div className="mb-6">
+        <CarteProfilCompetences
+          nom={`${user?.prenom ?? ''} ${user?.nom || user?.username || ''}`.trim()}
+          matricule={[user?.matricule, libelleConcours(actif)].filter(Boolean).join(' — ')}
+          notes={notesConcours}
+          chargement={notes === null && !erreur} />
+      </div>
+
       {!donnees && !erreur && <Loader texte="Chargement…" />}
 
-      {donnees && donnees.competences.length === 0 && (
-        <p className="text-sm text-gray-500">Aucune compétence n’est encore suivie pour votre concours.</p>
-      )}
-
-      {donnees && donnees.competences.length > 0 && (
+      {donnees && (competences.length > 0 || exercices.length > 0) && (
         <>
+          {competences.length > 0 && <h2 className="text-lg font-bold mb-3" style={{ color: '#071020' }}>Compétences détaillées {libelleConcours(actif)}</h2>}
           {aRenforcer.length > 0 && (
             <div className="rounded-2xl p-4 mb-5" style={{ background: 'rgba(201,76,123,0.08)', border: '1px solid rgba(201,76,123,0.25)' }}>
               <p className="text-sm font-bold" style={{ color: '#a8335c' }}>À renforcer</p>
@@ -85,7 +129,7 @@ export default function MesCompetences() {
           )}
 
           {matieres.map(matiere => {
-            const liste = donnees.competences.filter(c => c.matiere === matiere)
+            const liste = competences.filter(c => c.matiere === matiere)
             const pointsRadar = liste.filter(c => c.score !== null).map(c => ({ nom: c.code, score: Math.round(c.score), seuil: c.seuil }))
             return (
               <div key={matiere} className="bg-white rounded-2xl p-5 mb-5" style={{ border: '1px solid #f0ece0' }}>
@@ -108,18 +152,20 @@ export default function MesCompetences() {
             )
           })}
 
-          <p className="text-xs text-gray-500 mb-6">
-            Le trait rouge marque le seuil de renforcement. Un score « provisoire » ne repose que sur votre auto-évaluation : il devient définitif
-            dès qu’une note est rattachée à la compétence.
-          </p>
+          {competences.length > 0 && (
+            <p className="text-xs text-gray-500 mb-6">
+              Le trait rouge marque le seuil de renforcement. Un score « provisoire » ne repose que sur votre auto-évaluation : il devient définitif
+              dès qu’une note est rattachée à la compétence.
+            </p>
+          )}
 
           <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
             <h2 className="font-bold mb-3" style={{ color: '#071020' }}>Exercices recommandés</h2>
-            {donnees.exercices.length === 0 ? (
+            {exercices.length === 0 ? (
               <EmptyState icone="✏️" titre="Aucun exercice pour le moment" />
             ) : (
               <ul className="flex flex-col gap-3">
-                {donnees.exercices.map(e => (
+                {exercices.map(e => (
                   <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl p-3"
                     style={{ background: e.statut === 'fait' ? '#f8f7f4' : 'rgba(201,168,76,0.06)', border: '1px solid #f0ece0' }}>
                     <div>
@@ -144,6 +190,8 @@ export default function MesCompetences() {
             )}
           </div>
         </>
+      )}
+      </>
       )}
     </div>
   )

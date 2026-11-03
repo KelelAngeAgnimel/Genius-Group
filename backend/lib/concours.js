@@ -102,7 +102,7 @@ export const OPTIONS_PAR_DEFAUT = {
   }
 }
 
-const genAutoPermise = (optionsParCode, code) =>
+export const genAutoPermise = (optionsParCode, code) =>
   (optionsParCode?.[code] ?? OPTIONS_PAR_DEFAUT[code])?.generation_auto_tests !== false
 
 // La génération automatique de quiz (IA / import PDF) est-elle permise ?

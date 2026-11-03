@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useConcours } from '../../hooks/useConcours'
 
 const faqs = [
   {
@@ -13,10 +14,19 @@ const faqs = [
   {
     categorie: 'Concours',
     questions: [
-      { q: 'Quels concours sont prepares par Genius Group ?', r: 'Genius Group prépare actuellement aux concours de l\'INP-HB et de l\'ESATIC, deux grandes écoles de référence en Côte d\'Ivoire.' },
+      { q: 'Quels concours sont prepares par Genius Group ?', r: 'Genius Group prépare aux concours de l\'INP-HB, de l\'ESATIC, du CME et de l\'ENSEA, des concours de référence en Côte d\'Ivoire. Vous ne voyez que les contenus des concours auxquels vous êtes inscrit.' },
       { q: 'Comment consulter mon emploi du temps ?', r: 'Allez dans Planning puis Emploi du temps. Votre planning est mis à jour en temps réel par l\'administration.' },
       { q: 'Comment acceder aux sessions de concours blancs ?', r: 'Dans la section Planning, cliquez sur Sessions blanc pour consulter les dates et accéder aux sujets.' },
       { q: 'Comment contacter mon professeur ?', r: 'Utilisez la boite de réception pédagogique sur votre tableau de bord ou contactez l\'administration via la section Contacts.' },
+    ]
+  },
+  {
+    categorie: 'ENSEA',
+    concours: 'ensea', // visible des élèves inscrits à ce concours et du personnel
+    questions: [
+      { q: `Comment se passent les évaluations ENSEA ?`, r: `Elles se font sur papier. Dans Mes évaluations, ouvrez Évaluations puis ENSEA : téléchargez le sujet dès l'ouverture de l'évaluation, composez sur feuille, puis scannez ou photographiez votre copie et déposez-la (PDF, JPG ou PNG ; 15 Mo maximum par fichier, 10 fichiers au plus) avant la date limite. Selon l'évaluation, un dépôt tardif reste possible : il est alors signalé « en retard » à votre professeur. Votre professeur corrige ensuite votre copie : vous retrouvez votre note sur 20, son commentaire et, parfois, la copie annotée dans la même page.` },
+      { q: `À quoi sert l'auto-évaluation après chaque séance ?`, r: `Après chaque séance, vous notez de 0 à 5 votre maîtrise de chacune des compétences abordées. Le formulaire se trouve dans Mes cours, rubrique Séances et auto-évaluations ; il est à remplir dans le délai indiqué dans l'application, avec un rappel avant la fin de ce délai. Tant qu'il n'est pas rempli, l'accès à la séance suivante (lien de réunion et ressources) peut être verrouillé : si vous êtes bloqué, demandez à votre professeur de vous débloquer.` },
+      { q: `Qu'est-ce que le score de compétence ?`, r: `Chaque compétence du programme a un score sur 100, calculé à partir de vos auto-évaluations et des notes de vos professeurs rattachées à cette compétence. Tant qu'aucune note n'y est rattachée, le score est « provisoire » (auto-évaluation seule) et ne déclenche aucun envoi d'exercices. Sous le seuil de renforcement fixé pour le concours, la compétence est signalée « à renforcer » et des exercices ciblés vous sont proposés, après validation d'un professeur. Retrouvez le détail dans Mes progrès, rubrique Mes compétences.` },
     ]
   },
   {
@@ -32,8 +42,11 @@ const faqs = [
 export default function FaqGenerales() {
   const [ouvert, setOuvert] = useState(null)
   const [categorieActive, setCategorieActive] = useState('Général')
+  const { aConcours, estPersonnel } = useConcours()
 
-  const faqActive = faqs.find(f => f.categorie === categorieActive)
+  // Une catégorie liée à un concours n'est montrée qu'aux élèves inscrits (et au personnel)
+  const categories = faqs.filter(f => !f.concours || estPersonnel || aConcours(f.concours))
+  const faqActive = categories.find(f => f.categorie === categorieActive)
 
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
@@ -53,7 +66,7 @@ export default function FaqGenerales() {
 
       {/* ONGLETS CATEGORIES */}
       <div className="flex gap-2 mb-6 flex-wrap">
-        {faqs.map((f, i) => (
+        {categories.map((f, i) => (
           <button
             key={i}
             onClick={() => { setCategorieActive(f.categorie); setOuvert(null) }}

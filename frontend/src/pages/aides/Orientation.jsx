@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
+import { useConcours } from '../../hooks/useConcours'
 
 const ecoles = [
   {
     sigle: 'INP-HB',
+    code: 'inphb',
     nom: 'Institut National Polytechnique Félix Houphouët-Boigny',
     logo: 'https://inphb.edu.ci/wp-content/uploads/2020/03/INPHB.png',
     couleur: '#C9A84C',
@@ -102,6 +104,7 @@ const ecoles = [
   },
   {
     sigle: 'ESATIC',
+    code: 'esatic',
     nom: 'Ecole Supérieure Africaine des TIC',
     logo: 'https://esatic.ci/wp-content/uploads/2024/07/esatic_logo.jpg',
     couleur: '#4C7BC9',
@@ -215,6 +218,7 @@ const ecoles = [
   ,
   {
     sigle: "CME",
+    code: 'cme',
     nom: "Concours des Meilleurs Etudiants",
     logo: "/cme-logo.png",
     couleur: "#4CC9A8",
@@ -257,6 +261,66 @@ const ecoles = [
         ]
       },
     ]
+  },
+  {
+    // ── ENSEA — concours d'entrée du cycle Analyste Statisticien (AS) ─────────────────────────────
+    // Sources officielles (consultées le 03/11/2026) :
+    //  - https://ensea.ed.ci/formation-initiale/as/ (conditions, âge, épreuves, calendrier, dossier, frais, débouchés)
+    //  - https://ensea.ed.ci/formation-initiale/concours-2025/ (dépôt en ligne et dépôt physique, contacts)
+    // Seule la session 2025 est publiée officiellement : les dates 2026 sont « À confirmer ».
+    // Tout ce qui n'a pas été trouvé est marqué « À confirmer » (à faire valider par le pôle éducatif).
+    sigle: 'ENSEA',
+    code: 'ensea',
+    nom: 'École Nationale Supérieure de Statistique et d\'Économie Appliquée d\'Abidjan',
+    logo: '/ensea-logo.png', // à déposer dans frontend/public ; à défaut, le sigle est affiché
+    couleur: '#7B4CC9',
+    site: 'https://ensea.ed.ci',
+    contact: {
+      telephone: '+225 27 22 48 32 11 / 27 22 48 32 32 / +225 07 67 23 44 93',
+      email: 'ensea@ensea.ed.ci',
+      site: 'ensea.ed.ci',
+      depot: 'Inscription en ligne sur concours.ensea.ed.ci. Dépôt du dossier physique (session 2025) : ENSEA à Abidjan ou INP-HB à Yamoussoukro. Lieux de dépôt 2026 : À confirmer',
+      adresse: 'Avenue des Grandes Écoles, Cocody, Abidjan (Côte d\'Ivoire)'
+    },
+    presentation: 'L\'ENSEA d\'Abidjan forme les cadres de la statistique et de l\'économie appliquée. Le cycle Analyste Statisticien (AS) forme des cadres d\'application chargés de la conception, de la collecte, de l\'analyse et de la diffusion de la production statistique. Il est accessible par concours d\'entrée aux bacheliers des séries C, D, E ou S, et aux élèves de Terminale de ces séries sous réserve d\'obtenir le baccalauréat. Le concours ISE (Ingénieur Statisticien Économiste) vise d\'autres profils (Bac+2 et plus) : voir ensea.ed.ci.',
+    selection: [
+      { titre: 'Présélection : mathématiques', description: 'Une composition de mathématiques de 4 h. Session 2025 : 1er mars 2025. Coefficient : À confirmer.' },
+      { titre: 'Composition finale (épreuves écrites)', description: '1ère composition de mathématiques (4 h, coefficient 30) · Composition d\'ordre général (3 h, coefficient 25) · 2ème composition de mathématiques (3 h, coefficient 30) · Contraction de texte (3 h, coefficient 15). Session 2025 : 7 et 8 avril 2025.' },
+      { titre: 'Résumé et dissertation', description: 'Le programme Français de Genius Group travaille le résumé et la dissertation. Correspondance exacte avec les épreuves officielles (contraction de texte, composition d\'ordre général) : À confirmer.' },
+    ],
+    chronogramme: [
+      { phase: '1', date: 'Du 14/12/2024 au 10/02/2025', activite: 'Inscriptions (session 2025)', detail: 'Inscription en ligne obligatoire sur concours.ensea.ed.ci' },
+      { phase: '2', date: '01/03/2025', activite: 'Présélection (session 2025)', detail: 'Composition de mathématiques, 4 h' },
+      { phase: '3', date: '07 et 08/04/2025', activite: 'Composition finale (session 2025)', detail: 'Mathématiques, ordre général, contraction de texte' },
+      { phase: '4', date: 'À confirmer', activite: 'Session 2026', detail: 'Dates des inscriptions, de la présélection, de la composition et des résultats : À confirmer. Annonce officielle sur ensea.ed.ci' },
+    ],
+    dossier: [
+      'Droit d\'inscription : 15 000 FCFA (mode de paiement : À confirmer)',
+      'Demande d\'inscription adressée au Directeur de l\'ENSEA',
+      'Curriculum vitae',
+      'Extrait d\'acte de naissance',
+      'Diplôme ou certificat de fréquentation',
+      'Certificat de nationalité',
+      'Trois photos d\'identité couleur du même tirage',
+      'Candidats résidant hors de Côte d\'Ivoire : dossier À confirmer',
+      'Centres de composition : À confirmer',
+    ],
+    filieres: [
+      {
+        ecole: 'Cycle Analyste Statisticien (AS) — concours d\'entrée',
+        couleur: '#7B4CC9',
+        parcours: [
+          {
+            sigle: 'AS',
+            nom: 'Analyste Statisticien',
+            series: 'Baccalauréat C, D, E ou S. Élèves de Terminale C, D, E : admission définitive sous réserve d\'obtenir le baccalauréat.',
+            duree: '3 années universitaires (BAC+3). Cours théoriques et pratiques, travaux dirigés et deux stages sur le terrain (immersion, puis stage académique de fin de formation ; durées : À confirmer).',
+            conditions: 'Concours direct : être âgé de moins de 23 ans au 1er janvier de l\'année en cours. Un concours professionnel distinct existe pour les titulaires du diplôme d\'Agent ou d\'Adjoint Technique de la Statistique (ancienneté requise par la Fonction Publique). Nom officiel du diplôme délivré : À confirmer.',
+            debouches: 'Services nationaux de statistique ou de planification, organismes parapublics ou privés, entreprises et sociétés d\'État. Postes cités : Analyste Statisticien, Responsable du Suivi et Évaluation, Data Scientist, Gestionnaire de bases de données, Chef de projet, Consultant Statisticien, Chargé d\'études, Data Manager.'
+          }
+        ]
+      }
+    ]
   }
 ]
 
@@ -266,7 +330,12 @@ export default function Orientation() {
   const [filiereOuverte, setFiliereOuverte] = useState(null)
   const [parcourOuvert, setParcourOuvert] = useState(null)
 
+  const { estEtudiant, aConcours } = useConcours()
+
   const ecoleActive = ecoles.find(e => e.sigle === ecoleSelectionnee)
+  // Un élève voit d'abord les écoles de ses concours ; les autres restent consultables
+  const miennes = estEtudiant ? ecoles.filter(e => aConcours(e.code)) : []
+  const ecolesOrdonnees = [...miennes, ...ecoles.filter(e => !miennes.includes(e))]
 
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
@@ -280,7 +349,7 @@ export default function Orientation() {
           Conseils d'orientation
         </h1>
         <p className="text-gray-500 text-sm mt-1">
-          Informations officielles sur les concours INP-HB et ESATIC
+          Informations sur les concours INP-HB, ESATIC, CME et ENSEA
         </p>
 
         {/* Fil d'ariane */}
@@ -299,8 +368,19 @@ export default function Orientation() {
       {/* NIVEAU 1 — Choix de l'école */}
       {!ecoleSelectionnee && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {ecoles.map((ecole, i) => (
-            <div key={i}
+          {ecolesOrdonnees.map((ecole, i) => (
+            <Fragment key={ecole.sigle}>
+            {miennes.length > 0 && i === 0 && (
+              <p className="col-span-full text-xs tracking-widest uppercase font-bold" style={{ color: '#8A6D1A' }}>
+                {miennes.length > 1 ? 'Vos concours' : 'Votre concours'}
+              </p>
+            )}
+            {miennes.length > 0 && i === miennes.length && miennes.length < ecoles.length && (
+              <p className="col-span-full text-xs tracking-widest uppercase font-bold mt-2" style={{ color: '#6b7280' }}>
+                Autres concours
+              </p>
+            )}
+            <div
               onClick={() => setEcoleSelectionnee(ecole.sigle)}
               className="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-2xl"
               style={{
@@ -324,7 +404,12 @@ export default function Orientation() {
 
               <div className="px-6 py-4 flex items-center justify-between">
                 <div>
-                  <p className="text-white font-bold text-sm">{ecole.sigle}</p>
+                  <p className="text-white font-bold text-sm">
+                    {ecole.sigle}
+                    {miennes.includes(ecole) && (
+                      <span className="ml-2 text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: '#C9A84C', color: '#071020' }}>Votre concours</span>
+                    )}
+                  </p>
                   <p className="text-xs text-gray-500 mt-0.5">{ecole.nom}</p>
                 </div>
                 <span className="text-xs font-semibold px-3 py-1 rounded-lg"
@@ -333,6 +418,7 @@ export default function Orientation() {
                 </span>
               </div>
             </div>
+            </Fragment>
           ))}
         </div>
       )}
@@ -376,12 +462,12 @@ export default function Orientation() {
             <div className="flex overflow-x-auto bg-white" style={{ borderBottom: '1px solid #f0ece0' }}>
               {[
                 { key: 'filieres', label: 'Filières et formations' },
-                { key: 'selection', label: 'Processus de sélection' },
+                { key: 'selection', label: 'Épreuves et calendrier' },
                 { key: 'dossier', label: 'Dossier de candidature' },
                 { key: 'contact', label: 'Contact' },
               ].filter(o => {
-                if (o.key === 'selection') return ecoleActive.sigle === 'INP-HB'
-                if (o.key === 'dossier') return ecoleActive.sigle === 'INP-HB'
+                if (o.key === 'selection') return !!(ecoleActive.selection || ecoleActive.chronogramme)
+                if (o.key === 'dossier') return !!ecoleActive.dossier
                 return true
               }).map((o, i) => (
                 <button key={i}
@@ -487,7 +573,7 @@ export default function Orientation() {
             </div>
           )}
 
-          {/* Contenu onglet Sélection (INP-HB seulement) */}
+          {/* Contenu onglet Sélection */}
           {onglet === 'selection' && ecoleActive.selection && (
             <div className="flex flex-col gap-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -544,7 +630,7 @@ export default function Orientation() {
             </div>
           )}
 
-          {/* Contenu onglet Dossier (INP-HB seulement) */}
+          {/* Contenu onglet Dossier */}
           {onglet === 'dossier' && ecoleActive.dossier && (
             <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
               <h3 className="font-bold text-sm mb-4" style={{ color: '#071020' }}>

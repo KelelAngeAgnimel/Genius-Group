@@ -1,495 +1,272 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { useConcours } from '../hooks/useConcours'
+import { useEffect, useMemo, useState } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import api from '../api'
-import Breadcrumb from '../components/Breadcrumb'
+import { useConcours } from '../hooks/useConcours'
+import { usePreference } from '../hooks/usePreference'
 import { useToast } from '../hooks/useUi'
+import { CODES_CONCOURS, CONCOURS, libelleConcours, couleurConcours, viseConcours } from '../lib/concours'
+import { cleMatiere } from '../lib/profil'
+import { TRIS, estNouveau, filtrerDocuments, iconeMatiere, slugMatiere, typeDe } from '../lib/ressources'
+import Banniere from '../components/Banniere'
+import BarreOutils from '../components/BarreOutils'
+import Breadcrumb from '../components/Breadcrumb'
+import CarteRessource from '../components/CarteRessource'
 import EmptyState from '../components/EmptyState'
+import LecteurPDF from '../components/LecteurPDF'
+import Loader from '../components/Loader'
 
-// Une ressource correspond-elle à l'école affichée ?
-// Inclusif : une ressource "tous"/"all" ou combinée apparaît sous chaque école concernée.
-function correspondEcole(concours, sigle) {
-  const c = (concours || '').toString().trim().toLowerCase()
-  const s = (sigle || '').toString().trim().toLowerCase()
-  if (c === 'tous' || c === 'all') return true
-  if (s.includes('inp'))    return c.includes('inp')
-  if (s.includes('esatic')) return c.includes('esatic')
-  if (s.includes('cme'))    return c.includes('cme')
-  if (s.includes('ensea'))  return c.includes('ensea')
-  return c === s
-}
+const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`
 
-const ecoles = [
-  {
-    sigle: 'INP-HB',
-    nom: 'Institut National Polytechnique Houphouët-Boigny',
-    logo: 'https://inphb.edu.ci/wp-content/uploads/2020/03/INPHB.png',
-    couleur: '#C9A84C',
-    matieres: ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire'],
-    code: 'inphb',
-    description: 'Documents et annales pour le concours INP-HB'
-  },
-  {
-    sigle: 'ESATIC',
-    nom: 'Ecole Supérieure Africaine des TIC',
-    logo: 'https://esatic.ci/wp-content/uploads/2024/07/esatic_logo.jpg',
-    couleur: '#4C7BC9',
-    matieres: ['Mathématiques', 'Physique', 'Anglais', 'Français'],
-    code: 'esatic',
-    description: 'Documents et annales pour le concours ESATIC'
-  },
-  {
-    sigle: 'CME',
-    nom: 'Concours des Meilleurs Etudiants',
-    logo: '/cme-logo.png',
-    couleur: '#4CC9A8',
-    matieres: ['Culture Générale', 'Culture Scientifique', 'Anglais', 'Français'],
-    code: 'cme',
-    description: 'Documents et annales pour le concours CME'
-  },
-  {
-    sigle: 'ENSEA',
-    nom: 'École Nationale Supérieure de Statistique et d’Économie Appliquée',
-    logo: '/ensea-logo.png', // à déposer dans frontend/public ; à défaut, le sigle est affiché
-    couleur: '#7B4CC9',
-    matieres: ['Français', 'Mathématiques'],
-    code: 'ensea',
-    description: 'Documents et annales pour le concours ENSEA'
-  },
-]
-
-const typeConfig = {
-  pdf:      { label: 'PDF',      couleur: '#C9A84C', icone: '📄' },
-  video:    { label: 'Vidéo',    couleur: '#4C7BC9', icone: '🎥' },
-  exercice: { label: 'Exercice', couleur: '#C94C7B', icone: '✏️' },
-  lien:     { label: 'Lien',     couleur: '#4CC9A8', icone: '🔗' },
-}
-
-// ══════════════════════════════════════════
-// LECTEUR PDF INTÉGRÉ
-// ══════════════════════════════════════════
-// Chargement unique de PDF.js depuis le CDN (aucune dépendance npm)
-const PDFJS_VERSION = '3.11.174'
-let pdfjsPromise = null
-function chargerPdfJs() {
-  if (typeof window !== 'undefined' && window.pdfjsLib) return Promise.resolve(window.pdfjsLib)
-  if (pdfjsPromise) return pdfjsPromise
-  pdfjsPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script')
-    script.src = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.min.js`
-    script.onload = () => {
-      const lib = window.pdfjsLib
-      if (!lib) { reject(new Error('pdf.js indisponible')); return }
-      lib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}/pdf.worker.min.js`
-      resolve(lib)
-    }
-    script.onerror = () => { pdfjsPromise = null; reject(new Error('Impossible de charger le lecteur PDF')) }
-    document.body.appendChild(script)
-  })
-  return pdfjsPromise
-}
-
-function LecteurPDF({ ressource, onFermer }) {
-  const toast = useToast()
-  const [loading, setLoading] = useState(true)
-  const [erreur, setErreur] = useState('')
-  const containerRef = useRef(null)
-
-  useEffect(() => {
-    let annule = false
-    afficherPDF(() => annule)
-    return () => { annule = true }
-  }, [])
-
-  // Récupère les octets du PDF (protégés par le token) sous forme d'ArrayBuffer
-  const recupererBuffer = async () => {
-    const res = await api.get(`/api/ressources/ouvrir/${ressource.id}`, { responseType: 'arraybuffer' })
-    if (!res.ok) {
-      // Le corps d'erreur arrive aussi en binaire : on le décode pour lire le message
-      let err = {}
-      try { err = JSON.parse(new TextDecoder().decode(res.data)) } catch { /* corps non JSON */ }
-      throw new Error(err.message || 'Impossible de charger le document')
-    }
-    return res.data
-  }
-
-  // Rend chaque page dans un <canvas> — fonctionne sur PC ET mobile
-  const afficherPDF = async (estAnnule = () => false) => {
-    try {
-      setLoading(true)
-      setErreur('')
-      const [pdfjsLib, buffer] = await Promise.all([chargerPdfJs(), recupererBuffer()])
-      if (estAnnule()) return
-
-      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise
-      const container = containerRef.current
-      if (!container || estAnnule()) return
-      container.innerHTML = ''
-
-      const largeurDispo = Math.min((container.clientWidth || 360) - 24, 900)
-      const dpr = window.devicePixelRatio || 1
-
-      for (let n = 1; n <= pdf.numPages; n++) {
-        if (estAnnule()) return
-        const page = await pdf.getPage(n)
-        const base = page.getViewport({ scale: 1 })
-        const echelle = largeurDispo / base.width
-        const viewport = page.getViewport({ scale: echelle })
-
-        const canvas = document.createElement('canvas')
-        canvas.width = Math.floor(viewport.width * dpr)
-        canvas.height = Math.floor(viewport.height * dpr)
-        canvas.style.width = viewport.width + 'px'
-        canvas.style.height = viewport.height + 'px'
-        canvas.style.display = 'block'
-        canvas.style.margin = '0 auto 12px'
-        canvas.style.borderRadius = '4px'
-        canvas.style.boxShadow = '0 2px 12px rgba(0,0,0,0.45)'
-        container.appendChild(canvas)
-
-        const ctx = canvas.getContext('2d')
-        ctx.scale(dpr, dpr)
-        await page.render({ canvasContext: ctx, viewport }).promise
-      }
-    } catch (e) {
-      if (!estAnnule()) setErreur(e.message || 'Erreur lors de l\'affichage du document')
-    } finally {
-      if (!estAnnule()) setLoading(false)
-    }
-  }
-
-  // Filet de sécurité : téléchargement du PDF si l'affichage échoue
-  const telecharger = async () => {
-    try {
-      const buffer = await recupererBuffer()
-      const url = URL.createObjectURL(new Blob([buffer], { type: 'application/pdf' }))
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${ressource.titre || 'document'}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      setTimeout(() => URL.revokeObjectURL(url), 2000)
-    } catch {
-      toast.erreur('Téléchargement impossible pour le moment.')
-    }
-  }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(7,16,32,0.97)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', flexShrink: 0, background: '#071020', borderBottom: '1px solid rgba(201,168,76,0.2)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-          <span style={{ fontSize: 24 }}>📄</span>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ color: 'white', fontWeight: 700, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ressource.titre}</p>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: 0 }}>{ressource.matiere} · {ressource.concours}</p>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <button onClick={telecharger} title="Télécharger" style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', color: '#C9A84C', borderRadius: 8, padding: '6px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-            ⬇
-          </button>
-          <button onClick={onFermer} style={{ background: 'rgba(201,76,123,0.15)', border: '1px solid rgba(201,76,123,0.3)', color: '#C94C7B', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-            ✕ Fermer
-          </button>
-        </div>
-      </div>
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        {/* Zone de rendu des canvas (peuplée manuellement) */}
-        <div ref={containerRef} style={{ position: 'absolute', inset: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: 12 }} />
-
-        {loading && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, background: 'rgba(7,16,32,0.85)' }}>
-            <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid rgba(201,168,76,0.3)', borderTopColor: '#C9A84C', animation: 'spin 1s linear infinite' }} />
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>Chargement du document...</p>
-          </div>
-        )}
-        {erreur && !loading && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: 'rgba(7,16,32,0.9)', padding: 24, textAlign: 'center' }}>
-            <p style={{ color: '#C94C7B', fontSize: 16 }}>⚠️ {erreur}</p>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => afficherPDF()} style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', color: '#C9A84C', borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer' }}>
-                Réessayer
-              </button>
-              <button onClick={telecharger} style={{ background: 'rgba(76,123,201,0.15)', border: '1px solid rgba(76,123,201,0.3)', color: '#4C7BC9', borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer' }}>
-                Télécharger le PDF
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  )
-}
-
-// ══════════════════════════════════════════
-// PAGE PRINCIPALE
-// ══════════════════════════════════════════
-function RessourcesContenu() {
-  const navigate = useNavigate()
-  const { peutAcceder: peutVoirContenu } = useConcours()
-  const peutAcceder = (ecole) => peutVoirContenu(ecole.code)
-  // /ressources?ecole=ENSEA présélectionne le concours (seulement s'il est accessible)
-  const [ecoleSelectionnee, setEcoleSelectionnee] = useState(() => {
-    const demandee = new URLSearchParams(window.location.search).get('ecole')
-    return ecoles.find(e => e.sigle === demandee && peutVoirContenu(e.code))?.sigle ?? null
-  })
-  const [matiereSelectionnee, setMatiereSelectionnee] = useState(null)
-  const [ressources, setRessources] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [erreur, setErreur] = useState('')
-  const [ressourceOuverte, setRessourceOuverte] = useState(null)
-
-  const ecoleActive = ecoles.find(e => e.sigle === ecoleSelectionnee)
-  // Un élève ne voit que les concours auxquels il est inscrit (le personnel voit ceux auxquels il a accès)
-  const ecolesVisibles = ecoles.filter(peutAcceder)
-
-  useEffect(() => {
-    if (ecoleSelectionnee) chargerRessources()
-  }, [ecoleSelectionnee])
-
-  const chargerRessources = async () => {
-    setLoading(true)
-    setErreur('')
-    try {
-      const res = await api.get('/api/ressources')
-      const data = res.data
-      if (data.ressources) {
-        setRessources(data.ressources.filter(r => correspondEcole(r.concours, ecoleSelectionnee)))
-      } else {
-        setErreur('Erreur lors du chargement')
-      }
-    } catch {
-      setErreur('Erreur serveur')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const ressourcesFiltrees = matiereSelectionnee
-    ? ressources.filter(r => r.matiere === matiereSelectionnee)
-    : ressources
-
+// Cadre commun : fil d'Ariane, retour d'un niveau, titre
+function Page({ crumbs, retourPath, retourLabel, surtitre, titre, soustitre, children }) {
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
-
-      {ressourceOuverte && (
-        <LecteurPDF ressource={ressourceOuverte} onFermer={() => setRessourceOuverte(null)} />
-      )}
-
-      {/* EN-TÊTE */}
+      <Breadcrumb crumbs={crumbs} retourPath={retourPath} retourLabel={retourLabel} />
       <div className="mb-6">
-        <Breadcrumb
-          retourLabel={matiereSelectionnee ? ecoleActive?.sigle : ecoleActive ? 'Tous les documents' : undefined}
-          onRetour={
-            matiereSelectionnee ? () => setMatiereSelectionnee(null)
-            : ecoleActive ? () => { setEcoleSelectionnee(null); setMatiereSelectionnee(null) }
-            : undefined
-          }
-          suivantLabel={!ecoleActive ? 'Mon Planning' : null}
-          suivantPath={!ecoleActive ? '/planning/emploi-du-temps' : null}
-        />
-        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Bibliothèque</p>
-        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
-          {!ecoleActive && 'Tous les Documents'}
-          {ecoleActive && !matiereSelectionnee && `Documents ${ecoleActive.sigle}`}
-          {matiereSelectionnee && matiereSelectionnee}
-        </h1>
-        <p className="text-gray-500 text-sm mt-1">
-          {!ecoleActive && 'Sélectionnez votre concours pour accéder aux documents'}
-          {ecoleActive && !matiereSelectionnee && `Choisissez une matière — ${ecoleActive.matieres.length} matières disponibles`}
-          {matiereSelectionnee && `${ressourcesFiltrees.length} document(s) disponible(s)`}
-        </p>
+        <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>{surtitre}</p>
+        <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>{titre}</h1>
+        {soustitre && <p className="text-gray-500 text-sm mt-1">{soustitre}</p>}
       </div>
-
-      {/* NIVEAU 1 — Choix du concours : uniquement ceux de l'utilisateur */}
-      {!ecoleSelectionnee && ecolesVisibles.length === 0 && (
-        <EmptyState icone="🎓" titre="Aucun concours associé à votre compte" texte="Contactez l’administration pour être inscrit à un concours." />
-      )}
-      {!ecoleSelectionnee && ecolesVisibles.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {ecolesVisibles.map((ecole, i) => {
-            const acces = peutAcceder(ecole)
-            return (
-              <div key={i}
-                onClick={() => acces && setEcoleSelectionnee(ecole.sigle)}
-                className="rounded-2xl overflow-hidden transition-all duration-200 relative"
-                style={{
-                  background: 'linear-gradient(135deg, #071020, #0d1f3c)',
-                  border: acces ? `2px solid ${ecole.couleur}40` : '2px solid rgba(255,255,255,0.05)',
-                  cursor: acces ? 'pointer' : 'default',
-                  opacity: acces ? 1 : 0.7,
-                }}
-                onMouseEnter={e => acces && (e.currentTarget.style.transform = 'scale(1.02)')}
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-
-                {/* Badge "Non inscrit" pour les concours non accessibles */}
-                {!acces && (
-                  <div style={{
-                    position: 'absolute', top: 12, right: 12, zIndex: 10,
-                    background: 'rgba(156,163,175,0.2)', border: '1px solid rgba(156,163,175,0.3)',
-                    color: '#9ca3af', fontSize: 10, fontWeight: 700,
-                    padding: '3px 10px', borderRadius: 20, letterSpacing: '0.05em'
-                  }}>
-                    🔒 Non inscrit
-                  </div>
-                )}
-
-                <div className="flex items-center justify-center py-10 px-8">
-                  <img src={ecole.logo} alt={ecole.sigle}
-                    style={{ maxHeight: 100, maxWidth: 200, objectFit: 'contain', filter: acces ? 'none' : 'grayscale(100%)' }}
-                    onError={e => {
-                      e.target.style.display = 'none'
-                      e.target.parentNode.innerHTML = `<span style="font-size:38px;font-weight:900;color:${acces ? ecole.couleur : '#6b7280'}">${ecole.sigle}</span>`
-                    }} />
-                </div>
-
-                <div className="h-0.5" style={{ background: acces ? `linear-gradient(90deg, transparent, ${ecole.couleur}, transparent)` : 'rgba(255,255,255,0.05)' }} />
-
-                <div className="px-6 py-4">
-                  <p className="font-bold text-sm" style={{ color: acces ? 'white' : '#6b7280' }}>{ecole.sigle}</p>
-                  <p className="text-xs mt-0.5" style={{ color: acces ? '#9ca3af' : '#4b5563' }}>{ecole.description}</p>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-xs" style={{ color: acces ? '#6b7280' : '#4b5563' }}>
-                      {ecole.matieres.length} matières
-                    </span>
-                    {acces ? (
-                      <span className="text-xs font-semibold px-3 py-1 rounded-lg"
-                        style={{ background: `${ecole.couleur}20`, color: ecole.couleur }}>
-                        Accéder →
-                      </span>
-                    ) : (
-                      <span className="text-xs font-semibold px-3 py-1 rounded-lg"
-                        style={{ background: 'rgba(107,114,128,0.1)', color: '#6b7280' }}>
-                        Contacter l'admin
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* NIVEAU 2 — Choix de la matière */}
-      {ecoleActive && !matiereSelectionnee && (
-        <div>
-          <div className="rounded-2xl overflow-hidden mb-6" style={{ border: '1px solid #f0ece0' }}>
-            <div className="flex items-center gap-4 p-5"
-              style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', borderBottom: `2px solid ${ecoleActive.couleur}` }}>
-              <div className="w-16 h-16 rounded-xl bg-white flex items-center justify-center p-1.5 flex-shrink-0">
-                <img src={ecoleActive.logo} alt={ecoleActive.sigle} className="w-full h-full object-contain"
-                  onError={e => { e.target.style.display = 'none'; e.target.parentNode.innerHTML = `<span style="font-weight:900;color:${ecoleActive.couleur};font-size:14px">${ecoleActive.sigle}</span>` }} />
-              </div>
-              <div>
-                <p className="text-white font-bold text-lg">{ecoleActive.sigle}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{ecoleActive.nom}</p>
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {ecoleActive.matieres.map((matiere, i) => {
-              const count = ressources.filter(r => r.matiere === matiere).length
-              return (
-                <div key={i} onClick={() => setMatiereSelectionnee(matiere)}
-                  className="bg-white rounded-2xl overflow-hidden cursor-pointer transition-all hover:shadow-lg"
-                  style={{ border: '1px solid #f0ece0' }}>
-                  <div className="h-1.5" style={{ background: ecoleActive.couleur }} />
-                  <div className="p-5">
-                    <p className="font-bold text-sm mb-2" style={{ color: '#071020' }}>{matiere}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">{loading ? '...' : `${count} document(s)`}</span>
-                      <span className="text-xs font-semibold px-2 py-1 rounded-lg"
-                        style={{ background: `${ecoleActive.couleur}15`, color: ecoleActive.couleur }}>
-                        Consulter →
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* NIVEAU 3 — Documents de la matière */}
-      {matiereSelectionnee && (
-        <div>
-          <div className="rounded-2xl overflow-hidden mb-6" style={{ border: '1px solid #f0ece0' }}>
-            <div className="p-5"
-              style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', borderBottom: `2px solid ${ecoleActive?.couleur}` }}>
-              <p className="font-bold text-xl text-white">{matiereSelectionnee}</p>
-              <p className="text-xs mt-1" style={{ color: ecoleActive?.couleur }}>
-                {ecoleActive?.sigle} · {ressourcesFiltrees.length} document(s)
-              </p>
-            </div>
-          </div>
-
-          {loading && (
-            <div className="flex items-center justify-center py-12">
-              <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
-                style={{ borderColor: '#C9A84C', borderTopColor: 'transparent' }} />
-            </div>
-          )}
-
-          {erreur && <div className="text-center py-8 text-sm text-red-400">{erreur}</div>}
-
-          {!loading && !erreur && (
-            <div className="flex flex-col gap-3">
-              {ressourcesFiltrees.length === 0 && (
-                <div className="bg-white rounded-2xl p-10 text-center" style={{ border: '1px solid #f0ece0' }}>
-                  <p className="text-3xl mb-3">📭</p>
-                  <p className="text-sm font-semibold text-gray-500">Aucun document disponible</p>
-                  <p className="text-xs text-gray-500 mt-1">Votre enseignant n'a pas encore publié de contenu ici.</p>
-                </div>
-              )}
-              {ressourcesFiltrees.map((ressource, i) => {
-                const config = typeConfig[ressource.type] || { label: ressource.type, couleur: '#9ca3af', icone: '📎' }
-                return (
-                  <div key={i}
-                    className="bg-white rounded-2xl p-5 flex items-center gap-4 cursor-pointer transition-all hover:shadow-lg"
-                    style={{ border: '1px solid #f0ece0' }}
-                    onClick={() => setRessourceOuverte(ressource)}>
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"
-                      style={{ background: `${config.couleur}15` }}>
-                      {config.icone}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm text-gray-800">{ressource.titre}</p>
-                      {ressource.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{ressource.description}</p>}
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                          style={{ background: `${config.couleur}15`, color: config.couleur }}>
-                          {config.label}
-                        </span>
-                        {ressource.professeur && (
-                          <span className="text-xs text-gray-500">
-                            Par {ressource.professeur.prenom || ressource.professeur.username}
-                          </span>
-                        )}
-                        <span className="text-xs text-gray-500">
-                          {new Date(ressource.created_at).toLocaleDateString('fr-FR')}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="text-xs font-semibold px-3 py-2 rounded-xl flex-shrink-0"
-                      style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)' }}>
-                      Lire →
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
+      {children}
     </div>
   )
 }
 
-export default function Ressources() {
+const Grille = ({ children }) => <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">{children}</div>
+
+// Logo d'un concours ; à défaut (fichier absent), son sigle
+function LogoConcours({ code }) {
+  const [ko, setKo] = useState(false)
+  const logo = CONCOURS[code]?.logo
+  return logo && !ko
+    ? <img src={logo} alt="" onError={() => setKo(true)} style={{ maxHeight: 70, maxWidth: 160, objectFit: 'contain' }} />
+    : <span style={{ fontSize: 34, fontWeight: 900, color: couleurConcours(code) }}>{libelleConcours(code)}</span>
+}
+
+// Documents sans matière : regroupés dans une carte « Autres documents » pour rester accessibles
+const AUTRES = 'Autres documents'
+const sansMatiere = (r) => !String(r.matiere ?? '').trim()
+
+// Matières d'un concours : liste officielle, puis celles qui n'apparaissent que dans les documents
+function matieresDuConcours(code, ressources) {
+  const matieres = [...(CONCOURS[code]?.matieres ?? [])]
+  for (const r of ressources) {
+    if (!sansMatiere(r) && viseConcours(r.concours, code) && !matieres.some(m => cleMatiere(m) === cleMatiere(r.matiere))) matieres.push(r.matiere)
+  }
+  if (ressources.some(r => sansMatiere(r) && viseConcours(r.concours, code))) matieres.push(AUTRES)
+  return matieres
+}
+const documentsDe = (ressources, code, matiere) =>
+  ressources.filter(r => viseConcours(r.concours, code)
+    && (matiere === AUTRES ? sansMatiere(r) : cleMatiere(r.matiere) === cleMatiere(matiere)))
+
+// ══════════════════════════════════════════
+// NIVEAU 1 — /ressources : les concours
+// ══════════════════════════════════════════
+function NiveauConcours({ codes, ressources, chargement }) {
+  const navigate = useNavigate()
   const { search } = useLocation()
-  return <RessourcesContenu key={search} />
+
+  // Anciennes adresses /ressources?ecole=ENSEA
+  const ecole = new URLSearchParams(search).get('ecole')
+  const ancien = ecole && CODES_CONCOURS.find(c => libelleConcours(c).toLowerCase() === ecole.trim().toLowerCase())
+  if (ancien && codes.includes(ancien)) return <Navigate to={`/ressources/${ancien}`} replace />
+  // Un seul concours : on saute le choix
+  if (codes.length === 1) return <Navigate to={`/ressources/${codes[0]}`} replace />
+
+  return (
+    <Page crumbs={[{ label: 'Accueil', path: '/accueil' }, { label: 'Ressources' }]} retourPath="/accueil" retourLabel="Accueil"
+      surtitre="Bibliothèque" titre="Tous mes documents" soustitre="Choisissez votre concours">
+      {codes.length === 0 ? (
+        <EmptyState icone="🎓" titre="Aucun concours associé à votre compte" texte="Contactez l’administration pour être inscrit à un concours." />
+      ) : chargement ? <Loader texte="Chargement…" /> : (
+        <Grille>
+          {codes.map(code => {
+            const nbMatieres = (CONCOURS[code]?.matieres ?? []).length
+            const nbDocs = ressources.filter(r => viseConcours(r.concours, code)).length
+            return (
+              <CarteRessource key={code} couleur={couleurConcours(code)} titre={libelleConcours(code)}
+                sousTitre={`${pluriel(nbMatieres, 'matière')} · ${pluriel(nbDocs, 'document')}`}
+                banniere={<Banniere couleur={couleurConcours(code)} hauteur={128}><LogoConcours code={code} /></Banniere>}
+                onClick={() => navigate(`/ressources/${code}`)} />
+            )
+          })}
+        </Grille>
+      )}
+    </Page>
+  )
+}
+
+// Fil d'Ariane de base d'un concours (« Ressources » n'est pas cliquable s'il n'y a qu'un concours)
+function cheminConcours(code, unique) {
+  return [
+    { label: 'Accueil', path: '/accueil' },
+    { label: 'Ressources', path: unique ? undefined : '/ressources' },
+    { label: libelleConcours(code), path: `/ressources/${code}` }
+  ]
+}
+
+// ══════════════════════════════════════════
+// NIVEAU 2 — /ressources/:concours : les matières
+// ══════════════════════════════════════════
+function NiveauMatieres({ codes, ressources, chargement }) {
+  const navigate = useNavigate()
+  const { concours: param } = useParams()
+  const code = String(param ?? '').toLowerCase()
+  if (!codes.includes(code)) return <Navigate to="/ressources" replace />
+
+  const unique = codes.length === 1
+  const matieres = matieresDuConcours(code, ressources)
+  const couleur = couleurConcours(code)
+  const crumbs = cheminConcours(code, unique)
+
+  return (
+    <Page crumbs={[...crumbs.slice(0, 2), { label: libelleConcours(code) }]}
+      retourPath={unique ? '/accueil' : '/ressources'} retourLabel={unique ? 'Accueil' : 'Ressources'}
+      surtitre={`Bibliothèque · ${libelleConcours(code)}`} titre={`Documents ${libelleConcours(code)}`}
+      soustitre={`Choisissez une matière — ${pluriel(matieres.length, 'matière')}`}>
+      {chargement ? <Loader texte="Chargement…" /> : (
+        <Grille>
+          {matieres.map(matiere => {
+            const docs = documentsDe(ressources, code, matiere)
+            return (
+              <CarteRessource key={slugMatiere(matiere)} couleur={couleur} titre={matiere}
+                sousTitre={docs.length ? pluriel(docs.length, 'document') : 'Aucun document'}
+                badge={docs.some(d => estNouveau(d.created_at)) ? 'Nouveau' : undefined}
+                banniere={<Banniere couleur={couleur} icone={iconeMatiere(matiere)} />}
+                onClick={() => navigate(`/ressources/${code}/${slugMatiere(matiere)}`)} />
+            )
+          })}
+        </Grille>
+      )}
+    </Page>
+  )
+}
+
+// ══════════════════════════════════════════
+// NIVEAU 3 — /ressources/:concours/:matiere : les documents
+// ══════════════════════════════════════════
+function NiveauDocuments({ codes, ressources, chargement, erreur }) {
+  const { concours: param, matiere: slug } = useParams()
+  const toast = useToast()
+  const code = String(param ?? '').toLowerCase()
+  const [recherche, setRecherche] = useState('')
+  const [tri, setTri] = useState('recent')
+  const [type, setType] = useState('tous')
+  const [vue, setVue] = usePreference('ressources.vue', 'cartes', ['cartes', 'liste'])
+  const [ouverte, setOuverte] = useState(null)
+
+  const matiere = codes.includes(code) ? matieresDuConcours(code, ressources).find(m => slugMatiere(m) === slug) : null
+  const documents = useMemo(() => (matiere ? documentsDe(ressources, code, matiere) : []), [ressources, code, matiere])
+  const liste = useMemo(() => filtrerDocuments(documents, { recherche, type, tri }), [documents, recherche, type, tri])
+
+  if (!codes.includes(code)) return <Navigate to="/ressources" replace />
+  if (!matiere && !chargement) return <Navigate to={`/ressources/${code}`} replace />
+
+  const unique = codes.length === 1
+  const couleur = couleurConcours(code)
+  const typesPresents = [...new Set(documents.map(d => d.type))]
+  const filtres = typesPresents.length > 1
+    ? [{ value: 'tous', label: 'Tous les types' }, ...typesPresents.map(t => ({ value: t, label: typeDe(t).label }))]
+    : null
+
+  const copierLien = async () => {
+    try { await navigator.clipboard.writeText(window.location.href); toast.succes('Lien copié') }
+    catch { toast.erreur('Copie impossible, copiez l’adresse depuis la barre du navigateur.') }
+  }
+  const auteur = (d) => d.professeur ? (d.professeur.prenom || d.professeur.username) : null
+
+  return (
+    <Page crumbs={[...cheminConcours(code, unique), { label: matiere ?? '…' }]}
+      retourPath={`/ressources/${code}`} retourLabel={libelleConcours(code)}
+      surtitre={`Bibliothèque · ${libelleConcours(code)}`} titre={matiere ?? ''}
+      soustitre={pluriel(documents.length, 'document')}>
+      {ouverte && <LecteurPDF ressource={ouverte} onFermer={() => setOuverte(null)} />}
+
+      {chargement ? <Loader texte="Chargement…" /> : erreur ? (
+        <p className="text-sm text-center py-8" style={{ color: '#C94C7B' }}>{erreur}</p>
+      ) : documents.length === 0 ? (
+        <EmptyState icone="📭" titre="Aucun document pour l’instant" texte="Votre professeur n’a encore rien publié dans cette matière." />
+      ) : (
+        <>
+          <BarreOutils recherche={recherche} onRecherche={setRecherche} filtre={type} onFiltre={setType} filtres={filtres}
+            tri={tri} onTri={setTri} tris={TRIS} vue={vue} onVue={setVue} />
+          {liste.length === 0 ? (
+            <EmptyState icone="🔍" titre="Aucun résultat" texte="Essayez un autre mot ou retirez le filtre." />
+          ) : vue === 'cartes' ? (
+            <Grille>
+              {liste.map(d => (
+                <CarteRessource key={d.id} couleur={couleur} titre={d.titre}
+                  sousTitre={[typeDe(d.type).label, auteur(d), new Date(d.created_at).toLocaleDateString('fr-FR')].filter(Boolean).join(' · ')}
+                  badge={estNouveau(d.created_at) ? 'Nouveau' : undefined}
+                  banniere={<Banniere couleur={couleur} icone={typeDe(d.type).icone} />}
+                  actions={[{ label: 'Ouvrir', onClick: () => setOuverte(d) }, { label: 'Copier le lien de la matière', onClick: copierLien }]}
+                  onClick={() => setOuverte(d)} />
+              ))}
+            </Grille>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {liste.map(d => {
+                const t = typeDe(d.type)
+                return (
+                  <li key={d.id}>
+                    <button type="button" onClick={() => setOuverte(d)}
+                      className="w-full text-left bg-white rounded-2xl p-4 flex items-center gap-4 transition hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C]"
+                      style={{ border: '1px solid #f0ece0' }}>
+                      <span aria-hidden="true" className="w-11 h-11 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0"
+                        style={{ background: `${t.couleur}20`, color: t.couleur }}>{t.label.slice(0, 3).toUpperCase()}</span>
+                      <span className="flex-1 min-w-0">
+                        <span className="block font-bold text-sm truncate" style={{ color: couleur }}>{d.titre}</span>
+                        {d.description && <span className="block text-xs text-gray-500 truncate">{d.description}</span>}
+                        <span className="block text-xs text-gray-500 mt-0.5">
+                          {[t.label, auteur(d) && `Par ${auteur(d)}`, new Date(d.created_at).toLocaleDateString('fr-FR')].filter(Boolean).join(' · ')}
+                        </span>
+                      </span>
+                      {estNouveau(d.created_at) && (
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0" style={{ background: '#C9A84C', color: '#071020' }}>Nouveau</span>
+                      )}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </>
+      )}
+    </Page>
+  )
+}
+
+// ══════════════════════════════════════════
+// Routeur de la Bibliothèque — les données ne sont chargées qu'une fois pour les trois niveaux
+// ══════════════════════════════════════════
+export default function Ressources() {
+  const { peutAcceder } = useConcours()
+  const codes = CODES_CONCOURS.filter(code => peutAcceder(code))
+  const [ressources, setRessources] = useState([])
+  const [chargement, setChargement] = useState(true)
+  const [erreur, setErreur] = useState('')
+
+  useEffect(() => {
+    let vivant = true
+    api.get('/api/ressources')
+      .then(res => {
+        if (!vivant) return
+        if (res.ok && Array.isArray(res.data?.ressources)) setRessources(res.data.ressources)
+        else setErreur('Erreur lors du chargement des documents')
+      })
+      .catch(() => vivant && setErreur('Erreur de connexion au serveur'))
+      .finally(() => vivant && setChargement(false))
+    return () => { vivant = false }
+  }, [])
+
+  const donnees = { codes, ressources, chargement, erreur }
+  return (
+    <Routes>
+      <Route index element={<NiveauConcours {...donnees} />} />
+      <Route path=":concours" element={<NiveauMatieres {...donnees} />} />
+      <Route path=":concours/:matiere" element={<NiveauDocuments {...donnees} />} />
+      <Route path="*" element={<Navigate to="/ressources" replace />} />
+    </Routes>
+  )
 }

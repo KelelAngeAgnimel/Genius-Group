@@ -32,8 +32,8 @@ const Difficultes = lazy(() => import('./pages/professeur/Difficultes'))
 const GestionCompetences = lazy(() => import('./pages/admin/GestionCompetences'))
 const VueGlobale = lazy(() => import('./pages/admin/VueGlobale'))
 const GeniusEval = lazy(() => import('./pages/eval/GeniusEval'))
-const Evaluations = lazy(() => import('./pages/eval/Evaluations'))
-const EvaluationsEnsea = lazy(() => import('./pages/eval/EvaluationsEnsea'))
+const EvaluationsHub = lazy(() => import('./pages/eval/EvaluationsHub'))
+const EvaluationsConcours = lazy(() => import('./pages/eval/EvaluationsConcours'))
 const FaqGenerale = lazy(() => import('./pages/aides/FaqGenerales'))
 const FaqConcours = lazy(() => import('./pages/aides/FaqConcours'))
 const Contacts = lazy(() => import('./pages/aides/Contacts'))
@@ -77,7 +77,7 @@ export default function App() {
           <Route path="planning-perso" element={<PlanningPerso />} />
         </Route>
 
-        <Route path="/ressources" element={
+        <Route path="/ressources/*" element={
           <ProtectedRoute><Layout><Ressources /></Layout></ProtectedRoute>
         } />
 
@@ -91,8 +91,10 @@ export default function App() {
           <Route path="competences" element={<MesCompetences />} />
           <Route path="difficultes" element={<Difficultes />} />
           <Route path="genius-eval" element={<GeniusEval />} />
-          <Route path="evaluations" element={<Evaluations />} />
-          <Route path="evaluations-ensea" element={<EvaluationsEnsea />} />
+          <Route path="evaluations" element={<EvaluationsHub />} />
+          <Route path="evaluations/:concours" element={<EvaluationsConcours />} />
+          {/* Ancienne adresse conservée pour les liens existants */}
+          <Route path="evaluations-ensea" element={<Navigate to="/outils/evaluations/ensea" replace />} />
         </Route>
 
         <Route path="/aides" element={

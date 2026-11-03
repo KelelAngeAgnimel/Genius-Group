@@ -16,7 +16,7 @@ const LABELS = {
   '/outils/teams': 'Cours à Distance',
   '/outils/notes': 'Mes Notes',
   '/outils/genius-eval': 'Quiz',
-  '/outils/evaluations': 'Évaluation',
+  '/outils/evaluations': 'Évaluations',
   '/aides': 'Accompagnement',
   '/aides/faq-generale': 'Questions Fréquentes',
   '/aides/contacts': 'Nous Contacter',
@@ -45,10 +45,11 @@ function buildBreadcrumbs(pathname) {
   return crumbs
 }
 
-export default function Breadcrumb({ retourLabel, retourPath, onRetour, suivantLabel, suivantPath }) {
+export default function Breadcrumb({ crumbs: crumbsExplicites, retourLabel, retourPath, onRetour, suivantLabel, suivantPath }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const crumbs = buildBreadcrumbs(location.pathname)
+  // `crumbs` explicite : [{ label, path? }] (le dernier est la page courante) ; sinon déduit de l'URL
+  const crumbs = crumbsExplicites ?? buildBreadcrumbs(location.pathname)
 
   const handleRetour = () => {
     if (onRetour) return onRetour()
@@ -74,14 +75,14 @@ export default function Breadcrumb({ retourLabel, retourPath, onRetour, suivantL
           {crumbs.map((crumb, i) => (
             <span key={i} className="flex items-center gap-1">
               {i > 0 && <span className="text-gray-600">/</span>}
-              {i < crumbs.length - 1 ? (
+              {i < crumbs.length - 1 && crumb.path ? (
                 <button onClick={() => navigate(crumb.path)}
                   className="hover:text-white transition"
                   style={{ color: '#9ca3af' }}>
                   {crumb.label}
                 </button>
               ) : (
-                <span style={{ color: '#C9A84C', fontWeight: 600 }}>{crumb.label}</span>
+                <span style={i === crumbs.length - 1 ? { color: '#C9A84C', fontWeight: 600 } : { color: '#9ca3af' }}>{crumb.label}</span>
               )}
             </span>
           ))}

@@ -4,7 +4,7 @@ import { z } from 'zod'
 import supabase from '../supabase.js'
 import { verifyToken } from '../middleware/authMiddleware.js'
 import { validate } from '../middleware/validate.js'
-import { peutAcceder, peutPublierPour } from '../lib/concours.js'
+import { peutAcceder, peutPublierPour, codesDepuisContenu, CODES_CONCOURS } from '../lib/concours.js'
 import { contenuVerrouille, MESSAGE_VERROUILLE } from '../lib/autoeval.js'
 
 const router = express.Router()
@@ -90,7 +90,16 @@ router.get('/evaluations', verifyToken, async (req, res) => {
 
     if (error) { console.error(error); return res.status(500).json({ message: 'Erreur serveur' }) }
 
-    const filtrees = data.filter(r => peutAcceder(req.user, r.concours))
+    // ?concours=code restreint encore la liste, sans jamais élargir les droits de l'utilisateur
+    const demande = typeof req.query.concours === 'string' ? req.query.concours.trim().toLowerCase() : null
+    if (demande && !CODES_CONCOURS.includes(demande)) return res.status(400).json({ message: 'Concours inconnu' })
+    if (demande && !peutAcceder(req.user, demande)) return res.status(403).json({ message: 'Accès refusé' })
+    const filtrees = data.filter(r => {
+      if (!peutAcceder(req.user, r.concours)) return false
+      if (!demande) return true
+      const cibles = codesDepuisContenu(r.concours)
+      return cibles === null || cibles.includes(demande)
+    })
     res.json({ ressources: filtrees })
   } catch (err) {
     console.error(err)

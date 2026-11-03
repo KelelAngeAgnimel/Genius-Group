@@ -233,6 +233,21 @@ describe('Espace élève', () => {
     expect(JSON.stringify(r.body)).not.toMatch(/fichier_path|\.pdf/)
   })
 
+  it('chaque exercice porte son concours ; celui d’une compétence désactivée ou d’un concours quitté disparaît', async () => {
+    const r = await request(app).get('/api/renforcement/mes-competences').set(bearer(10))
+    expect(r.body.exercices.every(e => e.concours_code === 'ensea')).toBe(true)
+    // la compétence de l'exercice est désactivée : son concours reste connu, pas de fuite sous un autre concours
+    const idComp = tables.exercices[0].competence_id
+    tables.competences.find(c => String(c.id) === String(idComp)).actif = false
+    const apres = await request(app).get('/api/renforcement/mes-competences').set(bearer(10))
+    expect(apres.body.exercices).toHaveLength(1)
+    expect(apres.body.exercices[0]).toMatchObject({ concours_code: 'ensea', competence: null })
+    // l'élève quitte le concours : plus aucun exercice
+    tables.inscriptions = tables.inscriptions.filter(i => !(i.user_id === 10 && i.concours_code === 'ensea'))
+    invalidateUserCache()
+    expect((await request(app).get('/api/renforcement/mes-competences').set(bearer(10))).body.exercices).toHaveLength(0)
+  })
+
   it('un élève d’un autre concours n’a ni compétence ni accès', async () => {
     const r = await request(app).get('/api/renforcement/mes-competences').set(bearer(12))
     expect(r.body.competences).toHaveLength(0)

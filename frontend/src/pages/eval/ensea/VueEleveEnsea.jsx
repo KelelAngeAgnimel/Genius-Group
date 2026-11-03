@@ -251,7 +251,7 @@ function CarteEvaluation({ evaluation, maintenant, onChange }) {
 }
 
 // ── Page « Mes évaluations » ─────────────────────────────────────────────────
-export default function VueEleveEnsea() {
+export default function VueEleveEnsea({ concours = 'ensea' }) {
   const [evaluations, setEvaluations] = useState([])
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -261,14 +261,14 @@ export default function VueEleveEnsea() {
   const charger = useCallback(async () => {
     try {
       const res = await api.get('/api/evaluations/mes')
-      if (res.ok) setEvaluations(res.data.evaluations)
+      if (res.ok) setEvaluations(res.data.evaluations.filter(e => e.concours_code === concours))
       else setErreur(res.data?.message || 'Impossible de charger vos évaluations')
     } catch {
       setErreur('Erreur de connexion au serveur')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [concours])
 
   useEffect(() => { charger() }, [charger])
 

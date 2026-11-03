@@ -845,7 +845,7 @@ export default function GeniusEval() {
       <div className="p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
         <h1 className="text-2xl font-bold mb-2" style={{ color: COULEURS.navy }}>Quiz</h1>
         <p className="text-sm text-gray-500 mb-4">Les quiz automatiques ne sont pas proposés pour votre concours.</p>
-        <Link to="/outils/evaluations-ensea" className="text-sm font-semibold underline" style={{ color: COULEURS.or }}>Accéder aux Évaluations ENSEA</Link>
+        <Link to="/outils/evaluations/ensea" className="text-sm font-semibold underline" style={{ color: COULEURS.or }}>Accéder aux Évaluations ENSEA</Link>
       </div>
     )
   }
