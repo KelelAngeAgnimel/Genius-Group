@@ -16,12 +16,8 @@ const Aides = lazy(() => import('./pages/Aides'))
 const Outils = lazy(() => import('./pages/Outils'))
 const TableauDeBord = lazy(() => import('./pages/accueil/TableauDeBord'))
 const Actualites = lazy(() => import('./pages/accueil/Actualites'))
-const Fiches = lazy(() => import('./pages/accueil/Fiches'))
 const Guide = lazy(() => import('./pages/accueil/Guide'))
 const Statistiques = lazy(() => import('./pages/accueil/Statistiques'))
-const Calendrier = lazy(() => import('./pages/accueil/Calendrier'))
-const Ecoles = lazy(() => import('./pages/accueil/Ecoles'))
-const Tendances = lazy(() => import('./pages/accueil/Tendances'))
 const EmploiDuTemps = lazy(() => import('./pages/Planning/EmploiDuTemps'))
 const SuiviProgression = lazy(() => import('./pages/Planning/SuiviProgression'))
 const PlanningPerso = lazy(() => import('./pages/Planning/PlanningPerso'))
@@ -61,12 +57,8 @@ export default function App() {
           <Route index element={<Navigate to="tableau-de-bord" />} />
           <Route path="tableau-de-bord" element={<TableauDeBord />} />
           <Route path="actualites" element={<Actualites />} />
-          <Route path="fiches" element={<Fiches />} />
           <Route path="guide" element={<Guide />} />
           <Route path="statistiques" element={<Statistiques />} />
-          <Route path="calendrier" element={<Calendrier />} />
-          <Route path="ecoles" element={<Ecoles />} />
-          <Route path="tendances" element={<Tendances />} />
         </Route>
 
         <Route path="/planning" element={

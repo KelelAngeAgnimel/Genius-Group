@@ -1,6 +1,6 @@
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate, Link } from 'react-router-dom'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import api from '../../api'
 import { concoursDe } from '../../lib/concours'
 
@@ -41,37 +41,37 @@ function DashboardAdmin({ user }) {
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Total utilisateurs', valeur: stats.total, couleur: '#C9A84C' },
-          { label: 'Etudiants', valeur: stats.etudiants, couleur: '#4C7BC9' },
-          { label: 'Professeurs', valeur: stats.professeurs, couleur: '#4CC9A8' },
-          { label: 'Admins', valeur: stats.admins, couleur: '#C94C7B' },
+          { label: 'Total utilisateurs', valeur: stats.total },
+          { label: 'Etudiants', valeur: stats.etudiants },
+          { label: 'Professeurs', valeur: stats.professeurs },
+          { label: 'Admins', valeur: stats.admins },
         ].map((s, i) => (
-          <div key={i} className="bg-white rounded-2xl p-4 md:p-5" style={{ border: `1px solid ${s.couleur}20` }}>
+          <div key={i} className="bg-white rounded-2xl p-4 md:p-5" style={{ border: '1px solid #e5e7eb' }}>
             <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">{s.label}</p>
-            <p className="text-3xl md:text-4xl font-bold" style={{ color: s.couleur }}>{loading ? '...' : s.valeur}</p>
+            <p className="text-3xl md:text-4xl font-bold" style={{ color: '#071020' }}>{loading ? '...' : s.valeur}</p>
           </div>
         ))}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {[
-          { titre: 'Créer un compte', desc: 'Ajouter un etudiant, professeur ou admin', couleur: '#C9A84C', path: '/admin/creer' },
-          { titre: 'Gérer les comptes', desc: 'Voir et supprimer les utilisateurs', couleur: '#4C7BC9', path: '/admin/utilisateurs' },
-          { titre: 'Espace professeur', desc: 'Publier des ressources et envoyer des messages', couleur: '#4CC9A8', path: '/professeur' },
+          { titre: 'Créer un compte', desc: 'Ajouter un etudiant, professeur ou admin', path: '/admin/creer' },
+          { titre: 'Gérer les comptes', desc: 'Voir et supprimer les utilisateurs', path: '/admin/utilisateurs' },
+          { titre: 'Espace professeur', desc: 'Publier des ressources et envoyer des messages', path: '/professeur' },
         ].map((c, i) => (
-          <Link key={i} to={c.path} className="block rounded-2xl p-5 transition hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-            style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', border: `1px solid ${c.couleur}40`, outlineColor: c.couleur }}>
-            <p className="font-bold text-white mb-1">{c.titre}</p>
-            <p className="text-xs text-gray-400">{c.desc}</p>
-            <p className="text-xs mt-3 font-semibold" style={{ color: c.couleur }}>Accéder →</p>
+          <Link key={i} to={c.path} className="block rounded-2xl p-5 transition hover:border-gray-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            style={{ background: '#fff', border: '1px solid #e5e7eb', outlineColor: '#C9A84C' }}>
+            <p className="font-bold mb-1" style={{ color: '#071020' }}>{c.titre}</p>
+            <p className="text-xs text-gray-500">{c.desc}</p>
+            <p className="text-xs mt-3 font-semibold" style={{ color: '#8A6D1A' }}>Ouvrir</p>
           </Link>
         ))}
       </div>
-      <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
+      <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #e5e7eb' }}>
         <h2 className="font-bold text-base mb-4" style={{ color: '#071020' }}>Messages recus ({messages.length})</h2>
         {messages.length === 0 ? <p className="text-xs text-gray-400 text-center py-6">Aucun message</p> : (
           <div className="flex flex-col gap-2">
             {messages.slice(0, 5).map((msg, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: '#f8f7f4', border: '1px solid #f0ece0' }}>
+              <div key={i} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: '#f8f7f4', border: '1px solid #e5e7eb' }}>
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ background: '#071020' }}>
                   {msg.expediteur?.username?.[0]?.toUpperCase() || '?'}
                 </div>
@@ -130,27 +130,27 @@ function DashboardProfesseur({ user }) {
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Ressources publiees', valeur: ressources.filter(r => r.visible).length, couleur: '#C9A84C' },
-          { label: 'Ressources masquees', valeur: ressources.filter(r => !r.visible).length, couleur: '#9ca3af' },
-          { label: 'Etudiants', valeur: etudiants.length, couleur: '#4C7BC9' },
-          { label: 'Messages envoyes', valeur: messages.length, couleur: '#4CC9A8' },
+          { label: 'Ressources publiees', valeur: ressources.filter(r => r.visible).length },
+          { label: 'Ressources masquees', valeur: ressources.filter(r => !r.visible).length },
+          { label: 'Etudiants', valeur: etudiants.length },
+          { label: 'Messages envoyes', valeur: messages.length },
         ].map((s, i) => (
-          <div key={i} className="bg-white rounded-2xl p-4 md:p-5" style={{ border: `1px solid ${s.couleur}20` }}>
+          <div key={i} className="bg-white rounded-2xl p-4 md:p-5" style={{ border: '1px solid #e5e7eb' }}>
             <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">{s.label}</p>
-            <p className="text-3xl md:text-4xl font-bold" style={{ color: s.couleur }}>{loading ? '...' : s.valeur}</p>
+            <p className="text-3xl md:text-4xl font-bold" style={{ color: '#071020' }}>{loading ? '...' : s.valeur}</p>
           </div>
         ))}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[
-          { titre: 'Publier une ressource', desc: 'Ajouter un PDF, une video ou un exercice', couleur: '#4CC9A8', path: '/professeur' },
-          { titre: 'Envoyer un message', desc: 'Contacter un etudiant directement', couleur: '#C9A84C', path: '/professeur' },
+          { titre: 'Publier une ressource', desc: 'Ajouter un PDF, une video ou un exercice', path: '/professeur' },
+          { titre: 'Envoyer un message', desc: 'Contacter un etudiant directement', path: '/professeur' },
         ].map((c, i) => (
-          <Link key={i} to={c.path} className="block rounded-2xl p-5 transition hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-            style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', border: `1px solid ${c.couleur}40`, outlineColor: c.couleur }}>
-            <p className="font-bold text-white mb-1">{c.titre}</p>
-            <p className="text-xs text-gray-400">{c.desc}</p>
-            <p className="text-xs mt-3 font-semibold" style={{ color: c.couleur }}>Accéder →</p>
+          <Link key={i} to={c.path} className="block rounded-2xl p-5 transition hover:border-gray-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            style={{ background: '#fff', border: '1px solid #e5e7eb', outlineColor: '#C9A84C' }}>
+            <p className="font-bold mb-1" style={{ color: '#071020' }}>{c.titre}</p>
+            <p className="text-xs text-gray-500">{c.desc}</p>
+            <p className="text-xs mt-3 font-semibold" style={{ color: '#8A6D1A' }}>Ouvrir</p>
           </Link>
         ))}
       </div>
@@ -159,9 +159,9 @@ function DashboardProfesseur({ user }) {
 }
 
 // ══════════════════════════════════════════
-// RADAR FIFA — toile d'araignée SVG
+// RADAR DES COMPÉTENCES — toile d'araignée SVG
 // ══════════════════════════════════════════
-function RadarFIFA({ matieres, couleur }) {
+function RadarCompetences({ matieres, couleur }) {
   const cx = 130, cy = 130, r = 88
   const n = matieres.length
   if (n < 3) return null
@@ -195,7 +195,7 @@ function RadarFIFA({ matieres, couleur }) {
         <polygon points={dataPoints} fill={`${couleur}22`} stroke={couleur} strokeWidth="2.5" strokeLinejoin="round" />
         {matieres.map((m, i) => {
           const p = pt(i, m.valeur)
-          return <circle key={i} cx={p.x} cy={p.y} r="5" fill={couleur} stroke="white" strokeWidth="2.5" />
+          return <circle key={i} cx={p.x} cy={p.y} r="5" fill={couleur} stroke="white" strokeWidth="2" />
         })}
         {matieres.map((m, i) => {
           const lp = labelPt(i)
@@ -212,7 +212,7 @@ function RadarFIFA({ matieres, couleur }) {
           const p = pt(i, m.valeur)
           if (m.valeur === 0) return null
           return (
-            <text key={i} x={p.x} y={p.y - 12} textAnchor="middle" fontSize="8" fontWeight="900" fill={couleur}>
+            <text key={i} x={p.x} y={p.y - 12} textAnchor="middle" fontSize="8" fontWeight="700" fill="#8A6D1A">
               {m.note !== null ? `${m.note}/20` : ''}
             </text>
           )
@@ -233,9 +233,9 @@ function RadarFIFA({ matieres, couleur }) {
 }
 
 // ══════════════════════════════════════════
-// CARTE FIFA avec vraies notes Supabase
+// CARTE DES COMPÉTENCES avec les vraies notes
 // ══════════════════════════════════════════
-function CarteCompetencesFIFA({ config, notes }) {
+function CarteCompetences({ config, notes }) {
   const matiereAvecNotes = config.matieres.map(matiere => {
     const notesM = notes.filter(n =>
       n.concours?.toLowerCase() === config.codeConcours?.toLowerCase() &&
@@ -251,53 +251,49 @@ function CarteCompetencesFIFA({ config, notes }) {
     ? Math.round(notees.reduce((acc, m) => acc + m.valeur, 0) / notees.length)
     : null
 
-  const couleurCarte = noteGlobale === null ? '#9ca3af'
-    : noteGlobale >= 80 ? '#C9A84C'
-    : noteGlobale >= 65 ? '#4CC9A8'
-    : noteGlobale >= 50 ? '#4C7BC9'
-    : '#C94C7B'
+  const couleurCarte = noteGlobale === null ? '#9ca3af' : '#C9A84C'
 
   return (
-    <div style={{ background: 'linear-gradient(145deg, #071020, #0d1f3c)', borderRadius: 20, overflow: 'hidden', border: `1px solid ${couleurCarte}40`, boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
-      <div style={{ padding: '16px 20px 12px', borderBottom: `1px solid ${couleurCarte}30`, background: `linear-gradient(135deg, ${couleurCarte}12, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 50, height: 50, borderRadius: 12, background: 'white', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+    <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+      <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 8, border: '1px solid #e5e7eb', background: 'white', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
             <img src={config.logo} alt={config.sigle}
               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              onError={e => { e.target.style.display = 'none'; e.target.parentNode.innerHTML = `<span style="font-weight:900;color:#C9A84C;font-size:11px">${config.sigle}</span>` }}
+              onError={e => { const parent = e.target.parentNode; e.target.style.display = 'none'; parent.textContent = config.sigle; parent.style.fontSize = '10px'; parent.style.fontWeight = '700' }}
             />
           </div>
-          <div>
-            <p style={{ color: couleurCarte, fontWeight: 800, fontSize: 15, margin: 0 }}>{config.sigle}</p>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, margin: '2px 0 0 0' }}>{config.nom}</p>
-            <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9, margin: '1px 0 0 0' }}>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ color: '#071020', fontWeight: 700, fontSize: 15, margin: 0 }}>{config.sigle}</p>
+            <p style={{ color: '#6b7280', fontSize: 11, margin: '2px 0 0 0' }}>{config.nom}</p>
+            <p style={{ color: '#9ca3af', fontSize: 11, margin: '1px 0 0 0' }}>
               {notees.length}/{config.matieres.length} matière(s) notée(s)
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: `${couleurCarte}18`, borderRadius: 12, padding: '8px 14px', border: `1px solid ${couleurCarte}40`, minWidth: 62 }}>
-          <span style={{ color: couleurCarte, fontSize: 26, fontWeight: 900, lineHeight: 1 }}>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <span style={{ color: '#071020', fontSize: 24, fontWeight: 700, lineHeight: 1, display: 'block' }}>
             {noteGlobale !== null ? noteGlobale : '—'}
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8, fontWeight: 600, letterSpacing: '0.1em' }}>GLOBAL</span>
+          <span style={{ color: '#9ca3af', fontSize: 10 }}>Global</span>
         </div>
       </div>
       <div style={{ padding: '12px 8px 16px', display: 'flex', justifyContent: 'center' }}>
         {notees.length === 0 ? (
           <div style={{ padding: '28px 20px', textAlign: 'center' }}>
-            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, margin: 0 }}>Aucune note enregistrée</p>
-            <p style={{ color: 'rgba(255,255,255,0.18)', fontSize: 10, margin: '6px 0 0 0' }}>Le diagramme apparaîtra dès que vos professeurs auront saisi des notes</p>
+            <p style={{ color: '#6b7280', fontSize: 13, margin: 0 }}>Aucune note enregistrée</p>
+            <p style={{ color: '#9ca3af', fontSize: 11, margin: '6px 0 0 0' }}>Le diagramme apparaîtra dès que vos professeurs auront saisi des notes</p>
           </div>
         ) : (
-          <RadarFIFA matieres={matiereAvecNotes} couleur={couleurCarte} />
+          <RadarCompetences matieres={matiereAvecNotes} couleur={couleurCarte} />
         )}
       </div>
       <div style={{ padding: '0 20px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9, margin: 0 }}>Données issues de vos évaluations</p>
+        <p style={{ color: '#9ca3af', fontSize: 10, margin: 0 }}>Données issues de vos évaluations</p>
         {config.site && config.site !== '#' && (
           <a href={config.site} target="_blank" rel="noopener noreferrer"
-            style={{ fontSize: 10, fontWeight: 600, color: couleurCarte, textDecoration: 'none', border: `1px solid ${couleurCarte}40`, padding: '3px 10px', borderRadius: 20 }}>
-            Site officiel →
+            style={{ fontSize: 11, color: '#6b7280', textDecoration: 'underline' }}>
+            Site officiel
           </a>
         )}
       </div>
@@ -308,12 +304,12 @@ function CarteCompetencesFIFA({ config, notes }) {
 // ══════════════════════════════════════════
 // DÉCOMPTE DYNAMIQUE VERS LE CONCOURS
 // ══════════════════════════════════════════
-function DecompteConcours({ dateConcours, nomConcours, couleurConcours }) {
+function DecompteConcours({ dateConcours, nomConcours }) {
   if (!dateConcours) return null
-  return <DecompteAvecDate dateConcours={dateConcours} nomConcours={nomConcours} couleurConcours={couleurConcours} />
+  return <DecompteAvecDate dateConcours={dateConcours} nomConcours={nomConcours} />
 }
 
-function DecompteAvecDate({ dateConcours, nomConcours, couleurConcours }) {
+function DecompteAvecDate({ dateConcours, nomConcours }) {
   const calcJours = () => {
     const auj = new Date(); auj.setHours(0, 0, 0, 0)
     const cible = new Date(dateConcours); cible.setHours(0, 0, 0, 0)
@@ -325,8 +321,6 @@ function DecompteAvecDate({ dateConcours, nomConcours, couleurConcours }) {
     return () => clearInterval(t)
   }, [])
 
-  // Couleur du concours en priorité, sinon urgence
-  const couleur = couleurConcours || (jours <= 30 ? '#C94C7B' : jours <= 60 ? '#C9A84C' : '#4CC9A8')
   const semaines = Math.floor(jours / 7)
   const joursR = jours % 7
 
@@ -336,12 +330,12 @@ function DecompteAvecDate({ dateConcours, nomConcours, couleurConcours }) {
   const pct = Math.min(100, Math.max(0, Math.round(((auj - dateDebut) / (dateFin - dateDebut)) * 100)))
 
   return (
-    <div className="rounded-2xl p-4 md:p-5 bg-white" style={{ border: `1px solid ${couleur}30` }}>
+    <div className="rounded-2xl p-4 md:p-5 bg-white" style={{ border: '1px solid #e5e7eb' }}>
       <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Épreuves écrites</p>
-      <p className="text-sm font-bold" style={{ color: couleur }}>{nomConcours}</p>
+      <p className="text-sm font-bold" style={{ color: '#071020' }}>{nomConcours}</p>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginTop: 6 }}>
-        <span style={{ fontSize: 32, fontWeight: 900, color: couleur, lineHeight: 1 }}>{jours}</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: couleur }}>jours</span>
+        <span style={{ fontSize: 32, fontWeight: 700, color: '#071020', lineHeight: 1 }}>{jours}</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: '#6b7280' }}>jours</span>
       </div>
       <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>
         {semaines > 0 ? `${semaines}sem ${joursR}j · ` : ''}
@@ -352,8 +346,8 @@ function DecompteAvecDate({ dateConcours, nomConcours, couleurConcours }) {
           <span style={{ fontSize: 9, color: '#d1d5db' }}>Jan 2026</span>
           <span style={{ fontSize: 9, color: '#d1d5db' }}>Épreuves</span>
         </div>
-        <div style={{ width: '100%', height: 5, background: '#f0ece0', borderRadius: 3 }}>
-          <div style={{ width: `${pct}%`, height: 5, background: `linear-gradient(90deg, ${couleur}60, ${couleur})`, borderRadius: 3 }} />
+        <div style={{ width: '100%', height: 5, background: '#e5e7eb', borderRadius: 3 }}>
+          <div style={{ width: `${pct}%`, height: 5, background: '#C9A84C', borderRadius: 3 }} />
         </div>
         <p style={{ fontSize: 9, color: '#d1d5db', marginTop: 2, textAlign: 'right' }}>{pct}% du parcours écoulé</p>
       </div>
@@ -371,7 +365,6 @@ const CONCOURS_CONFIG = [
     nom: 'Institut National Polytechnique Houphouët-Boigny',
     logo: 'https://inphb.edu.ci/wp-content/uploads/2020/03/INPHB.png',
     matieres: ['Culture Scientifique', 'Culture Générale', 'Culture Littéraire'],
-    couleur: '#C9A84C',
     site: 'https://inphb.ci',
     dateConcours: '2026-08-05',
     nomConcours: 'Épreuves INP-HB'
@@ -382,7 +375,6 @@ const CONCOURS_CONFIG = [
     nom: 'Ecole Supérieure Africaine des TIC',
     logo: 'https://esatic.ci/wp-content/uploads/2024/07/esatic_logo.jpg',
     matieres: ['Mathématiques', 'Physique', 'Anglais', 'Français'],
-    couleur: '#4C7BC9',
     site: 'https://esatic.ci',
     dateConcours: '2026-08-04',
     nomConcours: 'Épreuves ESATIC'
@@ -393,7 +385,6 @@ const CONCOURS_CONFIG = [
     nom: 'Concours des Meilleurs Etudiants',
     logo: '/cme-logo.png',
     matieres: ['Culture Générale', 'Culture Scientifique', 'Anglais', 'Français'],
-    couleur: '#4CC9A8',
     site: '#',
     dateConcours: '2026-08-10',
     nomConcours: 'Épreuves CME'
@@ -404,7 +395,6 @@ const CONCOURS_CONFIG = [
     nom: 'École Nationale Supérieure de Statistique et d’Économie Appliquée',
     logo: '/ensea-logo.png',
     matieres: ['Français', 'Mathématiques'],
-    couleur: '#7B4CC9',
     site: 'https://ensea.ed.ci',
     dateConcours: null, // date non fournie par le pôle éducatif : le décompte n'est pas affiché
     nomConcours: 'Épreuves ENSEA'
@@ -413,9 +403,9 @@ const CONCOURS_CONFIG = [
 
 // Couleur par type d'événement
 const COULEUR_TYPE = {
-  cours: '#C9A84C',
-  examen: '#C94C7B',
-  evenement: '#4C7BC9',
+  cours: '#9ca3af',
+  examen: '#C9A84C',
+  evenement: '#9ca3af',
 }
 
 // ══════════════════════════════════════════
@@ -477,7 +467,6 @@ function DashboardEtudiant({ user, navigate }) {
 
   // Concours visibles : ceux auxquels l'élève est inscrit
   const concoursVisibles = CONCOURS_CONFIG.filter(c => concoursDe(user).includes(c.codeConcours))
-  const concoursPrincipal = concoursVisibles[0]
   const messagesNonLus = messages.filter(m => !m.lu).length
 
   // Planning de la semaine courante (lun → dim)
@@ -501,7 +490,7 @@ function DashboardEtudiant({ user, navigate }) {
       <div className="mb-6 md:mb-8">
         <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Tableau de bord</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>
-          Bonjour, {user?.prenom || user?.username} 👋
+          Bonjour, {user?.prenom || user?.username}
         </h1>
         <p className="text-gray-500 text-sm mt-1">
           {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -519,14 +508,14 @@ function DashboardEtudiant({ user, navigate }) {
 
         {/* Messages */}
         <div className="rounded-2xl p-4 md:p-5"
-          style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', border: '1px solid rgba(201,168,76,0.3)' }}>
-          <p className="text-xs tracking-widest uppercase mb-1" style={{ color: 'rgba(201,168,76,0.7)' }}>Messages</p>
-          <p className="text-4xl font-bold" style={{ color: '#C9A84C' }}>{loadingMsg ? '...' : messagesNonLus}</p>
-          <p className="text-gray-400 text-xs mt-1">{messagesNonLus > 0 ? 'non lus' : 'aucun nouveau'}</p>
+          style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
+          <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Messages</p>
+          <p className="text-4xl font-bold" style={{ color: '#071020' }}>{loadingMsg ? '...' : messagesNonLus}</p>
+          <p className="text-gray-500 text-xs mt-1">{messagesNonLus > 0 ? 'non lus' : 'aucun nouveau'}</p>
         </div>
 
         {/* Prochain cours (depuis l'API planning) */}
-        <div className="rounded-2xl p-4 md:p-5 bg-white" style={{ border: '1px solid #f0ece0' }}>
+        <div className="rounded-2xl p-4 md:p-5 bg-white" style={{ border: '1px solid #e5e7eb' }}>
           <p className="text-xs text-gray-400 uppercase tracking-widest mb-2">Prochain cours</p>
           {loadingPlanning ? (
             <p className="text-sm font-bold text-gray-300">Chargement...</p>
@@ -543,25 +532,24 @@ function DashboardEtudiant({ user, navigate }) {
           )}
         </div>
 
-        {/* Décomptes — un par concours visible, chacun avec sa couleur */}
+        {/* Décomptes — un par concours visible, un par concours */}
         {concoursVisibles.length > 0 ? (
           concoursVisibles.map((config, i) => (
             <DecompteConcours
               key={i}
               dateConcours={config.dateConcours}
               nomConcours={config.nomConcours}
-              couleurConcours={config.couleur}
             />
           ))
         ) : (
-          <div className="rounded-2xl p-4 md:p-5 bg-white col-span-2 md:col-span-1" style={{ border: '1px solid #f0ece0' }}>
+          <div className="rounded-2xl p-4 md:p-5 bg-white col-span-2 md:col-span-1" style={{ border: '1px solid #e5e7eb' }}>
             <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">Concours</p>
             <p className="text-sm text-gray-500">Aucun concours assigné</p>
           </div>
         )}
       </div>
 
-      {/* RADARS FIFA — un par concours */}
+      {/* RADARS — un par concours */}
       {concoursVisibles.length > 0 && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -570,12 +558,12 @@ function DashboardEtudiant({ user, navigate }) {
                 Vos compétences par matière
               </h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                Basé sur vos notes réelles · {concoursVisibles.length} concours
+                Calculé à partir de vos notes
               </p>
             </div>
             <button onClick={() => navigate('/accueil/statistiques')}
-              className="text-xs font-semibold" style={{ color: '#C9A84C' }}>
-              Voir statistiques →
+              className="text-xs font-semibold" style={{ color: '#8A6D1A' }}>
+              Voir les statistiques
             </button>
           </div>
 
@@ -587,7 +575,7 @@ function DashboardEtudiant({ user, navigate }) {
           ) : (
             <div className={`grid gap-4 md:gap-6 ${concoursVisibles.length === 1 ? 'grid-cols-1 max-w-md' : concoursVisibles.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'}`}>
               {concoursVisibles.map((config, i) => (
-                <CarteCompetencesFIFA key={i} config={config} notes={notes} />
+                <CarteCompetences key={i} config={config} notes={notes} />
               ))}
             </div>
           )}
@@ -598,12 +586,12 @@ function DashboardEtudiant({ user, navigate }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
 
         {/* Planning de la semaine (données réelles) */}
-        <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
+        <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #e5e7eb' }}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-base" style={{ color: '#071020' }}>Planning de la semaine</h2>
             <button onClick={() => navigate('/planning/emploi-du-temps')}
-              className="text-xs font-semibold" style={{ color: '#C9A84C' }}>
-              Voir tout →
+              className="text-xs font-semibold" style={{ color: '#8A6D1A' }}>
+              Voir tout
             </button>
           </div>
 
@@ -620,10 +608,10 @@ function DashboardEtudiant({ user, navigate }) {
           ) : (
             <div className="flex flex-col gap-2">
               {coursTriees.map((cours, i) => {
-                const couleur = COULEUR_TYPE[cours.type] || '#C9A84C'
+                const couleur = COULEUR_TYPE[cours.type] || '#9ca3af'
                 return (
                   <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl"
-                    style={{ background: `${couleur}08`, border: `1px solid ${couleur}20` }}>
+                    style={{ background: '#fafafa', border: '1px solid #e5e7eb' }}>
                     <div className="w-1 h-10 rounded-full flex-shrink-0" style={{ background: couleur }} />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-gray-800 truncate">{cours.matiere}</p>
@@ -632,11 +620,11 @@ function DashboardEtudiant({ user, navigate }) {
                         {cours.salle ? ` · ${cours.salle}` : ''}
                       </p>
                       {cours.prof && (
-                        <p className="text-xs italic mt-0.5" style={{ color: couleur }}>{cours.prof}</p>
+                        <p className="text-xs italic mt-0.5 text-gray-500">{cours.prof}</p>
                       )}
                     </div>
                     <span className="text-xs px-2 py-0.5 rounded-lg font-semibold flex-shrink-0"
-                      style={{ background: `${couleur}18`, color: couleur }}>
+                      style={{ background: '#f3f4f6', color: '#4b5563' }}>
                       {cours.type === 'cours' ? 'Cours' : cours.type === 'examen' ? 'Exam' : 'Évén.'}
                     </span>
                   </div>
@@ -647,9 +635,9 @@ function DashboardEtudiant({ user, navigate }) {
         </div>
 
         {/* Boîte de réception */}
-        <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
+        <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #e5e7eb' }}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-base" style={{ color: '#071020' }}>Boite de réception</h2>
+            <h2 className="font-bold text-base" style={{ color: '#071020' }}>Boîte de réception</h2>
             {messagesNonLus > 0 && (
               <span className="text-xs px-2 py-0.5 rounded-full font-bold"
                 style={{ background: 'rgba(201,168,76,0.15)', color: '#C9A84C' }}>

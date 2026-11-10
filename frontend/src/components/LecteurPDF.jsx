@@ -119,18 +119,19 @@ export default function LecteurPDF({ ressource, onFermer, nature = 'document' })
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(7,16,32,0.97)', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', flexShrink: 0, background: '#071020', borderBottom: '1px solid rgba(201,168,76,0.2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-          <span style={{ fontSize: 24 }}>{evaluation ? '📝' : '📄'}</span>
+          <span style={{ color: '#C9A84C', display: 'flex', flexShrink: 0 }}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9l-6-6Z" /><path d="M13 3v6h6" /><path d="M9 13h6M9 16.5h6" /></svg></span>
           <div style={{ minWidth: 0 }}>
             <p style={{ color: 'white', fontWeight: 700, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ressource.titre}</p>
             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: 0 }}>{ressource.matiere} · {libelleContenu(ressource.concours)}</p>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <button onClick={telecharger} title="Télécharger" style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', color: '#C9A84C', borderRadius: 8, padding: '6px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-            ⬇
+          <button onClick={telecharger} title="Télécharger" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#e5e7eb', borderRadius: 8, padding: '6px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center' }} aria-label="Télécharger">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 11l4.5 4.5 4.5-4.5M5 20h14" /></svg>
           </button>
-          <button onClick={onFermer} style={{ background: 'rgba(201,76,123,0.15)', border: '1px solid rgba(201,76,123,0.3)', color: '#C94C7B', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-            ✕ Fermer
+          <button onClick={onFermer} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#e5e7eb', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            Fermer
           </button>
         </div>
       </div>
@@ -146,12 +147,12 @@ export default function LecteurPDF({ ressource, onFermer, nature = 'document' })
         )}
         {erreur && !loading && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: 'rgba(7,16,32,0.9)', padding: 24, textAlign: 'center' }}>
-            <p style={{ color: '#C94C7B', fontSize: 16 }}>⚠️ {erreur}</p>
+            <p style={{ color: '#e5e7eb', fontSize: 16 }}>{erreur}</p>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => afficherPDF()} style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.3)', color: '#C9A84C', borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer' }}>
+              <button onClick={() => afficherPDF()} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#e5e7eb', borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer' }}>
                 Réessayer
               </button>
-              <button onClick={telecharger} style={{ background: 'rgba(76,123,201,0.15)', border: '1px solid rgba(76,123,201,0.3)', color: '#4C7BC9', borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer' }}>
+              <button onClick={telecharger} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#e5e7eb', borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer' }}>
                 Télécharger le PDF
               </button>
             </div>
