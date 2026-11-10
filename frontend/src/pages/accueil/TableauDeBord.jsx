@@ -1,5 +1,5 @@
 import { useAuth } from '../../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 import api from '../../api'
 import { concoursDe } from '../../lib/concours'
@@ -54,17 +54,16 @@ function DashboardAdmin({ user, navigate }) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {[
-          { titre: 'Creer un compte', desc: 'Ajouter un etudiant, professeur ou admin', couleur: '#C9A84C', path: '/admin/creer' },
-          { titre: 'Gerer les comptes', desc: 'Voir et supprimer les utilisateurs', couleur: '#4C7BC9', path: '/admin/utilisateurs' },
+          { titre: 'Créer un compte', desc: 'Ajouter un etudiant, professeur ou admin', couleur: '#C9A84C', path: '/admin/creer' },
+          { titre: 'Gérer les comptes', desc: 'Voir et supprimer les utilisateurs', couleur: '#4C7BC9', path: '/admin/utilisateurs' },
           { titre: 'Espace professeur', desc: 'Publier des ressources et envoyer des messages', couleur: '#4CC9A8', path: '/professeur' },
         ].map((c, i) => (
-          <div key={i} className="rounded-2xl p-5 cursor-pointer transition hover:shadow-lg"
-            onClick={() => navigate(c.path)}
-            style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', border: `1px solid ${c.couleur}40` }}>
+          <Link key={i} to={c.path} className="block rounded-2xl p-5 transition hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', border: `1px solid ${c.couleur}40`, outlineColor: c.couleur }}>
             <p className="font-bold text-white mb-1">{c.titre}</p>
             <p className="text-xs text-gray-400">{c.desc}</p>
-            <p className="text-xs mt-3 font-semibold" style={{ color: c.couleur }}>Acceder →</p>
-          </div>
+            <p className="text-xs mt-3 font-semibold" style={{ color: c.couleur }}>Accéder →</p>
+          </Link>
         ))}
       </div>
       <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
@@ -147,13 +146,12 @@ function DashboardProfesseur({ user, navigate }) {
           { titre: 'Publier une ressource', desc: 'Ajouter un PDF, une video ou un exercice', couleur: '#4CC9A8', path: '/professeur' },
           { titre: 'Envoyer un message', desc: 'Contacter un etudiant directement', couleur: '#C9A84C', path: '/professeur' },
         ].map((c, i) => (
-          <div key={i} className="rounded-2xl p-5 cursor-pointer transition hover:shadow-lg"
-            onClick={() => navigate(c.path)}
-            style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', border: `1px solid ${c.couleur}40` }}>
+          <Link key={i} to={c.path} className="block rounded-2xl p-5 transition hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', border: `1px solid ${c.couleur}40`, outlineColor: c.couleur }}>
             <p className="font-bold text-white mb-1">{c.titre}</p>
             <p className="text-xs text-gray-400">{c.desc}</p>
-            <p className="text-xs mt-3 font-semibold" style={{ color: c.couleur }}>Acceder →</p>
-          </div>
+            <p className="text-xs mt-3 font-semibold" style={{ color: c.couleur }}>Accéder →</p>
+          </Link>
         ))}
       </div>
     </div>
