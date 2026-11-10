@@ -50,8 +50,12 @@ export default function GestionUtilisateurs() {
     }
   }
 
-  const supprimerUtilisateur = async (id) => {
-    if (!(await confirmer({ titre: 'Supprimer l’utilisateur ?', message: 'Le compte sera supprimé définitivement.', confirmer: 'Supprimer', danger: true }))) return
+  const supprimerUtilisateur = async (u) => {
+    const id = u.id
+    const nomComplet = [u.prenom, u.nom].filter(Boolean).join(' ') || u.username
+    const numero = u.matricule || u.username
+    const cible = numero && numero !== nomComplet ? `${nomComplet} (${numero})` : nomComplet
+    if (!(await confirmer({ titre: `Supprimer ${cible} ?`, message: 'Le compte sera supprimé définitivement.', confirmer: 'Supprimer', danger: true }))) return
     setOccupe(id)
     try {
       await api.delete(`/api/users/${id}`)
@@ -402,7 +406,7 @@ export default function GestionUtilisateurs() {
                               {occupe === u.id ? '…' : u.bloque ? 'Débloquer' : 'Bloquer'}
                             </button>
                             <button
-                              onClick={() => supprimerUtilisateur(u.id)}
+                              onClick={() => supprimerUtilisateur(u)}
                               disabled={occupe === u.id}
                               className="px-3 py-1 rounded-lg text-xs font-semibold transition disabled:opacity-50"
                               style={{ background: 'rgba(201,76,123,0.1)', color: '#C94C7B' }}>
