@@ -3,7 +3,6 @@ import { useState } from 'react'
 const sections = [
   {
     titre: 'Qui est Genius Group ?',
-    couleur: '#C9A84C',
     contenu: [
       {
         sous_titre: 'Notre identité',
@@ -25,7 +24,6 @@ const sections = [
   },
   {
     titre: 'Les concours que nous préparons',
-    couleur: '#4C7BC9',
     contenu: [
       {
         sous_titre: 'Concours INP-HB',
@@ -43,7 +41,6 @@ const sections = [
   },
   {
     titre: 'Comment fonctionne ce portail ?',
-    couleur: '#4CC9A8',
     contenu: [
       {
         sous_titre: 'Votre espace personnel',
@@ -69,7 +66,6 @@ const sections = [
   },
   {
     titre: 'Votre équipe pédagogique',
-    couleur: '#7B4CC9',
     contenu: [
       {
         sous_titre: 'JEAN-LOIC AMON — Responsable Pédagogique',
@@ -91,7 +87,6 @@ const sections = [
   },
   {
     titre: 'Conseils pour bien utiliser le portail',
-    couleur: '#C94C7B',
     contenu: [
       {
         sous_titre: 'Consultez votre tableau de bord chaque matin',
@@ -133,46 +128,18 @@ export default function Guide() {
           Guide du portail
         </h1>
         <p className="text-gray-500 text-sm mt-1">
-          Tout ce que vous devez savoir sur Genius Group et votre espace personnel
+          Genius Group et votre espace personnel
         </p>
       </div>
 
-      {/* HERO */}
-      <div className="rounded-2xl p-6 md:p-8 mb-6"
-        style={{
-          background: 'linear-gradient(135deg, #071020, #0d1f3c)',
-          border: '1px solid rgba(201,168,76,0.2)'
-        }}>
-        <div className="flex flex-col md:flex-row items-center gap-6">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0"
-            style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)' }}>
-            <span className="text-4xl">🧠</span>
-          </div>
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
-              Bienvenue sur le Portail Genius Group
-            </h2>
-            <p className="text-gray-400 text-sm leading-relaxed">
-              Ce guide vous explique qui nous sommes, ce que nous faisons, et comment tirer le meilleur parti de votre espace personnel pour maximiser vos chances de réussite aux concours.
-            </p>
-          </div>
-        </div>
-
-        {/* Stats rapides */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-          {[
-            { valeur: '2', label: 'Concours préparés' },
-            { valeur: '6', label: 'Matières enseignées' },
-            { valeur: '3', label: 'Membres d\'équipe' },
-            { valeur: '100%', label: 'Accompagnement personnalisé' },
-          ].map((s, i) => (
-            <div key={i} className="text-center p-3 rounded-xl"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,168,76,0.1)' }}>
-              <p className="text-xl font-bold" style={{ color: '#C9A84C' }}>{s.valeur}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
-            </div>
-          ))}
-        </div>
+      {/* INTRODUCTION */}
+      <div className="bg-white rounded-2xl p-5 mb-6" style={{ border: '1px solid #e5e7eb' }}>
+        <h2 className="font-bold text-base md:text-lg mb-1" style={{ color: '#071020' }}>
+          Présentation du portail
+        </h2>
+        <p className="text-gray-600 text-sm leading-relaxed">
+          Ce guide présente Genius Group, son équipe et le fonctionnement de votre espace personnel.
+        </p>
       </div>
 
       {/* NAVIGATION */}
@@ -184,8 +151,7 @@ export default function Guide() {
             style={{
               background: sectionActive === i ? '#071020' : 'white',
               color: sectionActive === i ? '#C9A84C' : '#6b7280',
-              border: sectionActive === i ? `1px solid ${s.couleur}40` : '1px solid #f0ece0',
-              borderBottom: sectionActive === i ? `2px solid ${s.couleur}` : '1px solid #f0ece0'
+              border: sectionActive === i ? '1px solid #071020' : '1px solid #e5e7eb'
             }}>
             {s.titre}
           </button>
@@ -200,8 +166,8 @@ export default function Guide() {
             {/* Header section */}
             <div className="bg-white rounded-2xl p-5 mb-4"
               style={{
-                border: `1px solid ${section.couleur}20`,
-                borderLeft: `4px solid ${section.couleur}`
+                border: '1px solid #e5e7eb',
+                borderLeft: '3px solid #C9A84C'
               }}>
               <h2 className="font-bold text-base md:text-lg" style={{ color: '#071020' }}>
                 {section.titre}
@@ -214,8 +180,7 @@ export default function Guide() {
                 <div key={ii}
                   className="bg-white rounded-2xl overflow-hidden transition-all duration-200"
                   style={{
-                    border: itemOuvert === ii ? `1px solid ${section.couleur}25` : '1px solid #f0ece0',
-                    boxShadow: itemOuvert === ii ? `0 4px 20px ${section.couleur}08` : 'none'
+                    border: itemOuvert === ii ? '1px solid #C9A84C' : '1px solid #e5e7eb'
                   }}>
 
                   <button
@@ -224,17 +189,17 @@ export default function Guide() {
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                         style={{
-                          background: itemOuvert === ii ? `${section.couleur}15` : '#f8f7f4',
+                          background: '#f3f4f6',
                         }}>
                         <div className="w-2 h-2 rounded-full"
-                          style={{ background: itemOuvert === ii ? section.couleur : '#d1d5db' }} />
+                          style={{ background: itemOuvert === ii ? '#C9A84C' : '#d1d5db' }} />
                       </div>
                       <p className="text-sm font-semibold text-gray-800">{item.sous_titre}</p>
                     </div>
                     <span className="text-xs flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full ml-3"
                       style={{
-                        background: itemOuvert === ii ? `${section.couleur}15` : '#f0ece0',
-                        color: itemOuvert === ii ? section.couleur : '#9ca3af'
+                        background: '#f3f4f6',
+                        color: '#6b7280'
                       }}>
                       {itemOuvert === ii ? '−' : '+'}
                     </span>
@@ -243,7 +208,7 @@ export default function Guide() {
                   {itemOuvert === ii && (
                     <div className="px-5 pb-5">
                       <div className="ml-11 p-4 rounded-xl"
-                        style={{ background: `${section.couleur}05`, border: `1px solid ${section.couleur}12` }}>
+                        style={{ background: '#fafafa', border: '1px solid #e5e7eb' }}>
                         <p className="text-sm text-gray-600 leading-relaxed">{item.texte}</p>
                       </div>
                     </div>
