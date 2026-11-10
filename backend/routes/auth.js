@@ -6,11 +6,12 @@ import supabase from '../supabase.js'
 import { validate } from '../middleware/validate.js'
 import { loginLimiter } from '../middleware/rateLimit.js'
 import { avecConcoursUn } from '../lib/inscriptions.js'
+import { IDENTIFIANT_VALIDE } from '../lib/identifiant.js'
 
 const router = express.Router()
 
 const loginSchema = z.object({
-  matricule: z.string().trim().min(1).max(64),
+  matricule: z.string().trim().min(1).max(64).regex(IDENTIFIANT_VALIDE),
   password: z.string().min(1).max(200)
 })
 
