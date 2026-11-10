@@ -96,7 +96,7 @@ export default function FaqGenerales() {
             className="bg-white rounded-2xl overflow-hidden transition-all duration-200"
             style={{
               border: ouvert === i ? '1px solid rgba(201,168,76,0.3)' : '1px solid #f0ece0',
-              boxShadow: ouvert === i ? '0 4px 20px rgba(201,168,76,0.08)' : 'none'
+              
             }}>
 
             <button

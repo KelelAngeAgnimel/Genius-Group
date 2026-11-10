@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import api from '../../api'
+import Icon from '../../components/Icone'
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([
@@ -27,11 +28,11 @@ export default function Chatbot() {
         : res.status === 429
           ? '⏳ Trop de messages, patiente une minute.'
           : res.status === 401
-            ? '🔒 Session expirée, reconnecte-toi.'
-            : (data.message || data.error || '❌ Une erreur est survenue. Réessaie.')
+            ? 'Session expirée, reconnecte-toi.'
+            : (data.message || data.error || 'Une erreur est survenue. Réessaie.')
       setMessages(prev => [...prev, { role: 'bot', texte }])
     } catch {
-      setMessages(prev => [...prev, { role: 'bot', texte: '❌ Erreur de connexion. Réessaie.' }])
+      setMessages(prev => [...prev, { role: 'bot', texte: 'Erreur de connexion. Réessaie.' }])
     } finally {
       setLoading(false)
     }
@@ -62,9 +63,8 @@ export default function Chatbot() {
           <div style={{
             width: '44px', height: '44px', borderRadius: '50%',
             background: '#c9a227', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontSize: '20px', flexShrink: 0,
-            boxShadow: '0 0 0 3px rgba(201,162,39,0.2)'
-          }}>✦</div>
+            justifyContent: 'center', flexShrink: 0, color: '#071020'
+          }}><Icon name="message" className="w-5 h-5" /></div>
           <div>
             <div style={{ fontFamily: "'Cinzel', serif", fontSize: '17px', color: '#c9a227', letterSpacing: '0.5px' }}>
               Chatbot d'aide

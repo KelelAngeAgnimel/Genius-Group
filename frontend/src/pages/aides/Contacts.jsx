@@ -58,8 +58,7 @@ export default function Contacts() {
           <div key={i}
             className="bg-white rounded-2xl overflow-hidden"
             style={{
-              border: '1px solid #f0ece0',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.05)'
+              border: '1px solid #e5e7eb'
             }}>
 
             {/* Bande colorée + Photo */}

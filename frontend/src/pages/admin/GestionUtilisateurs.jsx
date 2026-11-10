@@ -14,8 +14,8 @@ const roleConfig = {
 const PAR_PAGE = 20
 
 const modaliteConfig = {
-  en_ligne:   { label: 'En ligne',   icone: '💻', couleur: '#4C7BC9' },
-  presentiel: { label: 'Présentiel', icone: '🏫', couleur: '#C9A84C' },
+  en_ligne:   { label: 'En ligne',   couleur: '#071020' },
+  presentiel: { label: 'Présentiel', couleur: '#071020' },
 }
 
 export default function GestionUtilisateurs() {
@@ -211,8 +211,8 @@ export default function GestionUtilisateurs() {
           className="border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none bg-white"
           style={{ borderColor: '#f0ece0' }}>
           <option value="tous">Toutes les modalités</option>
-          <option value="en_ligne">💻 En ligne</option>
-          <option value="presentiel">🏫 Présentiel</option>
+          <option value="en_ligne">En ligne</option>
+          <option value="presentiel">Présentiel</option>
         </select>
       </div>
 
@@ -306,8 +306,8 @@ export default function GestionUtilisateurs() {
                                   className="border rounded-lg px-2 py-1 text-xs bg-white focus:outline-none"
                                   style={{ borderColor: '#C9A84C' }}>
                                   <option value="">— Modalité —</option>
-                                  <option value="en_ligne">💻 En ligne</option>
-                                  <option value="presentiel">🏫 Présentiel</option>
+                                  <option value="en_ligne">En ligne</option>
+                                  <option value="presentiel">Présentiel</option>
                                 </select>
                               )}
                               <input
@@ -333,14 +333,14 @@ export default function GestionUtilisateurs() {
                                 {u.bloque && (
                                   <span className="px-2 py-0.5 rounded-full text-xs font-bold"
                                     style={{ background: 'rgba(201,76,123,0.12)', color: '#C94C7B' }}>
-                                    🚫 Bloqué
+                                    Bloqué
                                   </span>
                                 )}
                               </p>
                               {/* Modalité sous le nom pour les étudiants */}
                               {u.modalite && modaliteConfig[u.modalite] && (
                                 <p className="text-xs text-gray-500 mt-0.5">
-                                  {modaliteConfig[u.modalite].icone} {modaliteConfig[u.modalite].label}
+                                  {modaliteConfig[u.modalite].label}
                                 </p>
                               )}
                             </div>

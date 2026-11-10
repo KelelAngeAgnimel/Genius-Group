@@ -8,7 +8,7 @@ export default function Admin() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <p className="text-2xl font-bold text-red-600">⛔ Accès refusé</p>
+          <p className="text-2xl font-bold text-red-600">Accès refusé</p>
           <p className="text-gray-500 mt-2">Cette page est réservée aux administrateurs.</p>
         </div>
       </div>
@@ -18,14 +18,14 @@ export default function Admin() {
   return (
     <div className="flex flex-col md:flex-row gap-4 md:gap-6">
       <nav aria-label="Administration" className="md:w-64 flex flex-col gap-2 md:gap-3 shrink-0">
-        <h2 className="text-xl font-bold text-gray-800 md:mb-2">⚙️ Administration</h2>
+        <h2 className="text-xl font-bold text-gray-800 md:mb-2">Administration</h2>
         <div className="flex md:flex-col gap-2 md:gap-3 overflow-x-auto pb-1 md:pb-0">
         {[
-          { path: 'utilisateurs', label: '👥 Gestion utilisateurs' },
-          { path: 'creer', label: '➕ Créer un utilisateur' },
-          { path: 'planning', label: '📅 Gestion du planning' },
-          { path: 'competences', label: '🎯 Compétences et options' },
-          { path: 'vue-globale', label: '📊 Vue globale' },
+          { path: 'utilisateurs', label: 'Gestion utilisateurs' },
+          { path: 'creer', label: 'Créer un utilisateur' },
+          { path: 'planning', label: 'Gestion du planning' },
+          { path: 'competences', label: 'Compétences et options' },
+          { path: 'vue-globale', label: 'Vue globale' },
         ].map((page) => (
           <NavLink
             key={page.path}

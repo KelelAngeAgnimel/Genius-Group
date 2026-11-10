@@ -135,7 +135,7 @@ export default function PreparationMentale() {
                   className="bg-white rounded-2xl overflow-hidden transition-all duration-200"
                   style={{
                     border: conseilOuvert === ci ? `1px solid ${section.couleur}30` : '1px solid #f0ece0',
-                    boxShadow: conseilOuvert === ci ? `0 4px 20px ${section.couleur}10` : 'none'
+                    
                   }}>
 
                   <button

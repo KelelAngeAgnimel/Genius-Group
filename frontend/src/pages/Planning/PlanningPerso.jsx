@@ -224,7 +224,6 @@ function VueProfesseur() {
           {!etudiantSelectionne ? (
             <div className="rounded-2xl p-8 flex flex-col items-center justify-center text-center h-full"
               style={{ background: '#071020', border: '1px solid rgba(201,168,76,0.2)' }}>
-              <p className="text-4xl mb-3">👈</p>
               <p className="text-sm font-bold text-white mb-1">Sélectionnez un étudiant</p>
               <p className="text-xs text-gray-400">Cliquez sur un étudiant pour voir son profil et lui assigner un exercice</p>
             </div>

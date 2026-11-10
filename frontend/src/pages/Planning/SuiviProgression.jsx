@@ -350,7 +350,7 @@ function SuiviProfesseur() {
                 const couleur = couleurEleve(etudiant)
                 return (
                   <div key={i}
-                    className="bg-white rounded-2xl p-4 cursor-pointer transition-all hover:shadow-lg"
+                    className="bg-white rounded-2xl p-4 cursor-pointer transition-all hover:border-gray-400"
                     style={{ border: '1px solid #f0ece0' }}
                     onClick={() => ouvrirEtudiant(etudiant)}>
                     <div className="flex items-center gap-4">

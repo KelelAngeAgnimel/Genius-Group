@@ -211,7 +211,7 @@ function NiveauDocuments({ codes, ressources, chargement, erreur }) {
                 return (
                   <li key={d.id}>
                     <button type="button" onClick={() => setOuverte(d)}
-                      className="w-full text-left bg-white rounded-2xl p-4 flex items-center gap-4 transition hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C]"
+                      className="w-full text-left bg-white rounded-2xl p-4 flex items-center gap-4 transition hover:border-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C]"
                       style={{ border: '1px solid #f0ece0' }}>
                       <span aria-hidden="true" className="w-11 h-11 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0"
                         style={{ background: `${t.couleur}20`, color: t.couleur }}>{t.label.slice(0, 3).toUpperCase()}</span>
