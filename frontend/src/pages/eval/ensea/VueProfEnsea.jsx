@@ -3,8 +3,9 @@ import api from '../../../api'
 import { ouvrirFichierProtege } from '../../../lib/fichiers'
 import Loader from '../../../components/Loader'
 import EmptyState from '../../../components/EmptyState'
+import Icon from '../../../components/Icone'
 
-const VIOLET = '#7B4CC9'
+const VIOLET = '#071020' // couleur d'action unique (marine)
 const MATIERES = ['Français', 'Mathématiques'] // docs/pole-educatif.md
 const FILTRES = [
   { id: '', label: 'Toutes' },
@@ -196,7 +197,7 @@ function ListeCopies({ evaluation, onRetour, onChange }) {
 
       {erreur && <p className="text-sm mb-3" style={{ color: '#C94C7B' }}>{erreur}</p>}
       {loading ? <Loader texte="Chargement…" />
-        : copies.length === 0 ? <EmptyState icone="📄" titre="Aucune copie" />
+        : copies.length === 0 ? <EmptyState titre="Aucune copie" />
         : (
           <div className="flex flex-col gap-3">
             {copies.map(c => (
@@ -216,7 +217,7 @@ function ListeCopies({ evaluation, onRetour, onChange }) {
                 </div>
                 <div className="flex gap-2 mt-3">
                   <button type="button" onClick={() => ouvrirCopie(c)} className="text-xs font-bold px-3 py-2 rounded-xl" style={{ color: VIOLET, border: `1px solid ${VIOLET}60` }}>
-                    👁 Ouvrir la copie
+                    <span className="inline-flex items-center gap-1.5"><Icon name="eye" className="w-4 h-4" /> Ouvrir la copie</span>
                   </button>
                   <button type="button" onClick={() => setEnCorrection(enCorrection === c.id ? null : c.id)}
                     className="text-xs font-bold px-3 py-2 rounded-xl text-white" style={{ background: '#071020' }}>
@@ -269,7 +270,7 @@ export default function VueProfEnsea({ concours = 'ensea' }) {
 
       {erreur && <p className="text-sm mb-3" style={{ color: '#C94C7B' }}>{erreur}</p>}
       {loading ? <Loader texte="Chargement…" />
-        : evaluations.length === 0 ? <EmptyState icone="📝" titre="Aucune évaluation pour le moment" />
+        : evaluations.length === 0 ? <EmptyState titre="Aucune évaluation pour le moment" />
         : (
           <div className="flex flex-col gap-3">
             {evaluations.map(e => (

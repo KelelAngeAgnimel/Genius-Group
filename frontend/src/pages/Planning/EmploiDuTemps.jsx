@@ -332,7 +332,7 @@ export default function EmploiDuTemps() {
             <div className="flex flex-col gap-3">
               {evenementsFiltres.length === 0 && (
                 <div className="bg-white rounded-2xl p-10 text-center" style={{ border: '1px solid #f0ece0' }}>
-                  <EmptyState icone="📅" titre="Aucun cours prévu pour le moment" />
+                  <EmptyState titre="Aucun cours prévu pour le moment" />
                 </div>
               )}
               {jours.map(jour => {

@@ -361,7 +361,7 @@ export default function GestionPlanning() {
       {loading ? (
         <Loader texte="Chargement du planning…" />
       ) : coursAffiches.length === 0 ? (
-        <EmptyState icone="📅" titre="Aucun cours pour le moment" />
+        <EmptyState titre="Aucun cours pour le moment" />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

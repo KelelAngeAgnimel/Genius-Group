@@ -159,7 +159,7 @@ export default function GrilleNotes() {
       </form>
 
       {erreur && <p className="text-sm mb-3" style={{ color: '#C94C7B' }}>{erreur}</p>}
-      {donnees && lignes.length === 0 && <EmptyState icone="🎓" titre="Aucun élève inscrit à ce concours" />}
+      {donnees && lignes.length === 0 && <EmptyState titre="Aucun élève inscrit à ce concours" />}
 
       {lignes.length > 0 && (
         <div className="bg-white rounded-2xl overflow-x-auto" style={{ border: '1px solid #f0ece0' }}>

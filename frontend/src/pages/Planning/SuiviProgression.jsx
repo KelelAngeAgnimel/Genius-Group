@@ -444,7 +444,7 @@ function SuiviEtudiant() {
       </div>
 
       {!actif ? (
-        <EmptyState icone="🎓" titre="Aucun concours associé à votre compte" texte="Contactez l’administration pour être inscrit à un concours." />
+        <EmptyState titre="Aucun concours associé à votre compte" texte="Contactez l’administration pour être inscrit à un concours." />
       ) : (
         <>
           <SelecteurConcours codes={codes} actif={actif} onChoisir={choisir} />

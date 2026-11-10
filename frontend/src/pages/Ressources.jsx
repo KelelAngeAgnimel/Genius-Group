@@ -78,7 +78,7 @@ function NiveauConcours({ codes, ressources, chargement }) {
     <Page crumbs={[{ label: 'Accueil', path: '/accueil' }, { label: 'Ressources' }]} retourPath="/accueil" retourLabel="Accueil"
       surtitre="Bibliothèque" titre="Tous mes documents" soustitre="Choisissez votre concours">
       {codes.length === 0 ? (
-        <EmptyState icone="🎓" titre="Aucun concours associé à votre compte" texte="Contactez l’administration pour être inscrit à un concours." />
+        <EmptyState titre="Aucun concours associé à votre compte" texte="Contactez l’administration pour être inscrit à un concours." />
       ) : chargement ? <Loader texte="Chargement…" /> : (
         <Grille>
           {codes.map(code => {
@@ -186,13 +186,13 @@ function NiveauDocuments({ codes, ressources, chargement, erreur }) {
       {chargement ? <Loader texte="Chargement…" /> : erreur ? (
         <p className="text-sm text-center py-8" style={{ color: '#C94C7B' }}>{erreur}</p>
       ) : documents.length === 0 ? (
-        <EmptyState icone="📭" titre="Aucun document pour l’instant" texte="Votre professeur n’a encore rien publié dans cette matière." />
+        <EmptyState titre="Aucun document pour l’instant" texte="Votre professeur n’a encore rien publié dans cette matière." />
       ) : (
         <>
           <BarreOutils recherche={recherche} onRecherche={setRecherche} filtre={type} onFiltre={setType} filtres={filtres}
             tri={tri} onTri={setTri} tris={TRIS} vue={vue} onVue={setVue} />
           {liste.length === 0 ? (
-            <EmptyState icone="🔍" titre="Aucun résultat" texte="Essayez un autre mot ou retirez le filtre." />
+            <EmptyState titre="Aucun résultat" texte="Essayez un autre mot ou retirez le filtre." />
           ) : vue === 'cartes' ? (
             <Grille>
               {liste.map(d => (

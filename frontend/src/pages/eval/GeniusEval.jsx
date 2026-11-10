@@ -321,7 +321,7 @@ function VueEtudiant() {
       ) : quizzes.length === 0 ? (
         <div className="rounded-2xl p-8 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
           <p className="text-3xl mb-2">📭</p>
-          <EmptyState icone="❓" titre="Aucun quiz disponible pour le moment" />
+          <EmptyState titre="Aucun quiz disponible pour le moment" />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -538,7 +538,7 @@ function VueProf() {
         quizzes.length === 0 ? (
           <div className="rounded-2xl p-8 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
             <p className="text-3xl mb-2">📭</p>
-            <EmptyState icone="❓" titre="Aucun quiz créé pour le moment" />
+            <EmptyState titre="Aucun quiz créé pour le moment" />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

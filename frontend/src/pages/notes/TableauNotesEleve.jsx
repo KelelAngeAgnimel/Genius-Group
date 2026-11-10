@@ -37,7 +37,7 @@ export default function TableauNotesEleve({ concours }) {
   // Le serveur applique le même critère que viseConcours() ; repli sur la moyenne des matières si la valeur manque
   const moyenneGenerale = donnees.moyennes_concours?.[concours]
     ?? (matieres.length ? Math.round((matieres.reduce((s, m) => s + m.moyenne, 0) / matieres.length) * 100) / 100 : 0)
-  if (matieres.length === 0) return <EmptyState icone="📊" titre={`Aucune note ${libelleConcours(concours)} pour le moment`} />
+  if (matieres.length === 0) return <EmptyState titre={`Aucune note ${libelleConcours(concours)} pour le moment`} />
 
   return (
     <div className="mb-8">

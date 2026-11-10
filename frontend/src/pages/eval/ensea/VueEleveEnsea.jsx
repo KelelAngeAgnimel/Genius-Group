@@ -3,8 +3,9 @@ import api from '../../../api'
 import { LIMITES, TYPES_ACCEPTES, compresserImage, formaterTaille, ouvrirFichierProtege } from '../../../lib/fichiers'
 import Loader from '../../../components/Loader'
 import EmptyState from '../../../components/EmptyState'
+import Icon from '../../../components/Icone'
 
-const VIOLET = '#7B4CC9'
+const VIOLET = '#071020' // couleur d'action unique (marine)
 const ONGLETS = [
   { id: 'a_faire', label: 'À faire' },
   { id: 'deposee', label: 'Déposées' },
@@ -112,13 +113,13 @@ function FormulaireDepot({ evaluation, onDepose }) {
       <div className="flex flex-wrap gap-2 mb-3">
         {/* Mobile : ouvre directement l'appareil photo, une page par prise de vue */}
         <label className="text-xs font-bold px-4 py-2 rounded-xl cursor-pointer text-white" style={{ background: VIOLET }}>
-          📷 Prendre une page en photo
+          <span className="inline-flex items-center gap-1.5"><Icon name="camera" className="w-4 h-4" /> Prendre une page en photo</span>
           <input type="file" accept="image/jpeg,image/png" capture="environment" className="hidden"
             onChange={e => { ajouter(e.target.files); e.target.value = '' }} />
         </label>
         <label className="text-xs font-bold px-4 py-2 rounded-xl cursor-pointer bg-white"
           style={{ color: VIOLET, border: `1px solid ${VIOLET}60` }}>
-          📎 Choisir des fichiers
+          <span className="inline-flex items-center gap-1.5"><Icon name="paperclip" className="w-4 h-4" /> Choisir des fichiers</span>
           <input type="file" multiple accept="application/pdf,image/jpeg,image/png" className="hidden"
             onChange={e => { ajouter(e.target.files); e.target.value = '' }} />
         </label>
@@ -131,7 +132,7 @@ function FormulaireDepot({ evaluation, onDepose }) {
               <span className="text-xs font-bold text-gray-500 w-5 text-center">{i + 1}</span>
               {f.apercu
                 ? <img src={f.apercu} alt="" className="w-12 h-12 object-cover rounded-lg" />
-                : <div className="w-12 h-12 rounded-lg flex items-center justify-center text-lg bg-gray-100">📄</div>}
+                : <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-100 text-gray-500"><Icon name="fileText" className="w-6 h-6" /></div>}
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-700 truncate">{f.fichier.name}</p>
                 <p className="text-xs text-gray-500">{formaterTaille(f.fichier.size)}</p>
@@ -212,19 +213,19 @@ function CarteEvaluation({ evaluation, maintenant, onChange }) {
         {evaluation.ouverte && evaluation.a_sujet && (
           <button type="button" onClick={() => ouvrir(`/api/evaluations/${evaluation.id}/sujet`)}
             className="text-xs font-bold px-4 py-2 rounded-xl" style={{ color: VIOLET, border: `1px solid ${VIOLET}60` }}>
-            📥 Télécharger le sujet
+            <span className="inline-flex items-center gap-1.5"><Icon name="download" className="w-4 h-4" /> Télécharger le sujet</span>
           </button>
         )}
         {copie && (
           <button type="button" onClick={() => ouvrir(`/api/evaluations/copies/${copie.id}/fichier`)}
             className="text-xs font-bold px-4 py-2 rounded-xl" style={{ color: '#071020', border: '1px solid #e8e4da' }}>
-            👁 Voir ma copie
+            <span className="inline-flex items-center gap-1.5"><Icon name="eye" className="w-4 h-4" /> Voir ma copie</span>
           </button>
         )}
         {copie?.a_corrige && (
           <button type="button" onClick={() => ouvrir(`/api/evaluations/copies/${copie.id}/corrige`)}
-            className="text-xs font-bold px-4 py-2 rounded-xl text-white" style={{ background: '#4CC9A8' }}>
-            ✍️ Voir le corrigé annoté
+            className="text-xs font-bold px-4 py-2 rounded-xl text-white" style={{ background: '#071020' }}>
+            <span className="inline-flex items-center gap-1.5"><Icon name="pencil" className="w-4 h-4" /> Voir le corrigé annoté</span>
           </button>
         )}
       </div>
@@ -295,7 +296,7 @@ export default function VueEleveEnsea({ concours = 'ensea' }) {
       {loading ? (
         <Loader texte="Chargement…" />
       ) : visibles.length === 0 ? (
-        <EmptyState icone="📝" titre="Aucune évaluation dans cette catégorie" />
+        <EmptyState titre="Aucune évaluation dans cette catégorie" />
       ) : (
         <div className="flex flex-col gap-4">
           {visibles.map(e => <CarteEvaluation key={e.id} evaluation={e} maintenant={maintenant} onChange={charger} />)}

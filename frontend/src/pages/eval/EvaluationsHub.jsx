@@ -55,7 +55,7 @@ export default function EvaluationsHub() {
 
       {erreur && <p className="text-xs mb-4" style={{ color: '#C94C7B' }}>{erreur}</p>}
       {codes.length === 0 ? (
-        <EmptyState icone="🎓" titre="Aucun concours associé à votre compte" texte="Contactez l’administration pour être inscrit à un concours." />
+        <EmptyState titre="Aucun concours associé à votre compte" texte="Contactez l’administration pour être inscrit à un concours." />
       ) : !resume && !erreur ? (
         <Loader texte="Chargement…" />
       ) : (
