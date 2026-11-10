@@ -81,7 +81,7 @@ export default function PreparationMentale() {
       {/* CITATION */}
       <div className="rounded-2xl p-6 mb-6 text-center"
         style={{
-          background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+          background: '#071020',
           border: '1px solid rgba(201,168,76,0.2)'
         }}>
         <div className="w-8 h-0.5 mx-auto mb-4" style={{ background: '#C9A84C' }} />

@@ -558,7 +558,7 @@ export default function EspaceProfesseur() {
               className="py-3 rounded-xl text-sm font-bold tracking-widest transition"
               style={{
                 background: (!form.matiere || !form.titre || !fichier || loading)
-                  ? '#e5e1d5' : 'linear-gradient(135deg, #071020, #0d1f3c)',
+                  ? '#e5e1d5' : '#071020',
                 color: (!form.matiere || !form.titre || !fichier || loading) ? '#9ca3af' : '#C9A84C',
                 border: '1px solid rgba(201,168,76,0.4)',
                 cursor: (!form.matiere || !form.titre || !fichier || loading) ? 'not-allowed' : 'pointer'
@@ -719,7 +719,7 @@ export default function EspaceProfesseur() {
               <button type="submit" disabled={loading}
                 className="py-3 rounded-xl text-sm font-bold tracking-widest transition disabled:opacity-50"
                 style={{
-                  background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+                  background: '#071020',
                   color: '#C9A84C',
                   border: '1px solid rgba(201,168,76,0.4)'
                 }}>
@@ -984,7 +984,7 @@ export default function EspaceProfesseur() {
               <button type="submit" disabled={loading}
                 className="py-3 rounded-xl text-sm font-bold tracking-widest transition disabled:opacity-50"
                 style={{
-                  background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+                  background: '#071020',
                   color: '#C9A84C',
                   border: '1px solid rgba(201,168,76,0.4)'
                 }}>

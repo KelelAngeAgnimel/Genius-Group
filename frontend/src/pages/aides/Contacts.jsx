@@ -65,7 +65,7 @@ export default function Contacts() {
             {/* Bande colorée + Photo */}
             <div className="relative"
               style={{
-                background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+                background: '#071020',
                 borderBottom: `3px solid ${membre.couleur}`,
                 padding: '24px 24px 0 24px'
               }}>
@@ -192,7 +192,7 @@ export default function Contacts() {
         <button
           className="px-6 py-3 rounded-xl text-sm font-bold tracking-widest transition"
           style={{
-            background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+            background: '#071020',
             color: '#C9A84C',
             border: '1px solid rgba(201,168,76,0.4)'
           }}>

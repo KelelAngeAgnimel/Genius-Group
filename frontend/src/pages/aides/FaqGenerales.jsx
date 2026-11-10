@@ -140,7 +140,7 @@ export default function FaqGenerales() {
       {/* CONTACT */}
       <div className="mt-8 rounded-2xl p-6 text-center"
         style={{
-          background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+          background: '#071020',
           border: '1px solid rgba(201,168,76,0.2)'
         }}>
         <p className="text-white font-bold mb-2">Vous n'avez pas trouvé votre réponse ?</p>
@@ -148,7 +148,7 @@ export default function FaqGenerales() {
         <button
           className="px-6 py-2.5 rounded-xl text-sm font-bold transition"
           style={{
-            background: 'linear-gradient(135deg, #C9A84C, #8B6914)',
+            background: '#C9A84C',
             color: '#071020'
           }}>
           Contacter l'équipe

@@ -270,7 +270,7 @@ export default function Meetings() {
                 className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition"
                 style={{
                   background: c.live
-                    ? `linear-gradient(135deg, ${COULEURS.vert}, #3ab88f)`
+                    ? `${COULEURS.vert}`
                     : COULEURS.navy,
                   color: c.live ? COULEURS.navy : COULEURS.or,
                   textDecoration: 'none'

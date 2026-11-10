@@ -307,7 +307,7 @@ export default function Login() {
 
             <button type="submit" disabled={loading} style={{
               width: '100%', padding: '14px',
-              background: loading ? '#9ca3af' : 'linear-gradient(135deg, #071020, #1a3a6b)',
+              background: loading ? '#9ca3af' : '#071020',
               color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)',
               borderRadius: 12, fontSize: 14, fontWeight: 800,
               letterSpacing: '0.15em', cursor: loading ? 'not-allowed' : 'pointer',

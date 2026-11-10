@@ -64,7 +64,7 @@ export default function CarteProfilCompetences({ nom, matricule, notes, chargeme
   const { matieres, nbNotes, moyenneGenerale, niveau } = profilDepuisNotes(notes)
 
   return (
-    <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(145deg, #071020, #0d1f3c)', border: '1px solid rgba(201,168,76,0.3)' }}>
+    <div className="rounded-2xl p-5" style={{ background: '#071020', border: '1px solid rgba(201,168,76,0.3)' }}>
       <div className="flex items-center gap-3 mb-4">
         <div aria-hidden="true" className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
           style={{ background: 'rgba(201,168,76,0.2)', border: `1px solid ${OR}`, color: OR }}>

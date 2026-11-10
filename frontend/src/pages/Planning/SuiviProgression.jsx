@@ -151,7 +151,7 @@ function SuiviProfesseur() {
             style={{ border: '1px solid #f0ece0' }}>
             <div className="flex flex-col sm:flex-row items-center gap-4 p-5"
               style={{
-                background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+                background: '#071020',
                 borderBottom: `2px solid ${couleurEleve(etudiantActif)}`
               }}>
               <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold flex-shrink-0"
@@ -198,7 +198,7 @@ function SuiviProfesseur() {
 
                     <div className="p-4 flex items-center justify-between"
                       style={{
-                        background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+                        background: '#071020',
                         borderBottom: `2px solid ${couleur}`
                       }}>
                       <div>
@@ -242,7 +242,7 @@ function SuiviProfesseur() {
                                 <div className="h-2.5 rounded-full transition-all duration-700"
                                   style={{
                                     width: `${(note / 20) * 100}%`,
-                                    background: `linear-gradient(90deg, ${couleurNote(note)}66, ${couleurNote(note)})`
+                                    background: `${couleurNote(note)}`
                                   }} />
                               </div>
                             )}
@@ -451,7 +451,7 @@ function SuiviEtudiant() {
           {erreur && <p className="text-sm mb-4" style={{ color: '#C94C7B' }}>{erreur}</p>}
 
           <div className="rounded-2xl mb-6 p-5 flex items-center justify-between gap-4"
-            style={{ background: 'linear-gradient(135deg, #071020, #0d1f3c)', borderBottom: `2px solid ${couleur}` }}>
+            style={{ background: '#071020', borderBottom: `2px solid ${couleur}` }}>
             <div>
               <h2 className="text-xl font-bold text-white">{libelleConcours(actif)}</h2>
               <p className="text-xs text-gray-400 mt-0.5">{CONCOURS[actif]?.nom}</p>
@@ -483,7 +483,7 @@ function SuiviEtudiant() {
                     {derniere !== null && (
                       <div className="w-full h-2.5 rounded-full bg-gray-100 mb-3">
                         <div className="h-2.5 rounded-full transition-all duration-700"
-                          style={{ width: `${(derniere / 20) * 100}%`, background: `linear-gradient(90deg, ${couleurNote(derniere)}66, ${couleurNote(derniere)})` }} />
+                          style={{ width: `${(derniere / 20) * 100}%`, background: `${couleurNote(derniere)}` }} />
                       </div>
                     )}
 
