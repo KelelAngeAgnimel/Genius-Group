@@ -70,11 +70,11 @@ export default function StatistiquesEnsea() {
     <div className="flex flex-col gap-4">
       {erreur && <p className="text-sm" style={{ color: '#a8335c' }}>{erreur}</p>}
 
-      <Bloc titre="Notes">
+      <Bloc titre="Moyennes par matière">
         {MATIERES.map(nom => {
           const m = moyenneMatiere(nom)
           return (
-            <Ligne key={nom} libelle={`Moyenne en ${nom}`}
+            <Ligne key={nom} libelle={nom}
               valeur={m ? `${m.moyenne.toFixed(1)} / 20 (${m.nb} note${m.nb > 1 ? 's' : ''})` : null}
               vide="Aucune note pour l’instant" />
           )
