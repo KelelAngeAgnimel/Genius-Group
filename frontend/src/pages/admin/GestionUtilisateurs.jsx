@@ -11,6 +11,8 @@ const roleConfig = {
   etudiant:   { label: 'Étudiant',   couleur: '#C9A84C' },
 }
 
+const PAR_PAGE = 20
+
 const modaliteConfig = {
   en_ligne:   { label: 'En ligne',   icone: '💻', couleur: '#4C7BC9' },
   presentiel: { label: 'Présentiel', icone: '🏫', couleur: '#C9A84C' },
@@ -25,6 +27,8 @@ export default function GestionUtilisateurs() {
   const [recherche, setRecherche] = useState('')
   const [filtreRole, setFiltreRole] = useState('tous')
   const [filtreModalite, setFiltreModalite] = useState('tous')
+  const [page, setPage] = useState(1)
+  const [occupe, setOccupe] = useState(null) // id de la ligne dont une action est en cours
 
   // Édition en ligne
   const [editingId, setEditingId] = useState(null)
@@ -46,19 +50,27 @@ export default function GestionUtilisateurs() {
     }
   }
 
-  const supprimerUtilisateur = async (id) => {
-    if (!(await confirmer({ titre: 'Supprimer l’utilisateur ?', message: 'Le compte sera supprimé définitivement.', confirmer: 'Supprimer', danger: true }))) return
+  const supprimerUtilisateur = async (u) => {
+    const id = u.id
+    const nomComplet = [u.prenom, u.nom].filter(Boolean).join(' ') || u.username
+    const numero = u.matricule || u.username
+    const cible = numero && numero !== nomComplet ? `${nomComplet} (${numero})` : nomComplet
+    if (!(await confirmer({ titre: `Supprimer ${cible} ?`, message: 'Le compte sera supprimé définitivement.', confirmer: 'Supprimer', danger: true }))) return
+    setOccupe(id)
     try {
       await api.delete(`/api/users/${id}`)
       setUsers(prev => prev.filter(u => u.id !== id))
     } catch {
       toast.erreur('Erreur lors de la suppression')
+    } finally {
+      setOccupe(null)
     }
   }
 
   const basculerBlocage = async (u) => {
     const bloquer = !u.bloque
     if (bloquer && !(await confirmer({ titre: 'Bloquer ce compte ?', message: `${u.prenom || ''} ${u.nom || u.username} ne pourra plus se connecter.`, confirmer: 'Bloquer', danger: true }))) return
+    setOccupe(u.id)
     try {
       const res = await api.patch(`/api/users/${u.id}`, { bloque: bloquer })
       const data = res.data
@@ -69,6 +81,8 @@ export default function GestionUtilisateurs() {
       }
     } catch {
       toast.erreur('Erreur serveur lors du blocage')
+    } finally {
+      setOccupe(null)
     }
   }
 
@@ -109,6 +123,7 @@ export default function GestionUtilisateurs() {
   const usersFiltres = users.filter(u => {
     const matchRecherche = recherche === '' ||
       u.username?.toLowerCase().includes(recherche.toLowerCase()) ||
+      u.matricule?.toLowerCase().includes(recherche.toLowerCase()) ||
       u.nom?.toLowerCase().includes(recherche.toLowerCase()) ||
       u.prenom?.toLowerCase().includes(recherche.toLowerCase())
     const matchRole =
@@ -117,6 +132,11 @@ export default function GestionUtilisateurs() {
     const matchModalite = filtreModalite === 'tous' || u.modalite === filtreModalite
     return matchRecherche && matchRole && matchModalite
   })
+
+  // Pagination (20 par page) : évite 68+ lignes × 3 boutons dans le DOM
+  const nbPages = Math.max(1, Math.ceil(usersFiltres.length / PAR_PAGE))
+  const pageCourante = Math.min(page, nbPages)
+  const usersPage = usersFiltres.slice((pageCourante - 1) * PAR_PAGE, pageCourante * PAR_PAGE)
 
   // Un filtre est-il actif ?
   const filtreActif = recherche !== '' || filtreRole !== 'tous' || filtreModalite !== 'tous'
@@ -164,17 +184,17 @@ export default function GestionUtilisateurs() {
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <input
           type="text"
-          placeholder="Rechercher par nom ou identifiant..."
+          placeholder="Rechercher par nom ou matricule..."
           value={recherche}
-          onChange={e => setRecherche(e.target.value)}
+          onChange={e => { setRecherche(e.target.value); setPage(1) }}
           className="flex-1 border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none"
           style={{ borderColor: '#f0ece0' }}
           onFocus={e => e.target.style.borderColor = '#C9A84C'}
           onBlur={e => e.target.style.borderColor = '#f0ece0'}
-          aria-label="Rechercher par nom ou identifiant..." />
+          aria-label="Rechercher par nom ou matricule..." />
         <select aria-label="Filtrer par rôle ou concours"
           value={filtreRole}
-          onChange={e => setFiltreRole(e.target.value)}
+          onChange={e => { setFiltreRole(e.target.value); setPage(1) }}
           className="border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none bg-white"
           style={{ borderColor: '#f0ece0' }}>
           <option value="tous">Tous les rôles</option>
@@ -187,7 +207,7 @@ export default function GestionUtilisateurs() {
         </select>
         <select aria-label="Filtrer par modalité"
           value={filtreModalite}
-          onChange={e => setFiltreModalite(e.target.value)}
+          onChange={e => { setFiltreModalite(e.target.value); setPage(1) }}
           className="border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none bg-white"
           style={{ borderColor: '#f0ece0' }}>
           <option value="tous">Toutes les modalités</option>
@@ -201,6 +221,7 @@ export default function GestionUtilisateurs() {
         <div className="flex items-center justify-center py-12">
           <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin"
             style={{ borderColor: '#C9A84C', borderTopColor: 'transparent' }} />
+          <span className="ml-3 text-sm text-gray-500" role="status">Chargement des utilisateurs…</span>
         </div>
       )}
 
@@ -219,7 +240,7 @@ export default function GestionUtilisateurs() {
               <thead>
                 <tr style={{ borderBottom: '2px solid #f0ece0' }}>
                   <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Nom complet</th>
-                  <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Identifiant</th>
+                  <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Matricule / identifiant</th>
                   <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Role</th>
                   <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Inscrit le</th>
                   <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Actions</th>
@@ -233,7 +254,7 @@ export default function GestionUtilisateurs() {
                     </td>
                   </tr>
                 )}
-                {usersFiltres.map((u) => {
+                {usersPage.map((u) => {
                   const base = roleConfig[roleDeBase(u.role)] || { label: u.role, couleur: '#9ca3af' }
                   // Élève / professeur : on affiche ses concours (couleur du premier)
                   const role = roleDeBase(u.role) === 'admin' ? base
@@ -330,7 +351,7 @@ export default function GestionUtilisateurs() {
                       {/* Identifiant */}
                       <td className="p-4">
                         <span className="font-mono font-bold" style={{ color: '#C9A84C' }}>
-                          {u.username}
+                          {u.matricule || u.username}
                         </span>
                       </td>
 
@@ -370,21 +391,24 @@ export default function GestionUtilisateurs() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => commencerEdition(u)}
-                              className="px-3 py-1 rounded-lg text-xs font-semibold transition"
+                              disabled={occupe === u.id}
+                              className="px-3 py-1 rounded-lg text-xs font-semibold transition disabled:opacity-50"
                               style={{ background: 'rgba(76,123,201,0.1)', color: '#4C7BC9' }}>
                               Modifier
                             </button>
                             <button
                               onClick={() => basculerBlocage(u)}
-                              className="px-3 py-1 rounded-lg text-xs font-semibold transition"
+                              disabled={occupe === u.id}
+                              className="px-3 py-1 rounded-lg text-xs font-semibold transition disabled:opacity-50"
                               style={u.bloque
                                 ? { background: 'rgba(76,201,168,0.12)', color: '#4CC9A8' }
                                 : { background: 'rgba(230,150,40,0.12)', color: '#C97B1A' }}>
-                              {u.bloque ? 'Débloquer' : 'Bloquer'}
+                              {occupe === u.id ? '…' : u.bloque ? 'Débloquer' : 'Bloquer'}
                             </button>
                             <button
-                              onClick={() => supprimerUtilisateur(u.id)}
-                              className="px-3 py-1 rounded-lg text-xs font-semibold transition"
+                              onClick={() => supprimerUtilisateur(u)}
+                              disabled={occupe === u.id}
+                              className="px-3 py-1 rounded-lg text-xs font-semibold transition disabled:opacity-50"
                               style={{ background: 'rgba(201,76,123,0.1)', color: '#C94C7B' }}>
                               Supprimer
                             </button>
@@ -397,6 +421,28 @@ export default function GestionUtilisateurs() {
               </tbody>
             </table>
           </div>
+
+          {usersFiltres.length > PAR_PAGE && (
+            <nav aria-label="Pagination" className="flex items-center justify-between gap-3 p-3 text-xs"
+              style={{ borderTop: '1px solid #f0ece0' }}>
+              <span className="text-gray-500">
+                {(pageCourante - 1) * PAR_PAGE + 1}–{Math.min(pageCourante * PAR_PAGE, usersFiltres.length)} sur {usersFiltres.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setPage(pageCourante - 1)} disabled={pageCourante <= 1}
+                  className="px-3 py-1 rounded-lg font-semibold disabled:opacity-40"
+                  style={{ background: '#f8f7f4', color: '#374151' }}>
+                  Précédent
+                </button>
+                <span className="text-gray-600">Page {pageCourante} / {nbPages}</span>
+                <button type="button" onClick={() => setPage(pageCourante + 1)} disabled={pageCourante >= nbPages}
+                  className="px-3 py-1 rounded-lg font-semibold disabled:opacity-40"
+                  style={{ background: '#f8f7f4', color: '#374151' }}>
+                  Suivant
+                </button>
+              </div>
+            </nav>
+          )}
         </div>
       )}
     </div>

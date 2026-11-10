@@ -23,6 +23,31 @@ describe('POST /api/auth/login', () => {
     expect(res.body.user.password).toBeUndefined()
   })
 
+  // Rapport QA n°10 : message d'erreur entièrement en français
+  it('connexion vide → 400 avec libellés français (pas « matricule, password »)', async () => {
+    const res = await request(app).post('/api/auth/login').send({})
+    expect(res.status).toBe(400)
+    expect(res.body.message).toBe('Données invalides : Matricule, Mot de passe')
+    expect(res.body.message).not.toMatch(/password|matricule,/)
+    expect(res.body.champs).toEqual(['matricule', 'password']) // clés techniques conservées pour le front
+  })
+
+  // Rapport QA n°11 : une saisie malformée donne 400, jamais 500
+  it.each(["' OR 1=1 --", "admin'; DROP TABLE users;--", 'a" OR "1"="1', '1) or (1=1', 'x%27%20or%201=1'])(
+    'identifiant malformé %j → 400',
+    async (charge) => {
+      const res = await request(app).post('/api/auth/login').send({ matricule: charge, password: 'x' })
+      expect(res.status).toBe(400)
+    }
+  )
+
+  it('les identifiants usuels (matricule, prof.martin, e-mail, accents) restent acceptés (401 si inconnus)', async () => {
+    for (const id of ['26GEN0001', 'prof.martin', 'jean-marie_k', 'awa@exemple.ci', 'Kouamé Yao']) {
+      const res = await request(app).post('/api/auth/login').send({ matricule: id, password: 'x' })
+      expect(res.status).toBe(401)
+    }
+  })
+
   it('renvoie la liste des concours dans la réponse et le JWT (inscriptions)', async () => {
     resetDb({
       users: [{ ...eleve, role: 'etudiant' }],

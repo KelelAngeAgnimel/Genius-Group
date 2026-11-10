@@ -8,6 +8,13 @@ const rolesDisponibles = [
   { value: 'admin', label: 'Administrateur', couleur: '#C94C7B', description: 'Accès complet à toutes les fonctionnalités' },
 ]
 
+const ORDRE_CHAMPS = ['prenom', 'nom', 'username', 'password', 'concours', 'modalite']
+
+// Message d'erreur sous un champ
+const MessageChamp = ({ champ, erreurs }) => erreurs[champ]
+  ? <p id={`erreur-${champ}`} role="alert" className="text-xs font-semibold mt-1" style={{ color: '#C94C7B' }}>{erreurs[champ]}</p>
+  : null
+
 export default function CreerUtilisateur() {
   const [form, setForm] = useState({
     username: '',
@@ -21,10 +28,39 @@ export default function CreerUtilisateur() {
   const [loading, setLoading] = useState(false)
   const [succes, setSucces] = useState('')
   const [erreur, setErreur] = useState('')
+  const [erreurs, setErreurs] = useState({}) // une erreur par champ
   const [utilisateurCree, setUtilisateurCree] = useState(null)
 
   const roleActif = rolesDisponibles.find(r => r.value === form.role)
   const estEtudiant = form.role === 'etudiant'
+
+  const valider = () => {
+    const e = {}
+    if (!form.prenom.trim()) e.prenom = 'Le prénom est requis.'
+    if (!form.nom.trim()) e.nom = 'Le nom est requis.'
+    if (!estEtudiant && !form.username.trim()) e.username = 'L’identifiant de connexion est requis.'
+    if (!form.password) e.password = 'Le mot de passe est requis.'
+    else if (form.password.length < 6) e.password = 'Le mot de passe doit contenir au moins 6 caractères.'
+    if (estEtudiant && form.concours.length === 0) e.concours = 'Cochez au moins un concours.'
+    if (estEtudiant && !form.modalite) e.modalite = 'Choisissez la modalité (en ligne ou présentiel).'
+    return e
+  }
+
+  // Modifie un champ et efface son erreur
+  const changer = (champ, valeur) => {
+    setForm(f => ({ ...f, [champ]: valeur }))
+    setErreurs(prev => (prev[champ] ? { ...prev, [champ]: undefined } : prev))
+  }
+
+  // Attributs communs d'un champ texte : id, état invalide, bordure rouge
+  const attrs = (champ) => ({
+    id: `champ-${champ}`,
+    'aria-invalid': erreurs[champ] ? true : undefined,
+    'aria-describedby': erreurs[champ] ? `erreur-${champ}` : undefined,
+    style: { borderColor: erreurs[champ] ? '#C94C7B' : '#f0ece0' },
+    onFocus: e => { e.target.style.borderColor = erreurs[champ] ? '#C94C7B' : '#C9A84C' },
+    onBlur: e => { e.target.style.borderColor = erreurs[champ] ? '#C94C7B' : '#f0ece0' }
+  })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -33,23 +69,16 @@ export default function CreerUtilisateur() {
     setErreur('')
     setUtilisateurCree(null)
 
-    if (!estEtudiant && !form.username) {
-      setErreur('L\'identifiant de connexion est requis pour les professeurs et administrateurs')
+    const nouvelles = valider()
+    if (Object.keys(nouvelles).length > 0) {
+      setErreurs(nouvelles)
       setLoading(false)
+      // Place le curseur sur le premier champ fautif
+      const premier = ORDRE_CHAMPS.find(c => nouvelles[c])
+      document.getElementById(`champ-${premier}`)?.focus()
       return
     }
-
-    if (estEtudiant && form.concours.length === 0) {
-      setErreur('Cochez au moins un concours pour cet étudiant')
-      setLoading(false)
-      return
-    }
-
-    if (estEtudiant && !form.modalite) {
-      setErreur('Veuillez choisir la modalité des cours (en ligne ou présentiel)')
-      setLoading(false)
-      return
-    }
+    setErreurs({})
 
     try {
       // L'identifiant n'est envoyé que pour les professeurs et administrateurs
@@ -96,33 +125,29 @@ export default function CreerUtilisateur() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
 
             {/* Prénom et Nom */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Prénom</label>
+                <label htmlFor="champ-prenom" className="block text-xs font-semibold text-gray-600 mb-1">Prénom <span className="text-red-400">*</span></label>
                 <input type="text"
                   value={form.prenom}
-                  onChange={e => setForm({ ...form, prenom: e.target.value })}
+                  onChange={e => changer('prenom', e.target.value)}
                   placeholder="Ex: Jean-Marie"
                   className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none transition"
-                  style={{ borderColor: '#f0ece0' }}
-                  onFocus={e => e.target.style.borderColor = '#C9A84C'}
-                  onBlur={e => e.target.style.borderColor = '#f0ece0'}
-                  aria-label="Prénom" />
+                  {...attrs('prenom')} />
+                <MessageChamp champ="prenom" erreurs={erreurs} />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Nom</label>
+                <label htmlFor="champ-nom" className="block text-xs font-semibold text-gray-600 mb-1">Nom <span className="text-red-400">*</span></label>
                 <input type="text"
                   value={form.nom}
-                  onChange={e => setForm({ ...form, nom: e.target.value })}
+                  onChange={e => changer('nom', e.target.value)}
                   placeholder="Ex: Dupont"
                   className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none transition"
-                  style={{ borderColor: '#f0ece0' }}
-                  onFocus={e => e.target.style.borderColor = '#C9A84C'}
-                  onBlur={e => e.target.style.borderColor = '#f0ece0'}
-                  aria-label="Nom" />
+                  {...attrs('nom')} />
+                <MessageChamp champ="nom" erreurs={erreurs} />
               </div>
             </div>
 
@@ -132,15 +157,14 @@ export default function CreerUtilisateur() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1">
                   Identifiant de connexion <span className="text-red-400">*</span>
                 </label>
-                <input type="text" required={!estEtudiant}
+                <input type="text"
                   value={form.username}
-                  onChange={e => setForm({ ...form, username: e.target.value })}
+                  onChange={e => changer('username', e.target.value)}
                   placeholder="Ex: prof.martin"
                   className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none transition"
-                  style={{ borderColor: '#f0ece0' }}
-                  onFocus={e => e.target.style.borderColor = '#C9A84C'}
-                  onBlur={e => e.target.style.borderColor = '#f0ece0'}
+                  {...attrs('username')}
                   aria-label="Identifiant de connexion" />
+                <MessageChamp champ="username" erreurs={erreurs} />
                 <p className="text-xs text-gray-500 mt-1">Cet identifiant sera utilisé pour se connecter</p>
               </div>
             )}
@@ -168,15 +192,14 @@ export default function CreerUtilisateur() {
               <label className="block text-xs font-semibold text-gray-600 mb-1">
                 Mot de passe initial <span className="text-red-400">*</span>
               </label>
-              <input type="text" required
+              <input type="text"
                 value={form.password}
-                onChange={e => setForm({ ...form, password: e.target.value })}
+                onChange={e => changer('password', e.target.value)}
                 placeholder="Mot de passe à communiquer à l'utilisateur"
                 className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none transition"
-                style={{ borderColor: '#f0ece0' }}
-                onFocus={e => e.target.style.borderColor = '#C9A84C'}
-                onBlur={e => e.target.style.borderColor = '#f0ece0'}
+                {...attrs('password')}
                 aria-label="Mot de passe initial" />
+              <MessageChamp champ="password" erreurs={erreurs} />
             </div>
 
             {/* Rôle */}
@@ -187,7 +210,7 @@ export default function CreerUtilisateur() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {rolesDisponibles.map((role, i) => (
                   <button key={i} type="button"
-                    onClick={() => setForm({ ...form, role: role.value, modalite: '' })}
+                    onClick={() => { setForm({ ...form, role: role.value, modalite: '' }); setErreurs({}) }}
                     className="p-3 rounded-xl text-left transition"
                     style={{
                       border: form.role === role.value ? `2px solid ${role.couleur}` : '1px solid #f0ece0',
@@ -216,7 +239,11 @@ export default function CreerUtilisateur() {
                     ? "L'étudiant n'accède qu'aux contenus des concours cochés."
                     : "Aucun concours coché : le professeur voit tous les concours. Cocher des concours le limite à leurs élèves."}
                 </p>
-                <SelecteurConcours value={form.concours} onChange={concours => setForm({ ...form, concours })} />
+                <div id="champ-concours" tabIndex={-1} aria-invalid={erreurs.concours ? true : undefined}
+                  className="rounded-xl" style={erreurs.concours ? { outline: '2px solid #C94C7B', outlineOffset: 4 } : undefined}>
+                  <SelecteurConcours value={form.concours} onChange={concours => changer('concours', concours)} />
+                </div>
+                <MessageChamp champ="concours" erreurs={erreurs} />
               </div>
             )}
 
@@ -229,9 +256,11 @@ export default function CreerUtilisateur() {
                 <p className="text-xs text-gray-500 mb-3">
                   L'emploi du temps de l'étudiant sera adapté selon sa modalité.
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div id="champ-modalite" tabIndex={-1} aria-invalid={erreurs.modalite ? true : undefined}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl"
+                  style={erreurs.modalite ? { outline: '2px solid #C94C7B', outlineOffset: 4 } : undefined}>
                   <button type="button"
-                    onClick={() => setForm({ ...form, modalite: 'en_ligne' })}
+                    onClick={() => changer('modalite', 'en_ligne')}
                     className="p-4 rounded-xl text-left transition"
                     style={{
                       border: form.modalite === 'en_ligne' ? '2px solid #4C7BC9' : '1px solid #f0ece0',
@@ -249,7 +278,7 @@ export default function CreerUtilisateur() {
                   </button>
 
                   <button type="button"
-                    onClick={() => setForm({ ...form, modalite: 'presentiel' })}
+                    onClick={() => changer('modalite', 'presentiel')}
                     className="p-4 rounded-xl text-left transition"
                     style={{
                       border: form.modalite === 'presentiel' ? '2px solid #C9A84C' : '1px solid #f0ece0',
@@ -266,6 +295,7 @@ export default function CreerUtilisateur() {
                     </p>
                   </button>
                 </div>
+                <MessageChamp champ="modalite" erreurs={erreurs} />
               </div>
             )}
 
@@ -318,18 +348,13 @@ export default function CreerUtilisateur() {
                 ✓ Compte créé
               </p>
               <div className="flex flex-col gap-2.5">
-                {utilisateurCree.matricule && (
-                  <div className="flex justify-between items-center p-2 rounded-lg"
-                    style={{ background: 'rgba(201,168,76,0.08)' }}>
-                    <span className="text-xs text-gray-500">Matricule</span>
-                    <span className="text-sm font-black" style={{ color: '#C9A84C', letterSpacing: '0.1em' }}>
-                      {utilisateurCree.matricule}
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-xs text-gray-500">Identifiant</span>
-                  <span className="text-xs font-bold text-gray-700">{utilisateurCree.username}</span>
+                {/* Un seul numéro : le matricule (élève) ou l'identifiant (prof / admin, sans matricule) */}
+                <div className="flex justify-between items-center p-2 rounded-lg"
+                  style={{ background: 'rgba(201,168,76,0.08)' }}>
+                  <span className="text-xs text-gray-500">{utilisateurCree.matricule ? 'Matricule (identifiant de connexion)' : 'Identifiant de connexion'}</span>
+                  <span className="text-sm font-black" style={{ color: '#C9A84C', letterSpacing: '0.1em' }}>
+                    {utilisateurCree.matricule || utilisateurCree.username}
+                  </span>
                 </div>
                 {utilisateurCree.modalite && (
                   <div className="flex justify-between">
@@ -342,7 +367,7 @@ export default function CreerUtilisateur() {
               </div>
               <div className="mt-3 p-2 rounded-lg text-xs text-center"
                 style={{ background: 'rgba(201,168,76,0.08)', color: '#C9A84C' }}>
-                Communiquez le matricule et le mot de passe à l'étudiant
+                Communiquez ce numéro et le mot de passe {utilisateurCree.matricule ? 'à l’étudiant' : 'à l’utilisateur'}
               </div>
             </div>
           )}

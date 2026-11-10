@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import Loader from './components/Loader'
+const NotFound = lazy(() => import('./pages/NotFound'))
 const AccueilPublic = lazy(() => import('./pages/AccueilPublic'))
 const Admin = lazy(() => import('./pages/admin/Admin'))
 const GestionUtilisateurs = lazy(() => import('./pages/admin/GestionUtilisateurs'))
@@ -129,6 +130,9 @@ export default function App() {
           <Route path="competences" element={<GestionCompetences />} />
           <Route path="vue-globale" element={<VueGlobale />} />
         </Route>
+
+        {/* Toute adresse inconnue */}
+        <Route path="*" element={<NotFound />} />
 
       </Routes>
       </Suspense>

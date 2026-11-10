@@ -2,6 +2,7 @@ import api from '../api'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Loader from '../components/Loader'
 
 // Photos d'étudiants africains/noirs — Unsplash (libres de droits)
 // Sources : Emmanuel Ikwuegbu, Desola Lanre-Ologun, TopSphere Media, Nqobile Vundla
@@ -52,11 +53,26 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [erreurs, setErreurs] = useState({}) // une erreur par champ
   const [loading, setLoading] = useState(false)
+  // Réveil du serveur (Render en veille) : 'attente' tant que /health n'a pas répondu
+  const [serveur, setServeur] = useState('attente')
+  const [lent, setLent] = useState(false)
   const [slideIndex, setSlideIndex] = useState(0)
   const [fondu, setFondu] = useState(true)
   const { login } = useAuth()
   const navigate = useNavigate()
+
+  // Préchauffage : un appel /health dès l'arrivée sur la page de connexion
+  useEffect(() => {
+    let actif = true
+    const delaiLent = setTimeout(() => { if (actif) setLent(true) }, 2500)
+    api.get('/health', { timeout: 60000 })
+      .then(() => { if (actif) setServeur('pret') })
+      .catch(() => { if (actif) setServeur('indisponible') })
+      .finally(() => clearTimeout(delaiLent))
+    return () => { actif = false; clearTimeout(delaiLent) }
+  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -76,8 +92,16 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
     setError('')
+    const nouvelles = {}
+    if (!matricule.trim()) nouvelles.matricule = 'Saisissez votre matricule.'
+    if (!password) nouvelles.password = 'Saisissez votre mot de passe.'
+    setErreurs(nouvelles)
+    if (nouvelles.matricule || nouvelles.password) {
+      document.getElementById(nouvelles.matricule ? 'champ-matricule' : 'champ-password')?.focus()
+      return
+    }
+    setLoading(true)
     try {
       const res = await api.post('/api/auth/login', { matricule, password })
       if (!res.ok) {
@@ -201,50 +225,65 @@ export default function Login() {
             Utiliser votre compte Genius Group
           </p>
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {serveur === 'attente' && lent && (
+            <div style={{ marginBottom: 18, background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '4px 14px' }}>
+              <Loader texte="Le serveur démarre, cela peut prendre quelques secondes…" />
+            </div>
+          )}
+          {serveur === 'indisponible' && (
+            <div role="alert" style={{ marginBottom: 18, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '10px 14px', color: '#dc2626', fontSize: 13 }}>
+              Le serveur ne répond pas pour le moment. Réessayez dans un instant.
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+              <label htmlFor="champ-matricule" style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
                 Matricule
               </label>
               <input
+                id="champ-matricule"
                 type="text"
                 value={matricule}
-                onChange={e => setMatricule(e.target.value)}
+                onChange={e => { setMatricule(e.target.value); setErreurs(x => ({ ...x, matricule: undefined })) }}
                 placeholder="Ex: 26GEN0001"
-                required
+                aria-invalid={erreurs.matricule ? true : undefined}
+                aria-describedby={erreurs.matricule ? 'erreur-matricule' : undefined}
                 style={{
                   width: '100%', padding: '13px 16px', fontSize: 14,
-                  border: '2px solid #e5e7eb', borderRadius: 12, outline: 'none',
+                  border: `2px solid ${erreurs.matricule ? '#dc2626' : '#e5e7eb'}`, borderRadius: 12, outline: 'none',
                   boxSizing: 'border-box', color: '#111827',
-                  transition: 'border-color 0.2s', background: '#f9fafb'
+                  transition: 'border-color 0.2s', background: erreurs.matricule ? '#fef2f2' : '#f9fafb'
                 }}
-                onFocus={e => e.target.style.borderColor = '#C9A84C'}
-                onBlur={e => e.target.style.borderColor = '#e5e7eb'}
-                aria-label="Matricule" />
+                onFocus={e => e.target.style.borderColor = erreurs.matricule ? '#dc2626' : '#C9A84C'}
+                onBlur={e => e.target.style.borderColor = erreurs.matricule ? '#dc2626' : '#e5e7eb'} />
+              {erreurs.matricule && <p id="erreur-matricule" role="alert" style={{ color: '#dc2626', fontSize: 12, margin: '6px 0 0' }}>{erreurs.matricule}</p>}
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+              <label htmlFor="champ-password" style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
                 Mot de passe
               </label>
               <div style={{ position: 'relative' }}>
-                <input aria-label="Mot de passe"
+                <input
+                  id="champ-password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={e => { setPassword(e.target.value); setErreurs(x => ({ ...x, password: undefined })) }}
                   placeholder="••••••••"
-                  required
+                  aria-invalid={erreurs.password ? true : undefined}
+                  aria-describedby={erreurs.password ? 'erreur-password' : undefined}
                   style={{
                     width: '100%', padding: '13px 48px 13px 16px', fontSize: 14,
-                    border: '2px solid #e5e7eb', borderRadius: 12, outline: 'none',
+                    border: `2px solid ${erreurs.password ? '#dc2626' : '#e5e7eb'}`, borderRadius: 12, outline: 'none',
                     boxSizing: 'border-box', color: '#111827',
-                    transition: 'border-color 0.2s', background: '#f9fafb'
+                    transition: 'border-color 0.2s', background: erreurs.password ? '#fef2f2' : '#f9fafb'
                   }}
-                  onFocus={e => e.target.style.borderColor = '#C9A84C'}
-                  onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+                  onFocus={e => e.target.style.borderColor = erreurs.password ? '#dc2626' : '#C9A84C'}
+                  onBlur={e => e.target.style.borderColor = erreurs.password ? '#dc2626' : '#e5e7eb'}
                 />
-                <button type="button" onClick={() => setShowPassword(v => !v)} style={{
+                <button type="button" aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'} onClick={() => setShowPassword(v => !v)} style={{
                   position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
                   background: 'none', border: 'none', cursor: 'pointer',
                   color: '#9ca3af', fontSize: 16, padding: 4,
@@ -253,6 +292,7 @@ export default function Login() {
                   {showPassword ? '🙈' : '👁'}
                 </button>
               </div>
+              {erreurs.password && <p id="erreur-password" role="alert" style={{ color: '#dc2626', fontSize: 12, margin: '6px 0 0' }}>{erreurs.password}</p>}
             </div>
 
             {error && (
@@ -274,7 +314,7 @@ export default function Login() {
               transition: 'all 0.2s', marginTop: 6,
               boxShadow: '0 4px 20px rgba(201,168,76,0.15)'
             }}>
-              {loading ? 'Connexion en cours...' : 'SE CONNECTER'}
+              {loading ? (lent || serveur === 'attente' ? 'Connexion… (le serveur démarre)' : 'Connexion en cours...') : 'SE CONNECTER'}
             </button>
           </form>
 
