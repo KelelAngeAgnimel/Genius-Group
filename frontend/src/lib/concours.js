@@ -1,12 +1,13 @@
 // Concours : référentiel d'affichage + traduction des anciens rôles (comptes pas encore migrés).
 // Le backend reste la source de vérité des droits ; ceci sert à l'affichage et au filtrage d'interface.
 
+// guide : texte facultatif affiché dans Accueil > Guide (presentation, matieres, fonctionnement, preparation).
 export const CONCOURS = {
-  inphb:  { label: 'INP-HB', couleur: '#C9A84C', matieres: ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire'], nom: 'Institut National Polytechnique Houphouët-Boigny', logo: 'https://inphb.edu.ci/wp-content/uploads/2020/03/INPHB.png' },
-  esatic: { label: 'ESATIC', couleur: '#4C7BC9', matieres: ['Mathématiques', 'Physique', 'Anglais', 'Français'], nom: 'Ecole Supérieure Africaine des TIC', logo: 'https://esatic.ci/wp-content/uploads/2024/07/esatic_logo.jpg' },
-  cme:    { label: 'CME',    couleur: '#4CC9A8', matieres: ['Culture Générale', 'Culture Scientifique', 'Anglais', 'Français'], nom: 'Concours des Meilleurs Etudiants', logo: '/cme-logo.png' },
+  inphb:  { label: 'INP-HB', couleur: '#C9A84C', matieres: ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire'], nom: 'Institut National Polytechnique Houphouët-Boigny', logo: 'https://inphb.edu.ci/wp-content/uploads/2020/03/INPHB.png', guide: { presentation: 'Concours d’entrée niveau BAC/BT à l’Institut National Polytechnique Félix Houphouët-Boigny, qui regroupe 8 grandes écoles (EPGE, ESI, ESCAE, ESTP, ESAS, ESMG, ESCPE et ESA). Il comporte deux phases : une admissibilité sur dossier, puis une composition écrite de 3H30.' } },
+  esatic: { label: 'ESATIC', couleur: '#4C7BC9', matieres: ['Mathématiques', 'Physique', 'Anglais', 'Français'], nom: 'Ecole Supérieure Africaine des TIC', logo: 'https://esatic.ci/wp-content/uploads/2024/07/esatic_logo.jpg', guide: { presentation: 'Concours d’entrée de l’Ecole Supérieure Africaine des TIC, en classes préparatoires MP2I et en Licence 1 (SRIT, TWIN, ENTD).' } },
+  cme:    { label: 'CME',    couleur: '#4CC9A8', matieres: ['Culture Générale', 'Culture Scientifique', 'Anglais', 'Français'], nom: 'Concours des Meilleurs Etudiants', logo: '/cme-logo.png', guide: { presentation: 'Concours des Meilleurs Etudiants : concours national destiné aux bacheliers.' } },
   // logo à déposer dans frontend/public ; à défaut, le sigle est affiché
-  ensea:  { label: 'ENSEA',  couleur: '#7B4CC9', matieres: ['Français', 'Mathématiques'], nom: 'École Nationale Supérieure de Statistique et d’Économie Appliquée', logo: '/ensea-logo.png' }
+  ensea:  { label: 'ENSEA',  couleur: '#7B4CC9', matieres: ['Français', 'Mathématiques'], nom: 'École Nationale Supérieure de Statistique et d’Économie Appliquée', logo: '/ensea-logo.png', guide: { presentation: 'École Nationale Supérieure de Statistique et d’Économie Appliquée d’Abidjan. Concours d’entrée du cycle Analyste Statisticien (AS), ouvert aux bacheliers des séries C, D, E ou S.', matieres: 'Français (résumé et dissertation) et Mathématiques', fonctionnement: 'Sur la plateforme, vous téléchargez les sujets, déposez votre copie scannée, que le professeur corrige (note sur 20 et commentaire), et remplissez une auto-évaluation après chaque séance. Un score de compétence est calculé pour chaque compétence.', preparation: 'La préparation se poursuit jusqu’à la date des épreuves écrites du concours.' } }
 }
 export const CODES_CONCOURS = Object.keys(CONCOURS)
 
