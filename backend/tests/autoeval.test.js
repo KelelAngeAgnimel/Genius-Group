@@ -160,6 +160,17 @@ describe('Auto-évaluation', () => {
     expect(r.body.en_attente[0].competences.map(c => c.code)).toEqual(['FR-RES-1', 'MA-ANA-1'])
   })
 
+  it('GET /en-attente renvoie le bilan par concours (séances terminées / remplies)', async () => {
+    resetDb(base({
+      seances: [seance(S.recente, -1), seance(S.ancienne, -100), seance(S.future, +5)],
+      seance_competences: [S.recente, S.ancienne, S.future].flatMap(id => [C1, C2].map(c => ({ seance_id: id, competence_id: c }))),
+      auto_evaluations: [C1, C2].map(c => ({ seance_id: S.ancienne, etudiant_id: 10, competence_id: c, niveau: 3 }))
+    }))
+    const r = await request(app).get('/api/auto-eval/en-attente').set(bearer(10))
+    expect(r.body.bilan).toEqual({ ensea: { terminees: 2, remplies: 1 } })
+    expect((await request(app).get('/api/auto-eval/en-attente').set(bearer(12))).body.bilan).toEqual({})
+  })
+
   it('rien en attente pour une séance à venir ou pour un élève d’un autre concours', async () => {
     resetDb(base(avecSeance(S.future, +5)))
     expect((await request(app).get('/api/auto-eval/en-attente').set(bearer(10))).body.en_attente).toHaveLength(0)

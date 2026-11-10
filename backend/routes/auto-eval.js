@@ -25,15 +25,24 @@ const envoiSchema = z.object({
 //  rappel     : au moins une est en retard de réponse (rappel à 24 h)
 //  verrouille : au moins une bloque l'accès aux cours et ressources (délai de 48 h dépassé)
 router.get('/en-attente', verifyToken, async (req, res) => {
-  if (!estEtudiant(req.user)) return res.json({ en_attente: [], rappel: false, verrouille: false })
+  if (!estEtudiant(req.user)) return res.json({ en_attente: [], rappel: false, verrouille: false, bilan: {} })
   const statuts = await statutsEleve(req.user)
   const enAttente = statuts
     .filter(s => s.etat === 'en_attente')
     .sort((a, b) => new Date(a.seance.fin) - new Date(b.seance.fin))
+  // Bilan par concours : séances terminées avec compétences (faites ou en attente) et celles déjà remplies
+  const bilan = {}
+  for (const s of statuts) {
+    if (s.etat !== 'faite' && s.etat !== 'en_attente') continue
+    const b = (bilan[s.seance.concours_code] ??= { terminees: 0, remplies: 0 })
+    b.terminees += 1
+    if (s.etat === 'faite') b.remplies += 1
+  }
   res.json({
     en_attente: enAttente,
     rappel: enAttente.some(s => s.rappel),
-    verrouille: enAttente.some(s => s.verrouille)
+    verrouille: enAttente.some(s => s.verrouille),
+    bilan
   })
 })
 
