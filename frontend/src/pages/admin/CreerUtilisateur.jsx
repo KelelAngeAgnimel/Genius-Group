@@ -8,7 +8,7 @@ const rolesDisponibles = [
   { value: 'admin', label: 'Administrateur', couleur: '#C94C7B', description: 'Accès complet à toutes les fonctionnalités' },
 ]
 
-const ORDRE_CHAMPS = ['username', 'password', 'concours', 'modalite']
+const ORDRE_CHAMPS = ['prenom', 'nom', 'username', 'password', 'concours', 'modalite']
 
 // Message d'erreur sous un champ
 const MessageChamp = ({ champ, erreurs }) => erreurs[champ]
@@ -36,6 +36,8 @@ export default function CreerUtilisateur() {
 
   const valider = () => {
     const e = {}
+    if (!form.prenom.trim()) e.prenom = 'Le prénom est requis.'
+    if (!form.nom.trim()) e.nom = 'Le nom est requis.'
     if (!estEtudiant && !form.username.trim()) e.username = 'L’identifiant de connexion est requis.'
     if (!form.password) e.password = 'Le mot de passe est requis.'
     else if (form.password.length < 6) e.password = 'Le mot de passe doit contenir au moins 6 caractères.'
@@ -128,28 +130,24 @@ export default function CreerUtilisateur() {
             {/* Prénom et Nom */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Prénom</label>
+                <label htmlFor="champ-prenom" className="block text-xs font-semibold text-gray-600 mb-1">Prénom <span className="text-red-400">*</span></label>
                 <input type="text"
                   value={form.prenom}
-                  onChange={e => setForm({ ...form, prenom: e.target.value })}
+                  onChange={e => changer('prenom', e.target.value)}
                   placeholder="Ex: Jean-Marie"
                   className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none transition"
-                  style={{ borderColor: '#f0ece0' }}
-                  onFocus={e => e.target.style.borderColor = '#C9A84C'}
-                  onBlur={e => e.target.style.borderColor = '#f0ece0'}
-                  aria-label="Prénom" />
+                  {...attrs('prenom')} />
+                <MessageChamp champ="prenom" erreurs={erreurs} />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Nom</label>
+                <label htmlFor="champ-nom" className="block text-xs font-semibold text-gray-600 mb-1">Nom <span className="text-red-400">*</span></label>
                 <input type="text"
                   value={form.nom}
-                  onChange={e => setForm({ ...form, nom: e.target.value })}
+                  onChange={e => changer('nom', e.target.value)}
                   placeholder="Ex: Dupont"
                   className="w-full border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none transition"
-                  style={{ borderColor: '#f0ece0' }}
-                  onFocus={e => e.target.style.borderColor = '#C9A84C'}
-                  onBlur={e => e.target.style.borderColor = '#f0ece0'}
-                  aria-label="Nom" />
+                  {...attrs('nom')} />
+                <MessageChamp champ="nom" erreurs={erreurs} />
               </div>
             </div>
 
