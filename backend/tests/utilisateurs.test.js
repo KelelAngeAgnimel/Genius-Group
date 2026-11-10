@@ -58,6 +58,19 @@ describe('Création de comptes (admin)', () => {
     expect(tables.inscriptions[0]).toMatchObject({ user_id: r.body.user.id, concours_code: 'ensea' })
   })
 
+  // Rapport QA n°6 : un seul numéro par élève (celui affiché = celui de la liste = celui qui connecte)
+  it("l'identifiant de connexion d'un élève est son matricule", async () => {
+    const r = await request(app).post('/api/users/create').set(bearer(30)).send({
+      password: 'motdepasse', nom: 'Dupont', prenom: 'Awa', role: 'etudiant', concours: ['inphb'], modalite: 'presentiel'
+    })
+    expect(r.status).toBe(201)
+    expect(r.body.user.username).toBe(r.body.user.matricule)
+    const liste = await request(app).get('/api/users/all').set(bearer(30))
+    const cree = liste.body.users.find(u => u.id === r.body.user.id)
+    expect(cree.matricule).toBe(r.body.user.matricule)
+    expect(cree.username).toBe(cree.matricule)
+  })
+
   it('refuse un élève sans concours ni modalité', async () => {
     const base = { password: 'motdepasse', role: 'etudiant' }
     expect((await request(app).post('/api/users/create').set(bearer(30)).send({ ...base, modalite: 'en_ligne' })).status).toBe(400)

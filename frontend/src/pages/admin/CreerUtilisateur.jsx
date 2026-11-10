@@ -350,18 +350,13 @@ export default function CreerUtilisateur() {
                 ✓ Compte créé
               </p>
               <div className="flex flex-col gap-2.5">
-                {utilisateurCree.matricule && (
-                  <div className="flex justify-between items-center p-2 rounded-lg"
-                    style={{ background: 'rgba(201,168,76,0.08)' }}>
-                    <span className="text-xs text-gray-500">Matricule</span>
-                    <span className="text-sm font-black" style={{ color: '#C9A84C', letterSpacing: '0.1em' }}>
-                      {utilisateurCree.matricule}
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-xs text-gray-500">Identifiant</span>
-                  <span className="text-xs font-bold text-gray-700">{utilisateurCree.username}</span>
+                {/* Un seul numéro : le matricule (élève) ou l'identifiant (prof / admin, sans matricule) */}
+                <div className="flex justify-between items-center p-2 rounded-lg"
+                  style={{ background: 'rgba(201,168,76,0.08)' }}>
+                  <span className="text-xs text-gray-500">{utilisateurCree.matricule ? 'Matricule (identifiant de connexion)' : 'Identifiant de connexion'}</span>
+                  <span className="text-sm font-black" style={{ color: '#C9A84C', letterSpacing: '0.1em' }}>
+                    {utilisateurCree.matricule || utilisateurCree.username}
+                  </span>
                 </div>
                 {utilisateurCree.modalite && (
                   <div className="flex justify-between">
@@ -374,7 +369,7 @@ export default function CreerUtilisateur() {
               </div>
               <div className="mt-3 p-2 rounded-lg text-xs text-center"
                 style={{ background: 'rgba(201,168,76,0.08)', color: '#C9A84C' }}>
-                Communiquez le matricule et le mot de passe à l'étudiant
+                Communiquez ce numéro et le mot de passe {utilisateurCree.matricule ? 'à l’étudiant' : 'à l’utilisateur'}
               </div>
             </div>
           )}

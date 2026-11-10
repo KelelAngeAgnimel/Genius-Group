@@ -119,6 +119,7 @@ export default function GestionUtilisateurs() {
   const usersFiltres = users.filter(u => {
     const matchRecherche = recherche === '' ||
       u.username?.toLowerCase().includes(recherche.toLowerCase()) ||
+      u.matricule?.toLowerCase().includes(recherche.toLowerCase()) ||
       u.nom?.toLowerCase().includes(recherche.toLowerCase()) ||
       u.prenom?.toLowerCase().includes(recherche.toLowerCase())
     const matchRole =
@@ -179,14 +180,14 @@ export default function GestionUtilisateurs() {
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <input
           type="text"
-          placeholder="Rechercher par nom ou identifiant..."
+          placeholder="Rechercher par nom ou matricule..."
           value={recherche}
           onChange={e => { setRecherche(e.target.value); setPage(1) }}
           className="flex-1 border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none"
           style={{ borderColor: '#f0ece0' }}
           onFocus={e => e.target.style.borderColor = '#C9A84C'}
           onBlur={e => e.target.style.borderColor = '#f0ece0'}
-          aria-label="Rechercher par nom ou identifiant..." />
+          aria-label="Rechercher par nom ou matricule..." />
         <select aria-label="Filtrer par rôle ou concours"
           value={filtreRole}
           onChange={e => { setFiltreRole(e.target.value); setPage(1) }}
@@ -235,7 +236,7 @@ export default function GestionUtilisateurs() {
               <thead>
                 <tr style={{ borderBottom: '2px solid #f0ece0' }}>
                   <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Nom complet</th>
-                  <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Identifiant</th>
+                  <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Matricule / identifiant</th>
                   <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Role</th>
                   <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Inscrit le</th>
                   <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Actions</th>
@@ -346,7 +347,7 @@ export default function GestionUtilisateurs() {
                       {/* Identifiant */}
                       <td className="p-4">
                         <span className="font-mono font-bold" style={{ color: '#C9A84C' }}>
-                          {u.username}
+                          {u.matricule || u.username}
                         </span>
                       </td>
 
