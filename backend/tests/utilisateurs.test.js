@@ -72,17 +72,30 @@ describe('Création de comptes (admin)', () => {
   })
 
   it('refuse un élève sans concours ni modalité', async () => {
-    const base = { password: 'motdepasse', role: 'etudiant' }
+    const base = { password: 'motdepasse', nom: 'Dupont', prenom: 'Awa', role: 'etudiant' }
     expect((await request(app).post('/api/users/create').set(bearer(30)).send({ ...base, modalite: 'en_ligne' })).status).toBe(400)
     expect((await request(app).post('/api/users/create').set(bearer(30)).send({ ...base, concours: ['ensea'] })).status).toBe(400)
   })
 
   it('un professeur exige un identifiant et peut être rattaché à un concours', async () => {
-    const sans = await request(app).post('/api/users/create').set(bearer(30)).send({ password: 'motdepasse', role: 'professeur', username: '' })
+    const sans = await request(app).post('/api/users/create').set(bearer(30)).send({ password: 'motdepasse', nom: 'Martin', prenom: 'Paul', role: 'professeur', username: '' })
     expect(sans.status).toBe(400)
-    const ok = await request(app).post('/api/users/create').set(bearer(30)).send({ password: 'motdepasse', role: 'professeur', username: 'prof.ensea', concours: ['ensea'] })
+    const ok = await request(app).post('/api/users/create').set(bearer(30)).send({ password: 'motdepasse', nom: 'Martin', prenom: 'Paul', role: 'professeur', username: 'prof.ensea', concours: ['ensea'] })
     expect(ok.status).toBe(201)
     expect(ok.body.user.concours).toEqual(['ensea'])
+  })
+
+  // Rapport QA n°8
+  it('refuse la création sans prénom ou sans nom, ou avec un nom vide', async () => {
+    const base = { password: 'motdepasse', role: 'etudiant', concours: ['ensea'], modalite: 'en_ligne' }
+    const post = (corps) => request(app).post('/api/users/create').set(bearer(30)).send(corps)
+    for (const corps of [base, { ...base, nom: 'Dupont' }, { ...base, prenom: 'Awa' }, { ...base, nom: '  ', prenom: 'Awa' }]) {
+      const r = await post(corps)
+      expect(r.status).toBe(400)
+      expect(r.body.message).toMatch(/^Données invalides : /)
+    }
+    expect(tables.users).toHaveLength(2) // aucun compte créé
+    expect((await post({ ...base, nom: 'Dupont', prenom: 'Awa' })).status).toBe(201)
   })
 
   it('seul un admin crée des comptes', async () => {

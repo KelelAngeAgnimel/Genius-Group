@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { verifyToken, requireRole, invalidateUserCache } from '../middleware/authMiddleware.js'
 import { validate } from '../middleware/validate.js'
 import { avecConcours, avecConcoursUn, definirInscriptions } from '../lib/inscriptions.js'
+import { IDENTIFIANT_VALIDE } from '../lib/identifiant.js'
 import { CODES_CONCOURS, concoursDepuisAncienRole, roleDeBase, peutGererEleve } from '../lib/concours.js'
 
 const router = express.Router()
@@ -23,10 +24,11 @@ const nomSchema = z.string().trim().max(100)
 
 const creerSchema = z.object({
   // Vide pour un élève (son identifiant est le matricule généré) : traité comme absent
-  username: z.preprocess(v => (typeof v === 'string' && v.trim() === '' ? undefined : v), z.string().trim().min(1).max(64).optional()),
+  username: z.preprocess(v => (typeof v === 'string' && v.trim() === '' ? undefined : v), z.string().trim().min(1).max(64).regex(IDENTIFIANT_VALIDE).optional()),
   password: z.string().min(6).max(200),
-  nom: nomSchema.nullish(),
-  prenom: nomSchema.nullish(),
+  // Prénom et nom obligatoires à la création (rapport QA n°8) ; la modification reste souple (comptes existants)
+  nom: nomSchema.min(1),
+  prenom: nomSchema.min(1),
   role: z.enum(ROLES).optional(),
   concours: concoursSchema.optional(),
   modalite: z.enum(['en_ligne', 'presentiel']).nullish()
