@@ -7,7 +7,7 @@ import { concoursDe } from '../../lib/concours'
 // =====================
 // DASHBOARD ADMIN
 // =====================
-function DashboardAdmin({ user, navigate }) {
+function DashboardAdmin({ user }) {
   const [stats, setStats] = useState({ total: 0, etudiants: 0, professeurs: 0, admins: 0 })
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(true)
@@ -95,7 +95,7 @@ function DashboardAdmin({ user, navigate }) {
 // =====================
 // DASHBOARD PROFESSEUR
 // =====================
-function DashboardProfesseur({ user, navigate }) {
+function DashboardProfesseur({ user }) {
   const [ressources, setRessources] = useState([])
   const [etudiants, setEtudiants] = useState([])
   const [messages, setMessages] = useState([])
