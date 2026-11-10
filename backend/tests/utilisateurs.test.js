@@ -15,6 +15,35 @@ beforeEach(() => {
   resetDb({ users: [user(30, 'admin'), user(20, 'professeur')] })
 })
 
+// Rapport QA n°12 : contrôle d'accès par rôle sur l'administration
+describe('Liste des utilisateurs (/api/users/all)', () => {
+  beforeEach(() => {
+    invalidateUserCache()
+    resetDb({ users: [user(30, 'admin'), user(20, 'professeur'), user(10, 'etudiant'), user(11, 'etudiant_inphb')] })
+  })
+
+  it('sans token → 401', async () => {
+    expect((await request(app).get('/api/users/all')).status).toBe(401)
+  })
+
+  it('un élève reçoit 403', async () => {
+    expect((await request(app).get('/api/users/all').set(bearer(10))).status).toBe(403)
+    expect((await request(app).get('/api/users/all').set(bearer(11))).status).toBe(403)
+  })
+
+  it('un élève ne peut ni créer ni supprimer un compte → 403', async () => {
+    const c = await request(app).post('/api/users/create').set(bearer(10)).send({ password: 'motdepasse', role: 'admin', username: 'x', nom: 'A', prenom: 'B' })
+    expect(c.status).toBe(403)
+    expect((await request(app).delete('/api/users/30').set(bearer(10))).status).toBe(403)
+  })
+
+  it('un admin reçoit 200', async () => {
+    const r = await request(app).get('/api/users/all').set(bearer(30))
+    expect(r.status).toBe(200)
+    expect(Array.isArray(r.body.users)).toBe(true)
+  })
+})
+
 describe('Création de comptes (admin)', () => {
   it('crée un élève ENSEA même si le formulaire envoie un identifiant vide', async () => {
     const r = await request(app).post('/api/users/create').set(bearer(30)).send({

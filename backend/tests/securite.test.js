@@ -19,6 +19,18 @@ describe('Authentification des routes', () => {
     expect(res.status).toBe(401)
   })
 
+  // Rapport QA n°1 : ces routes sont appelées par le front ; elles doivent exister (401, jamais 404)
+  it.each([
+    ['post', '/api/chat'],
+    ['get', '/api/evaluations/mes'],
+    ['get', '/api/evaluations/resume'],
+    ['get', '/api/evaluations/gestion'],
+    ['post', '/api/evaluations']
+  ])('%s %s existe : sans token → 401 (pas 404)', async (methode, url) => {
+    const res = await request(app)[methode](url)
+    expect(res.status).toBe(401)
+  })
+
   it('compte bloqué avec un token valide → 403', async () => {
     resetDb({ users: [user(10, 'etudiant_inphb', { bloque: true })] })
     const res = await request(app).post('/api/chat').set(bearer(10)).send({ message: 'Bonjour' })
