@@ -2,6 +2,7 @@ import api from '../api'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Loader from '../components/Loader'
 
 // Photos d'étudiants africains/noirs — Unsplash (libres de droits)
 // Sources : Emmanuel Ikwuegbu, Desola Lanre-Ologun, TopSphere Media, Nqobile Vundla
@@ -54,10 +55,24 @@ export default function Login() {
   const [error, setError] = useState('')
   const [erreurs, setErreurs] = useState({}) // une erreur par champ
   const [loading, setLoading] = useState(false)
+  // Réveil du serveur (Render en veille) : 'attente' tant que /health n'a pas répondu
+  const [serveur, setServeur] = useState('attente')
+  const [lent, setLent] = useState(false)
   const [slideIndex, setSlideIndex] = useState(0)
   const [fondu, setFondu] = useState(true)
   const { login } = useAuth()
   const navigate = useNavigate()
+
+  // Préchauffage : un appel /health dès l'arrivée sur la page de connexion
+  useEffect(() => {
+    let actif = true
+    const delaiLent = setTimeout(() => { if (actif) setLent(true) }, 2500)
+    api.get('/health', { timeout: 60000 })
+      .then(() => { if (actif) setServeur('pret') })
+      .catch(() => { if (actif) setServeur('indisponible') })
+      .finally(() => clearTimeout(delaiLent))
+    return () => { actif = false; clearTimeout(delaiLent) }
+  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -210,6 +225,17 @@ export default function Login() {
             Utiliser votre compte Genius Group
           </p>
 
+          {serveur === 'attente' && lent && (
+            <div style={{ marginBottom: 18, background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '4px 14px' }}>
+              <Loader texte="Le serveur démarre, cela peut prendre quelques secondes…" />
+            </div>
+          )}
+          {serveur === 'indisponible' && (
+            <div role="alert" style={{ marginBottom: 18, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 10, padding: '10px 14px', color: '#dc2626', fontSize: 13 }}>
+              Le serveur ne répond pas pour le moment. Réessayez dans un instant.
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
             <div>
@@ -288,7 +314,7 @@ export default function Login() {
               transition: 'all 0.2s', marginTop: 6,
               boxShadow: '0 4px 20px rgba(201,168,76,0.15)'
             }}>
-              {loading ? 'Connexion en cours...' : 'SE CONNECTER'}
+              {loading ? (lent || serveur === 'attente' ? 'Connexion… (le serveur démarre)' : 'Connexion en cours...') : 'SE CONNECTER'}
             </button>
           </form>
 

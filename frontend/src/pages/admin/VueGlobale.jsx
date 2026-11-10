@@ -23,7 +23,7 @@ export default function VueGlobale() {
   }, [])
 
   if (erreur) return <p className="text-sm" style={{ color: '#C94C7B' }}>{erreur}</p>
-  if (!concours) return <Loader texte="Chargement…" />
+  if (!concours) return <Loader plein texte="Chargement de la vue globale… (le premier affichage peut prendre quelques secondes)" />
 
   const avecEleves = concours.filter(c => c.nb_eleves > 0 || c.nb_notes > 0)
   const moyennes = avecEleves.filter(c => c.moyenne !== null).map(c => ({ nom: c.nom, valeur: c.moyenne }))
