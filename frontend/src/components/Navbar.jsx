@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { libelleUtilisateur, CODES_CONCOURS } from '../lib/concours'
+import { CODES_CONCOURS } from '../lib/concours'
 import { useConcours } from '../hooks/useConcours'
 
 // ── Icônes SVG monochromes (héritent de la couleur du texte via currentColor) ──
@@ -30,6 +30,24 @@ const ICONS = {
   compass: <><circle cx="12" cy="12" r="9" /><path d="M15.5 8.5l-2 5-5 2 2-5 5-2Z" /></>,
   heart: <><path d="M12 20.5C7 17 3 13.5 3 9.2 3 6.6 5 4.5 7.5 4.5c1.7 0 3.2 1 4.5 2.5 1.3-1.5 2.8-2.5 4.5-2.5C19 4.5 21 6.6 21 9.2c0 4.3-4 7.8-9 11.3Z" /></>,
   message: <><path d="M4 5.5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H8.5L4 20.5V6.5a1 1 0 0 1 0-1Z" /><path d="M8.5 11h.01M12 11h.01M15.5 11h.01" /></>,
+  chevronDown: <path d="M6 9l6 6 6-6" />,
+  chevronUp: <path d="M6 15l6-6 6 6" />,
+  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  close: <path d="M6 6l12 12M18 6L6 18" />,
+}
+
+// Nom affiché dans le bandeau : « Prénom Nom », sinon le matricule seul
+function identite(user) {
+  const nom = [user?.prenom, user?.nom].filter(Boolean).join(' ').trim()
+  const matricule = user?.matricule || user?.username || ''
+  return nom ? { principal: nom, secondaire: matricule } : { principal: matricule, secondaire: '' }
+}
+
+// Le concours de l'élève est visible ailleurs (Ressources, Tableau de bord) : le bandeau n'affiche que le rôle du personnel
+function libelleRole(role) {
+  if (role === 'admin') return 'Administrateur'
+  if (role === 'professeur') return 'Enseignant'
+  return ''
 }
 
 function Icon({ name, className = 'w-4 h-4' }) {
@@ -171,6 +189,8 @@ export default function Navbar() {
   const handleLogout = () => { logout(); navigate('/') }
   const isProfOrAdmin = ['professeur', 'admin'].includes(user?.role)
   const isAdmin = user?.role === 'admin'
+  const id = identite(user)
+  const role = libelleRole(user?.role)
 
   return (
     <nav ref={navRef} className="sticky top-0 z-50 shadow-lg"
@@ -204,7 +224,7 @@ export default function Navbar() {
                 onClick={() => setOpenMenu(openMenu === item.label ? null : item.label)}>
                 <Icon name={item.icon} className="w-4 h-4" />
                 {item.label}
-                <span className="text-xs opacity-60">{openMenu === item.label ? '▲' : '▼'}</span>
+                <Icon name={openMenu === item.label ? 'chevronUp' : 'chevronDown'} className="w-3.5 h-3.5 opacity-60" />
               </button>
               {openMenu === item.label && (
                 <DropdownMenu items={item.dropdown} onClose={() => setOpenMenu(null)} />
@@ -241,23 +261,14 @@ export default function Navbar() {
 
         {/* Profil desktop */}
         <div className="hidden md:flex items-center gap-3">
-          <span className="text-xs px-2 py-1 rounded-lg font-semibold"
-            style={{
-              background: isAdmin ? 'rgba(201,76,123,0.1)' : isProfOrAdmin ? 'rgba(76,201,168,0.1)' : 'rgba(201,168,76,0.1)',
-              color: isAdmin ? '#C94C7B' : isProfOrAdmin ? '#4CC9A8' : '#C9A84C'
-            }}>
-            {libelleUtilisateur(user)}
-          </span>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-              style={{ background: 'rgba(201,168,76,0.2)', color: '#C9A84C' }}>
-              {user?.username?.[0]?.toUpperCase()}
-            </div>
-            <span className="text-xs text-gray-400">{user?.username}</span>
+          <div className="text-right leading-tight">
+            <p className="text-sm text-gray-200">{id.principal}</p>
+            {(id.secondaire || role) && (
+              <p className="text-[11px] text-gray-500">{[id.secondaire, role].filter(Boolean).join(' · ')}</p>
+            )}
           </div>
           <button onClick={handleLogout}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold transition"
-            style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)' }}>
+            className="px-2 py-1.5 text-xs text-gray-400 hover:text-white hover:underline underline-offset-4 transition">
             Déconnexion
           </button>
         </div>
@@ -265,7 +276,7 @@ export default function Navbar() {
         {/* Burger mobile */}
         <button className="md:hidden text-white text-xl p-2" aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'} aria-expanded={mobileOpen}
           onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? '✕' : '☰'}
+          <Icon name={mobileOpen ? 'close' : 'menu'} className="w-6 h-6" />
         </button>
       </div>
 
@@ -284,7 +295,7 @@ export default function Navbar() {
                   <Icon name={item.icon} className="w-4 h-4" />
                   {item.label}
                 </span>
-                <span>{mobileExpanded === item.label ? '▲' : '▼'}</span>
+                <Icon name={mobileExpanded === item.label ? 'chevronUp' : 'chevronDown'} className="w-4 h-4 opacity-60" />
               </button>
               {mobileExpanded === item.label && (
                 <div className="pl-3 pb-2">
@@ -316,17 +327,15 @@ export default function Navbar() {
               Administration
             </Link>
           )}
-          <div className="pt-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">{user?.username}</span>
-              <span className="text-xs px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
-                {libelleUtilisateur(user)}
-              </span>
+          <div className="pt-3 flex items-center justify-between gap-3">
+            <div className="min-w-0 leading-tight">
+              <p className="text-sm text-gray-200 truncate">{id.principal}</p>
+              {(id.secondaire || role) && (
+                <p className="text-[11px] text-gray-500 truncate">{[id.secondaire, role].filter(Boolean).join(' · ')}</p>
+              )}
             </div>
             <button onClick={handleLogout}
-              className="text-xs px-3 py-1.5 rounded-lg"
-              style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
+              className="text-xs px-2 py-2 text-gray-400 hover:text-white hover:underline underline-offset-4 flex-shrink-0">
               Déconnexion
             </button>
           </div>
