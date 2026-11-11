@@ -1,12 +1,12 @@
 import { Fragment, useState } from 'react'
 import { useConcours } from '../../hooks/useConcours'
+import { CONCOURS } from '../../lib/concours'
 
 const ecoles = [
   {
     sigle: 'INP-HB',
     code: 'inphb',
     nom: 'Institut National Polytechnique Félix Houphouët-Boigny',
-    logo: 'https://inphb.edu.ci/wp-content/uploads/2020/03/INPHB.png',
     couleur: '#C9A84C',
     site: 'https://inphb.ci',
     contact: {
@@ -106,7 +106,6 @@ const ecoles = [
     sigle: 'ESATIC',
     code: 'esatic',
     nom: 'Ecole Supérieure Africaine des TIC',
-    logo: 'https://esatic.ci/wp-content/uploads/2024/07/esatic_logo.jpg',
     couleur: '#4C7BC9',
     site: 'https://esatic.ci',
     contact: {
@@ -220,7 +219,6 @@ const ecoles = [
     sigle: "CME",
     code: 'cme',
     nom: "Concours des Meilleurs Etudiants",
-    logo: "/cme-logo.png",
     couleur: "#4CC9A8",
     site: "#",
     contact: {
@@ -272,7 +270,6 @@ const ecoles = [
     sigle: 'ENSEA',
     code: 'ensea',
     nom: 'École Nationale Supérieure de Statistique et d\'Économie Appliquée d\'Abidjan',
-    logo: '/ensea-logo.png', // à déposer dans frontend/public ; à défaut, le sigle est affiché
     couleur: '#7B4CC9',
     site: 'https://ensea.ed.ci',
     contact: {
@@ -391,7 +388,7 @@ export default function Orientation() {
               onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
 
               <div className="flex items-center justify-center py-14 px-8">
-                <img src={ecole.logo} alt={ecole.sigle}
+                <img src={CONCOURS[ecole.code]?.logo} alt={ecole.sigle}
                   className="object-contain"
                   style={{ maxHeight: '130px', maxWidth: '240px' }}
                   onError={(e) => {
@@ -440,7 +437,7 @@ export default function Orientation() {
                 borderBottom: `2px solid ${ecoleActive.couleur}`
               }}>
               <div className="w-20 h-20 rounded-xl bg-white flex items-center justify-center p-2 flex-shrink-0">
-                <img src={ecoleActive.logo} alt={ecoleActive.sigle}
+                <img src={CONCOURS[ecoleActive.code]?.logo} alt={ecoleActive.sigle}
                   className="w-full h-full object-contain"
                   onError={(e) => {
                     e.target.style.display = 'none'

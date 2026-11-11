@@ -1,31 +1,28 @@
 import { useConcours } from '../../hooks/useConcours'
+import { CONCOURS } from '../../lib/concours'
 
 const cartes = [
   {
     sigle: 'INP-HB',
     nom: 'Institut National Polytechnique Félix Houphouët-Boigny',
-    logo: 'https://inphb.edu.ci/wp-content/uploads/2020/03/INPHB.png',
     site: 'https://inphb.ci',
     code: 'inphb'
   },
   {
     sigle: 'ESATIC',
     nom: "Ecole Supérieure Africaine des Technologies de l'Info. et de la Com.",
-    logo: 'https://esatic.ci/wp-content/uploads/2024/07/esatic_logo.jpg',
     site: 'https://esatic.ci',
     code: 'esatic'
   },
   {
     sigle: 'CME',
     nom: 'Concours des Meilleurs Etudiants',
-    logo: '/cme-logo.png',
     site: '#',
     code: 'cme'
   },
   {
     sigle: 'ENSEA',
     nom: 'École Nationale Supérieure de Statistique et d’Économie Appliquée',
-    logo: '/ensea-logo.png',
     site: 'https://ensea.ed.ci',
     code: 'ensea'
   },
@@ -58,7 +55,7 @@ export default function Actualites() {
             style={{ border: '1px solid #e5e7eb', textDecoration: 'none' }}>
 
             <div className="flex items-center justify-center py-8 px-8" style={{ borderBottom: '1px solid #e5e7eb' }}>
-              <img src={carte.logo} alt={carte.sigle}
+              <img src={CONCOURS[carte.code]?.logo} alt={carte.sigle}
                 style={{ maxHeight: '90px', maxWidth: '200px', objectFit: 'contain' }}
                 onError={e => {
                   const parent = e.target.parentNode

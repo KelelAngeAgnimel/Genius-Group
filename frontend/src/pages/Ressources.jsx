@@ -13,6 +13,7 @@ import Breadcrumb from '../components/Breadcrumb'
 import CarteRessource from '../components/CarteRessource'
 import EmptyState from '../components/EmptyState'
 import LecteurPDF from '../components/LecteurPDF'
+import LogoConcours from '../components/LogoConcours'
 import Loader from '../components/Loader'
 
 const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`
@@ -33,15 +34,6 @@ function Page({ crumbs, retourPath, retourLabel, surtitre, titre, soustitre, chi
 }
 
 const Grille = ({ children }) => <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">{children}</div>
-
-// Logo d'un concours ; à défaut (fichier absent), son sigle
-function LogoConcours({ code }) {
-  const [ko, setKo] = useState(false)
-  const logo = CONCOURS[code]?.logo
-  return logo && !ko
-    ? <img src={logo} alt="" onError={() => setKo(true)} style={{ maxHeight: 70, maxWidth: 160, objectFit: 'contain' }} />
-    : <span style={{ fontSize: 34, fontWeight: 900, color: couleurConcours(code) }}>{libelleConcours(code)}</span>
-}
 
 // Documents sans matière : regroupés dans une carte « Autres documents » pour rester accessibles
 const AUTRES = 'Autres documents'

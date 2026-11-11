@@ -2,7 +2,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useNavigate, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import api from '../../api'
-import { concoursDe } from '../../lib/concours'
+import { concoursDe, CONCOURS } from '../../lib/concours'
 
 // =====================
 // DASHBOARD ADMIN
@@ -258,7 +258,7 @@ function CarteCompetences({ config, notes }) {
       <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
           <div style={{ width: 44, height: 44, borderRadius: 8, border: '1px solid #e5e7eb', background: 'white', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-            <img src={config.logo} alt={config.sigle}
+            <img src={CONCOURS[config.codeConcours]?.logo} alt={config.sigle}
               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
               onError={e => { const parent = e.target.parentNode; e.target.style.display = 'none'; parent.textContent = config.sigle; parent.style.fontSize = '10px'; parent.style.fontWeight = '700' }}
             />
@@ -363,7 +363,6 @@ const CONCOURS_CONFIG = [
     sigle: 'INP-HB',
     codeConcours: 'inphb',
     nom: 'Institut National Polytechnique Houphouët-Boigny',
-    logo: 'https://inphb.edu.ci/wp-content/uploads/2020/03/INPHB.png',
     matieres: ['Culture Scientifique', 'Culture Générale', 'Culture Littéraire'],
     site: 'https://inphb.ci',
     dateConcours: '2026-08-05',
@@ -373,7 +372,6 @@ const CONCOURS_CONFIG = [
     sigle: 'ESATIC',
     codeConcours: 'esatic',
     nom: 'Ecole Supérieure Africaine des TIC',
-    logo: 'https://esatic.ci/wp-content/uploads/2024/07/esatic_logo.jpg',
     matieres: ['Mathématiques', 'Physique', 'Anglais', 'Français'],
     site: 'https://esatic.ci',
     dateConcours: '2026-08-04',
@@ -383,7 +381,6 @@ const CONCOURS_CONFIG = [
     sigle: 'CME',
     codeConcours: 'cme',
     nom: 'Concours des Meilleurs Etudiants',
-    logo: '/cme-logo.png',
     matieres: ['Culture Générale', 'Culture Scientifique', 'Anglais', 'Français'],
     site: '#',
     dateConcours: '2026-08-10',
@@ -393,7 +390,6 @@ const CONCOURS_CONFIG = [
     sigle: 'ENSEA',
     codeConcours: 'ensea',
     nom: 'École Nationale Supérieure de Statistique et d’Économie Appliquée',
-    logo: '/ensea-logo.png',
     matieres: ['Français', 'Mathématiques'],
     site: 'https://ensea.ed.ci',
     dateConcours: null, // date non fournie par le pôle éducatif : le décompte n'est pas affiché
