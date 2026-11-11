@@ -3,6 +3,7 @@ import api from '../../api'
 import SelecteurConcoursCases from '../../components/SelecteurConcoursCases'
 import { CODES_CONCOURS, concoursDe, libelleConcours, libelleUtilisateur, couleurConcours, roleDeBase } from '../../lib/concours'
 import { useToast, useConfirm } from '../../hooks/useUi'
+import { identifiantDe } from '../../lib/identifiants'
 
 // Rôles de l'application ; les concours sont gérés séparément (inscriptions)
 const roleConfig = {
@@ -53,7 +54,7 @@ export default function GestionUtilisateurs() {
   const supprimerUtilisateur = async (u) => {
     const id = u.id
     const nomComplet = [u.prenom, u.nom].filter(Boolean).join(' ') || u.username
-    const numero = u.matricule || u.username
+    const numero = identifiantDe(u)
     const cible = numero && numero !== nomComplet ? `${nomComplet} (${numero})` : nomComplet
     if (!(await confirmer({ titre: `Supprimer ${cible} ?`, message: 'Le compte sera supprimé définitivement.', confirmer: 'Supprimer', danger: true }))) return
     setOccupe(id)
@@ -184,14 +185,14 @@ export default function GestionUtilisateurs() {
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <input
           type="text"
-          placeholder="Rechercher par nom ou matricule..."
+          placeholder="Rechercher par nom ou identifiant…"
           value={recherche}
           onChange={e => { setRecherche(e.target.value); setPage(1) }}
           className="flex-1 border rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none"
           style={{ borderColor: '#f0ece0' }}
           onFocus={e => e.target.style.borderColor = '#C9A84C'}
           onBlur={e => e.target.style.borderColor = '#f0ece0'}
-          aria-label="Rechercher par nom ou matricule..." />
+          aria-label="Rechercher par nom ou identifiant…" />
         <select aria-label="Filtrer par rôle ou concours"
           value={filtreRole}
           onChange={e => { setFiltreRole(e.target.value); setPage(1) }}
@@ -240,7 +241,7 @@ export default function GestionUtilisateurs() {
               <thead>
                 <tr style={{ borderBottom: '2px solid #f0ece0' }}>
                   <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Nom complet</th>
-                  <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Matricule / identifiant</th>
+                  <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Identifiant</th>
                   <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Role</th>
                   <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Inscrit le</th>
                   <th className="text-left p-4 font-semibold text-gray-500 uppercase tracking-widest">Actions</th>
@@ -351,7 +352,7 @@ export default function GestionUtilisateurs() {
                       {/* Identifiant */}
                       <td className="p-4">
                         <span className="font-mono font-bold" style={{ color: '#C9A84C' }}>
-                          {u.matricule || u.username}
+                          {identifiantDe(u)}
                         </span>
                       </td>
 
