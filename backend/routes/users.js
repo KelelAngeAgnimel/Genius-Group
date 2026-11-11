@@ -21,6 +21,12 @@ const ROLES = [
 const concoursSchema = z.union([z.array(z.enum(CODES_CONCOURS)).max(CODES_CONCOURS.length), z.string().trim().max(50)])
 const listeConcours = (v) => (Array.isArray(v) ? v : null)
 const nomSchema = z.string().trim().max(100)
+// Modalité vide ('' ou espaces, envoyée par un formulaire non étudiant) : traitée comme absente.
+// L'obligation pour un étudiant reste vérifiée dans la route de création.
+const modaliteSchema = z.preprocess(
+  v => (typeof v === 'string' && v.trim() === '' ? undefined : v),
+  z.enum(['en_ligne', 'presentiel']).nullish()
+)
 
 const creerSchema = z.object({
   // Vide pour un élève (son identifiant est le matricule généré) : traité comme absent
@@ -31,14 +37,14 @@ const creerSchema = z.object({
   prenom: nomSchema.min(1),
   role: z.enum(ROLES).optional(),
   concours: concoursSchema.optional(),
-  modalite: z.enum(['en_ligne', 'presentiel']).nullish()
+  modalite: modaliteSchema
 })
 const modifierSchema = z.object({
   nom: nomSchema.optional(),
   prenom: nomSchema.optional(),
   role: z.enum(ROLES).optional(),
   concours: concoursSchema.optional(),
-  modalite: z.enum(['en_ligne', 'presentiel']).optional(),
+  modalite: modaliteSchema,
   password: z.string().min(6).max(200).optional().or(z.literal('')),
   bloque: z.boolean().optional()
 })
