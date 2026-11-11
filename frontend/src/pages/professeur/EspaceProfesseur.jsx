@@ -511,7 +511,6 @@ export default function EspaceProfesseur() {
                     </div>
                   ) : (
                     <div>
-                      <p className="text-2xl mb-2">📄</p>
                       <p className="text-sm font-semibold text-gray-500">Cliquer pour choisir un PDF</p>
                       <p className="text-xs text-gray-500 mt-1">Taille maximale : 50 Mo</p>
                     </div>
@@ -527,8 +526,8 @@ export default function EspaceProfesseur() {
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { val: false, titre: 'Ressource', sous: 'Apparaît dans la Bibliothèque', couleur: '#C9A84C', icone: '📄' },
-                  { val: true, titre: 'Évaluation', sous: 'Apparaît dans Outils → Évaluation', couleur: '#C94C7B', icone: '📝' },
+                  { val: false, titre: 'Ressource', sous: 'Apparaît dans la Bibliothèque', couleur: '#071020' },
+                  { val: true, titre: 'Évaluation', sous: 'Apparaît dans Outils → Évaluation', couleur: '#071020' },
                 ].map(opt => {
                   const actif = form.est_evaluation === opt.val
                   return (
@@ -540,7 +539,7 @@ export default function EspaceProfesseur() {
                         border: `1px solid ${actif ? opt.couleur : '#f0ece0'}`
                       }}>
                       <p className="text-sm font-bold flex items-center gap-1.5" style={{ color: actif ? opt.couleur : '#374151' }}>
-                        <span>{opt.icone}</span> {opt.titre}
+                        {opt.titre}
                       </p>
                       <p className="text-xs mt-0.5" style={{ color: actif ? opt.couleur : '#9ca3af' }}>{opt.sous}</p>
                     </button>
@@ -558,7 +557,7 @@ export default function EspaceProfesseur() {
               className="py-3 rounded-xl text-sm font-bold tracking-widest transition"
               style={{
                 background: (!form.matiere || !form.titre || !fichier || loading)
-                  ? '#e5e1d5' : 'linear-gradient(135deg, #071020, #0d1f3c)',
+                  ? '#e5e1d5' : '#071020',
                 color: (!form.matiere || !form.titre || !fichier || loading) ? '#9ca3af' : '#C9A84C',
                 border: '1px solid rgba(201,168,76,0.4)',
                 cursor: (!form.matiere || !form.titre || !fichier || loading) ? 'not-allowed' : 'pointer'
@@ -719,7 +718,7 @@ export default function EspaceProfesseur() {
               <button type="submit" disabled={loading}
                 className="py-3 rounded-xl text-sm font-bold tracking-widest transition disabled:opacity-50"
                 style={{
-                  background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+                  background: '#071020',
                   color: '#C9A84C',
                   border: '1px solid rgba(201,168,76,0.4)'
                 }}>
@@ -842,8 +841,8 @@ export default function EspaceProfesseur() {
                 className="w-full border rounded-xl px-3 py-2 text-sm bg-white"
                 style={{ borderColor: '#f0ece0' }} aria-label="Modalité">
                 <option value="tous">Toutes les modalités</option>
-                <option value="en_ligne">💻 En ligne</option>
-                <option value="presentiel">🏫 Présentiel</option>
+                <option value="en_ligne">En ligne</option>
+                <option value="presentiel">Présentiel</option>
               </select>
             </div>
           </div>
@@ -906,8 +905,8 @@ export default function EspaceProfesseur() {
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Envoyer à</label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { val: 'etudiant', label: '👤 Un étudiant' },
-                    { val: 'groupe', label: '👥 Un groupe' },
+                    { val: 'etudiant', label: 'Un étudiant' },
+                    { val: 'groupe', label: 'Un groupe' },
                   ].map(m => (
                     <button key={m.val} type="button"
                       onClick={() => setMsgMode(m.val)}
@@ -984,7 +983,7 @@ export default function EspaceProfesseur() {
               <button type="submit" disabled={loading}
                 className="py-3 rounded-xl text-sm font-bold tracking-widest transition disabled:opacity-50"
                 style={{
-                  background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+                  background: '#071020',
                   color: '#C9A84C',
                   border: '1px solid rgba(201,168,76,0.4)'
                 }}>

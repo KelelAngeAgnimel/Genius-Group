@@ -224,7 +224,6 @@ export default function Meetings() {
         <Loader texte="Chargement des cours…" />
       ) : coursAffiches.length === 0 ? (
         <div className="rounded-2xl p-10 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
-          <p className="text-4xl mb-3">📭</p>
           <p className="text-sm text-gray-500">
             {filtreActive ? 'Aucun cours en cours pour le moment.' : 'Aucun cours publié pour le moment.'}
           </p>
@@ -246,7 +245,7 @@ export default function Meetings() {
                 </span>
                 {c.live && (
                   <span className="flex items-center gap-1.5 text-xs font-bold" style={{ color: COULEURS.vert }}>
-                    <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: COULEURS.vert }} />
+                    <span className="w-2 h-2 rounded-full" style={{ background: COULEURS.vert }} />
                     En cours
                   </span>
                 )}
@@ -270,7 +269,7 @@ export default function Meetings() {
                 className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition"
                 style={{
                   background: c.live
-                    ? `linear-gradient(135deg, ${COULEURS.vert}, #3ab88f)`
+                    ? `${COULEURS.vert}`
                     : COULEURS.navy,
                   color: c.live ? COULEURS.navy : COULEURS.or,
                   textDecoration: 'none'

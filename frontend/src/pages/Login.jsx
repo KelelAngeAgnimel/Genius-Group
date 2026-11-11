@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Loader from '../components/Loader'
+import Icon from '../components/Icone'
 
 // Photos d'étudiants africains/noirs — Unsplash (libres de droits)
 // Sources : Emmanuel Ikwuegbu, Desola Lanre-Ologun, TopSphere Media, Nqobile Vundla
@@ -289,7 +290,7 @@ export default function Login() {
                   color: '#9ca3af', fontSize: 16, padding: 4,
                   display: 'flex', alignItems: 'center'
                 }}>
-                  {showPassword ? '🙈' : '👁'}
+                  <Icon name={showPassword ? 'eyeOff' : 'eye'} className="w-5 h-5" />
                 </button>
               </div>
               {erreurs.password && <p id="erreur-password" role="alert" style={{ color: '#dc2626', fontSize: 12, margin: '6px 0 0' }}>{erreurs.password}</p>}
@@ -307,12 +308,11 @@ export default function Login() {
 
             <button type="submit" disabled={loading} style={{
               width: '100%', padding: '14px',
-              background: loading ? '#9ca3af' : 'linear-gradient(135deg, #071020, #1a3a6b)',
+              background: loading ? '#9ca3af' : '#071020',
               color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)',
               borderRadius: 12, fontSize: 14, fontWeight: 800,
               letterSpacing: '0.15em', cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s', marginTop: 6,
-              boxShadow: '0 4px 20px rgba(201,168,76,0.15)'
+              transition: 'all 0.2s', marginTop: 6
             }}>
               {loading ? (lent || serveur === 'attente' ? 'Connexion… (le serveur démarre)' : 'Connexion en cours...') : 'SE CONNECTER'}
             </button>

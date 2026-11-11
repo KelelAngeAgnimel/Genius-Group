@@ -143,7 +143,7 @@ export default function GrilleNotes() {
         </select>
         <button type="button" onClick={exporter} disabled={lignes.length === 0}
           className="text-xs font-bold px-4 py-2 rounded-xl text-white disabled:opacity-40 ml-auto" style={{ background: '#071020' }}>
-          ⬇ Exporter en CSV
+          Exporter en CSV
         </button>
       </div>
 
@@ -159,7 +159,7 @@ export default function GrilleNotes() {
       </form>
 
       {erreur && <p className="text-sm mb-3" style={{ color: '#C94C7B' }}>{erreur}</p>}
-      {donnees && lignes.length === 0 && <EmptyState icone="🎓" titre="Aucun élève inscrit à ce concours" />}
+      {donnees && lignes.length === 0 && <EmptyState titre="Aucun élève inscrit à ce concours" />}
 
       {lignes.length > 0 && (
         <div className="bg-white rounded-2xl overflow-x-auto" style={{ border: '1px solid #f0ece0' }}>
@@ -174,7 +174,7 @@ export default function GrilleNotes() {
                     <button type="button" onClick={() => ouvrirLiaison(c)} className="block mt-1 text-[11px] font-semibold underline"
                       style={{ color: (c.competence_ids?.length ?? 0) > 0 ? VIOLET : '#C94C7B' }}
                       title="Les notes de cette colonne comptent pour le score des compétences cochées">
-                      {(c.competence_ids?.length ?? 0) > 0 ? `${c.competence_ids.length} compétence(s)` : '⚠ Compétences'}
+                      {(c.competence_ids?.length ?? 0) > 0 ? `${c.competence_ids.length} compétence(s)` : 'Compétences à associer'}
                     </button>
                   </th>
                 ))}

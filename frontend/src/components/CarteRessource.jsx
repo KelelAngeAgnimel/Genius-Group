@@ -15,7 +15,7 @@ export default function CarteRessource({ banniere, titre, sousTitre, couleur, ba
   }, [menuOuvert])
 
   return (
-    <div ref={racine} className="relative bg-white rounded-2xl overflow-hidden transition-shadow hover:shadow-lg flex flex-col"
+    <div ref={racine} className="relative bg-white rounded-2xl overflow-hidden transition-colors hover:border-gray-400 flex flex-col"
       style={{ border: '1px solid #f0ece0' }}>
       <button type="button" onClick={onClick} aria-label={`${titre}${sousTitre ? ` — ${sousTitre}` : ''}`}
         className="absolute inset-0 w-full h-full z-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C] rounded-2xl" />

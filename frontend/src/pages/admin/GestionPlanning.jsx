@@ -20,9 +20,9 @@ const concoursConfig = {
 }
 
 const modaliteConfig = {
-  en_ligne: { label: 'En ligne', icone: '💻', couleur: '#4C7BC9' },
-  presentiel: { label: 'Présentiel', icone: '🏫', couleur: '#C9A84C' },
-  les_deux: { label: 'En ligne + Présentiel', icone: '🔀', couleur: '#4CC9A8' },
+  en_ligne: { label: 'En ligne', couleur: '#071020' },
+  presentiel: { label: 'Présentiel', couleur: '#071020' },
+  les_deux: { label: 'En ligne + Présentiel', couleur: '#071020' },
 }
 
 const formVide = {
@@ -161,7 +161,7 @@ export default function GestionPlanning() {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-800 mb-1">📅 Gestion du planning</h2>
+      <h2 className="text-xl font-bold text-gray-800 mb-1">Gestion du planning</h2>
       <p className="text-sm text-gray-500 mb-6">
         Ajoutez, modifiez ou supprimez les cours de l'emploi du temps. Les étudiants ne voient que les cours de leur concours.
       </p>
@@ -283,7 +283,6 @@ export default function GestionPlanning() {
                     color: form.modalite === key ? 'white' : val.couleur,
                     border: `2px solid ${form.modalite === key ? val.couleur : `${val.couleur}30`}`
                   }}>
-                  <div className="text-xl mb-1">{val.icone}</div>
                   <div>{val.label}</div>
                   <div className="text-xs mt-1 opacity-80">
                     {key === 'en_ligne' ? 'Étudiants en ligne uniquement'
@@ -361,7 +360,7 @@ export default function GestionPlanning() {
       {loading ? (
         <Loader texte="Chargement du planning…" />
       ) : coursAffiches.length === 0 ? (
-        <EmptyState icone="📅" titre="Aucun cours pour le moment" />
+        <EmptyState titre="Aucun cours pour le moment" />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -405,7 +404,7 @@ export default function GestionPlanning() {
                           background: `${modaliteConfig[c.modalite].couleur}15`,
                           color: modaliteConfig[c.modalite].couleur
                         }}>
-                        {modaliteConfig[c.modalite].icone} {modaliteConfig[c.modalite].label}
+                        {modaliteConfig[c.modalite].label}
                       </span>
                     )}
                   </td>

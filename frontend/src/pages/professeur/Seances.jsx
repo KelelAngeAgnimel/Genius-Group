@@ -205,7 +205,7 @@ export default function Seances() {
           {creation && <FormulaireSeance onCree={() => { setCreation(false); charger() }} onAnnuler={() => setCreation(false)} />}
 
           {loading ? <Loader texte="Chargement…" />
-            : seances.length === 0 ? <EmptyState icone="📅" titre="Aucune séance pour le moment" />
+            : seances.length === 0 ? <EmptyState titre="Aucune séance pour le moment" />
             : (
               <div className="flex flex-col gap-3">
                 {seances.map(s => {

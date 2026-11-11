@@ -279,7 +279,7 @@ export default function GestionCompetences() {
               )
             })}
             {chargement && <tr><td colSpan={6}><Loader texte="Chargement des compétences…" /></td></tr>}
-            {!chargement && competences.length === 0 && <tr><td colSpan={6}><EmptyState icone="🎯" titre="Aucune compétence pour ce concours" texte="Ajoutez-en une ci-dessus ou importez un fichier CSV." /></td></tr>}
+            {!chargement && competences.length === 0 && <tr><td colSpan={6}><EmptyState titre="Aucune compétence pour ce concours" texte="Ajoutez-en une ci-dessus ou importez un fichier CSV." /></td></tr>}
           </tbody>
         </table>
       </div>

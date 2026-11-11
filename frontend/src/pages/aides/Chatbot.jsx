@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import api from '../../api'
+import Icon from '../../components/Icone'
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([
@@ -27,11 +28,11 @@ export default function Chatbot() {
         : res.status === 429
           ? '⏳ Trop de messages, patiente une minute.'
           : res.status === 401
-            ? '🔒 Session expirée, reconnecte-toi.'
-            : (data.message || data.error || '❌ Une erreur est survenue. Réessaie.')
+            ? 'Session expirée, reconnecte-toi.'
+            : (data.message || data.error || 'Une erreur est survenue. Réessaie.')
       setMessages(prev => [...prev, { role: 'bot', texte }])
     } catch {
-      setMessages(prev => [...prev, { role: 'bot', texte: '❌ Erreur de connexion. Réessaie.' }])
+      setMessages(prev => [...prev, { role: 'bot', texte: 'Erreur de connexion. Réessaie.' }])
     } finally {
       setLoading(false)
     }
@@ -52,7 +53,7 @@ export default function Chatbot() {
 
         {/* Header */}
         <div style={{
-          background: 'linear-gradient(135deg, #0d1f3c 0%, #1a3a6b 100%)',
+          background: '#071020',
           padding: '20px 24px',
           borderBottom: '2px solid #c9a227',
           display: 'flex',
@@ -62,9 +63,8 @@ export default function Chatbot() {
           <div style={{
             width: '44px', height: '44px', borderRadius: '50%',
             background: '#c9a227', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', fontSize: '20px', flexShrink: 0,
-            boxShadow: '0 0 0 3px rgba(201,162,39,0.2)'
-          }}>✦</div>
+            justifyContent: 'center', flexShrink: 0, color: '#071020'
+          }}><Icon name="message" className="w-5 h-5" /></div>
           <div>
             <div style={{ fontFamily: "'Cinzel', serif", fontSize: '17px', color: '#c9a227', letterSpacing: '0.5px' }}>
               Chatbot d'aide
@@ -97,7 +97,7 @@ export default function Chatbot() {
                 borderRadius: m.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
                 fontSize: '14px', lineHeight: '1.6',
                 background: m.role === 'user'
-                  ? 'linear-gradient(135deg, #b8891e, #c9a227)'
+                  ? '#C9A84C'
                   : '#0f2444',
                 border: m.role === 'user' ? 'none' : '1px solid #1e3a5f',
                 color: m.role === 'user' ? '#0a1628' : '#c8daf0',
@@ -150,7 +150,7 @@ export default function Chatbot() {
             onClick={envoyer}
             disabled={loading}
             style={{
-              background: 'linear-gradient(135deg, #b8891e, #c9a227)',
+              background: '#C9A84C',
               border: 'none', borderRadius: '10px',
               padding: '12px 20px', color: '#0a1628',
               fontWeight: '700', fontSize: '13px',

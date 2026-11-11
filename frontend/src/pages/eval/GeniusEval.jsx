@@ -6,6 +6,7 @@ import { useConcours } from '../../hooks/useConcours'
 import { useToast, useConfirm } from '../../hooks/useUi'
 import Loader from '../../components/Loader'
 import EmptyState from '../../components/EmptyState'
+import Icon from '../../components/Icone'
 
 
 // Matières par concours — doivent correspondre exactement aux matières dans la table notes
@@ -16,7 +17,8 @@ const MATIERES_PAR_CONCOURS = {
 }
 
 
-const COULEURS = { or: '#C9A84C', bleu: '#4C7BC9', vert: '#4CC9A8', rose: '#C94C7B', navy: '#071020' }
+// vert et rose : uniquement pour un état (réussi / échec) ; or : accent unique
+const COULEURS = { or: '#C9A84C', vert: '#4CC9A8', rose: '#C94C7B', navy: '#071020' }
 
 // Décrit qui verra le quiz apparaître, selon le concours et la modalité ciblés
 function audienceQuiz(concours, modalite) {
@@ -130,16 +132,16 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
       <div>
         <button onClick={() => setTentativeAffichee(null)} className="text-xs font-semibold mb-4" style={{ color: COULEURS.or }}>← Retour à l'historique</button>
         <div className="rounded-2xl p-6 mb-4 text-center" style={{
-          background: `linear-gradient(135deg, ${COULEURS.navy}, #0d1f3c)`,
-          border: `1px solid ${t.score / t.total >= 0.5 ? COULEURS.vert : COULEURS.rose}66`
+          background: '#fff',
+          border: '1px solid #e5e7eb'
         }}>
-          <p className="text-xs tracking-widest uppercase text-gray-400 mb-1">Tentative #{t.tentative_numero}</p>
+          <p className="text-xs tracking-widest uppercase text-gray-500 mb-1">Tentative #{t.tentative_numero}</p>
           <p className="text-4xl font-bold" style={{
             color: t.score / t.total >= 0.7 ? COULEURS.vert : t.score / t.total >= 0.5 ? COULEURS.or : COULEURS.rose
           }}>
             {t.score}/{t.total}
           </p>
-          <p className="text-xs text-gray-400 mt-1">{Math.round((t.score / t.total) * 100)}% de bonnes réponses</p>
+          <p className="text-xs text-gray-500 mt-1">{Math.round((t.score / t.total) * 100)}% de bonnes réponses</p>
           <p className="text-xs text-gray-500 mt-2">{new Date(t.created_at).toLocaleString('fr-FR')}</p>
         </div>
       </div>
@@ -150,21 +152,21 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
     <div>
       <button onClick={onRetour} className="text-xs font-semibold mb-4" style={{ color: COULEURS.or }}>← Retour aux quiz</button>
 
-      <div className="rounded-2xl p-5 mb-4 flex items-center justify-between" style={{ background: `linear-gradient(135deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${COULEURS.or}4D` }}>
+      <div className="rounded-2xl p-5 mb-4 flex items-center justify-between" style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
         <div>
-          <p className="text-xs tracking-widest uppercase" style={{ color: '#C9A84C' }}>{data.quiz.matiere}</p>
-          <p className="font-bold text-white text-lg">{data.quiz.titre}</p>
-          <p className="text-xs text-gray-400 mt-1">Durée : {data.quiz.duree_minutes} min — {data.questions.length} question(s)</p>
+          <p className="text-xs tracking-widest uppercase" style={{ color: '#8A6D1A' }}>{data.quiz.matiere}</p>
+          <p className="font-bold text-lg" style={{ color: COULEURS.navy }}>{data.quiz.titre}</p>
+          <p className="text-xs text-gray-500 mt-1">Durée : {data.quiz.duree_minutes} min — {data.questions.length} question(s)</p>
         </div>
         {enCours && secondesRestantes !== null && (
           <div className="text-center px-4 py-2 rounded-xl flex-shrink-0" style={{
-            background: secondesRestantes <= 30 ? `${COULEURS.rose}26` : 'rgba(255,255,255,0.08)',
-            border: `1px solid ${secondesRestantes <= 30 ? COULEURS.rose : 'rgba(255,255,255,0.15)'}`
+            background: secondesRestantes <= 30 ? `${COULEURS.rose}14` : '#f9fafb',
+            border: `1px solid ${secondesRestantes <= 30 ? COULEURS.rose : '#e5e7eb'}`
           }}>
-            <p className="text-2xl font-bold tabular-nums" style={{ color: secondesRestantes <= 30 ? COULEURS.rose : 'white' }}>
+            <p className="text-2xl font-bold tabular-nums" style={{ color: secondesRestantes <= 30 ? COULEURS.rose : COULEURS.navy }}>
               {formatChrono(secondesRestantes)}
             </p>
-            <p className="text-xs text-gray-400">temps restant</p>
+            <p className="text-xs text-gray-500">temps restant</p>
           </div>
         )}
       </div>
@@ -172,26 +174,26 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
       {resultat ? (
         <div>
           <div className="rounded-2xl p-6 mb-4 text-center" style={{
-            background: `linear-gradient(135deg, ${COULEURS.navy}, #0d1f3c)`,
-            border: `1px solid ${resultat.score / resultat.total >= 0.5 ? COULEURS.vert : COULEURS.rose}66`
+            background: '#fff',
+            border: '1px solid #e5e7eb'
           }}>
-            <p className="text-xs tracking-widest uppercase text-gray-400 mb-1">Résultat — Tentative #{resultat.tentative_numero}</p>
+            <p className="text-xs tracking-widest uppercase text-gray-500 mb-1">Résultat — Tentative #{resultat.tentative_numero}</p>
             <p className="text-4xl font-bold" style={{
               color: resultat.score / resultat.total >= 0.7 ? COULEURS.vert : resultat.score / resultat.total >= 0.5 ? COULEURS.or : COULEURS.rose
             }}>
               {resultat.score}/{resultat.total}
             </p>
-            <p className="text-xs text-gray-400 mt-1">{Math.round((resultat.score / resultat.total) * 100)}% de bonnes réponses</p>
+            <p className="text-xs text-gray-500 mt-1">{Math.round((resultat.score / resultat.total) * 100)}% de bonnes réponses</p>
             {/* Message selon si la note est conservée ou non */}
             {resultat.note_conservee === false ? (
               <p className="text-xs mt-3 px-3 py-1.5 rounded-full inline-block"
-                style={{ background: 'rgba(201,76,123,0.15)', color: '#C94C7B' }}>
-                ⚠️ Note non conservée — seule la première tentative compte
+                style={{ background: 'rgba(201,76,123,0.08)', color: '#C94C7B' }}>
+                Note non conservée — seule la première tentative compte
               </p>
             ) : (
               <p className="text-xs mt-3 px-3 py-1.5 rounded-full inline-block"
-                style={{ background: 'rgba(76,201,168,0.15)', color: '#4CC9A8' }}>
-                ✓ Note enregistrée — première tentative
+                style={{ background: 'rgba(76,201,168,0.1)', color: '#2a9d7f' }}>
+                Note enregistrée — première tentative
               </p>
             )}
           </div>
@@ -204,7 +206,7 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
                   {c.options.map((opt, oi) => (
                     <div key={oi} className="text-xs px-3 py-1.5 rounded-lg flex items-center justify-between" style={{
                       background: oi === c.bonne_reponse ? `${COULEURS.vert}1A` : oi === c.choisi ? `${COULEURS.rose}1A` : '#f8f7f4',
-                      border: `1px solid ${oi === c.bonne_reponse ? COULEURS.vert : oi === c.choisi ? COULEURS.rose : '#f0ece0'}`,
+                      border: `1px solid ${oi === c.bonne_reponse ? COULEURS.vert : oi === c.choisi ? COULEURS.rose : '#e5e7eb'}`,
                       color: oi === c.bonne_reponse ? COULEURS.vert : oi === c.choisi ? COULEURS.rose : '#6b7280'
                     }}>
                       <span>{opt}</span>
@@ -221,14 +223,14 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
           </div>
 
           <button onClick={commencer} className="w-full py-3 rounded-xl text-sm font-bold"
-            style={{ background: `linear-gradient(135deg, #b8891e, ${COULEURS.or})`, color: COULEURS.navy }}>
+            style={{ background: COULEURS.navy, color: COULEURS.or }}>
             Refaire une tentative
           </button>
         </div>
       ) : enCours ? (
         <div className="flex flex-col gap-3">
           {data.questions.map((q, i) => (
-            <div key={q.id} className="rounded-xl p-4" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
+            <div key={q.id} className="rounded-xl p-4" style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
               <p className="text-xs font-bold mb-3" style={{ color: COULEURS.navy }}>{i + 1}. {q.question}</p>
               <div className="flex flex-col gap-1.5">
                 {q.options.map((opt, oi) => (
@@ -236,7 +238,7 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
                     className="text-xs px-3 py-2 rounded-lg cursor-pointer transition"
                     style={{
                       background: reponses[q.id] === oi ? `${COULEURS.or}1A` : '#f8f7f4',
-                      border: `1px solid ${reponses[q.id] === oi ? COULEURS.or : '#f0ece0'}`,
+                      border: `1px solid ${reponses[q.id] === oi ? COULEURS.or : '#e5e7eb'}`,
                       color: reponses[q.id] === oi ? COULEURS.or : '#374151',
                       fontWeight: reponses[q.id] === oi ? '700' : '400'
                     }}>
@@ -249,8 +251,8 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
           <button onClick={soumettre} disabled={submitting}
             className="py-3 rounded-xl text-sm font-bold mt-2"
             style={{
-              background: !submitting ? `linear-gradient(135deg, #b8891e, ${COULEURS.or})` : '#e5e1d5',
-              color: !submitting ? COULEURS.navy : '#9ca3af',
+              background: !submitting ? COULEURS.navy : '#e5e7eb',
+              color: !submitting ? COULEURS.or : '#9ca3af',
               cursor: !submitting ? 'pointer' : 'not-allowed'
             }}>
             {submitting ? 'Envoi...' : toutesRepondues ? 'Valider mes réponses' : 'Valider (questions sans réponse comptées comme incorrectes)'}
@@ -259,7 +261,7 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
       ) : (
         <div>
           {tentatives.length > 0 && (
-            <div className="rounded-2xl p-5 mb-4" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
+            <div className="rounded-2xl p-5 mb-4" style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
               <p className="font-bold text-sm mb-3" style={{ color: COULEURS.navy }}>Vos tentatives précédentes</p>
               <div className="flex flex-col gap-2">
                 {tentatives.map((t, i) => {
@@ -281,7 +283,7 @@ function LecteurQuiz({ quizId, onTermine, onRetour }) {
             </div>
           )}
           <button onClick={commencer} className="w-full py-3 rounded-xl text-sm font-bold"
-            style={{ background: `linear-gradient(135deg, #b8891e, ${COULEURS.or})`, color: COULEURS.navy }}>
+            style={{ background: COULEURS.navy, color: COULEURS.or }}>
             {tentatives.length > 0 ? 'Nouvelle tentative' : 'Commencer le quiz'}
           </button>
         </div>
@@ -319,30 +321,29 @@ function VueEtudiant() {
       {loading ? (
         <Loader texte="Chargement des quiz…" />
       ) : quizzes.length === 0 ? (
-        <div className="rounded-2xl p-8 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
-          <p className="text-3xl mb-2">📭</p>
-          <EmptyState icone="❓" titre="Aucun quiz disponible pour le moment" />
+        <div className="rounded-2xl bg-white" style={{ border: '1px solid #e5e7eb' }}>
+          <EmptyState titre="Aucun quiz disponible pour le moment" />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {quizzes.map((q, i) => (
             <div key={i} onClick={() => setQuizOuvert(q.id)}
-              className="rounded-2xl p-5 cursor-pointer transition hover:shadow-lg"
-              style={{ background: `linear-gradient(145deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${q.deja_fait ? COULEURS.vert + '4D' : COULEURS.or + '4D'}` }}>
+              className="rounded-2xl p-5 cursor-pointer transition-colors hover:border-gray-400"
+              style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs tracking-widest uppercase" style={{ color: '#C9A84C' }}>{q.matiere}</span>
+                <span className="text-xs tracking-widest uppercase" style={{ color: '#8A6D1A' }}>{q.matiere}</span>
                 {q.deja_fait ? (
-                  <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '20px', background: `${COULEURS.vert}26`, color: COULEURS.vert, border: `1px solid ${COULEURS.vert}` }}>
+                  <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '20px', background: `${COULEURS.vert}1A`, color: '#2a9d7f', border: `1px solid ${COULEURS.vert}` }}>
                     Meilleur : {q.score}/{q.total_score}
                   </span>
                 ) : (
-                  <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '20px', background: `${COULEURS.or}26`, color: COULEURS.or, border: `1px solid ${COULEURS.or}` }}>
+                  <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '20px', background: '#f3f4f6', color: '#4b5563', border: '1px solid #d1d5db' }}>
                     À faire
                   </span>
                 )}
               </div>
-              <p className="font-bold text-white">{q.titre}</p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="font-bold" style={{ color: COULEURS.navy }}>{q.titre}</p>
+              <p className="text-xs text-gray-500 mt-1">
                 {q.nb_questions} questions — {q.duree_minutes} min{q.nb_tentatives > 0 ? ` — ${q.nb_tentatives} tentative(s)` : ''}
               </p>
             </div>
@@ -524,9 +525,9 @@ function VueProf() {
           <button key={t.k} onClick={() => { setVue(t.k); if (t.k === 'creer') reinitialiserForm() }}
             className="px-4 py-2 rounded-xl text-xs font-bold transition"
             style={{
-              background: vue === t.k ? `linear-gradient(135deg, #b8891e, ${COULEURS.or})` : '#fff',
-              color: vue === t.k ? COULEURS.navy : '#9ca3af',
-              border: `1px solid ${vue === t.k ? COULEURS.or : '#f0ece0'}`
+              background: vue === t.k ? COULEURS.navy : '#fff',
+              color: vue === t.k ? COULEURS.or : '#6b7280',
+              border: `1px solid ${vue === t.k ? COULEURS.navy : '#e5e7eb'}`
             }}>
             {t.l}
           </button>
@@ -536,26 +537,25 @@ function VueProf() {
       {vue === 'liste' && (
         loading ? <Loader texte="Chargement…" /> :
         quizzes.length === 0 ? (
-          <div className="rounded-2xl p-8 text-center" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
-            <p className="text-3xl mb-2">📭</p>
-            <EmptyState icone="❓" titre="Aucun quiz créé pour le moment" />
+          <div className="rounded-2xl bg-white" style={{ border: '1px solid #e5e7eb' }}>
+            <EmptyState titre="Aucun quiz créé pour le moment" />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {quizzes.map((q, i) => (
-              <div key={i} className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
+              <div key={i} className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs tracking-widest uppercase" style={{ color: '#8A6D1A' }}>{q.matiere}</span>
                   <div className="flex items-center gap-1.5">
                     {q.publie === false && (
-                      <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: `${COULEURS.rose}1A`, color: COULEURS.rose }}>🚫 Masqué</span>
+                      <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: `${COULEURS.rose}1A`, color: COULEURS.rose }}>Masqué</span>
                     )}
-                    {q.ai_genere && <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: `${COULEURS.bleu}1A`, color: COULEURS.bleu }}>IA</span>}
+                    {q.ai_genere && <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px', background: '#f3f4f6', color: '#4b5563' }}>IA</span>}
                   </div>
                 </div>
                 <p className="font-bold text-sm" style={{ color: COULEURS.navy }}>{q.titre}</p>
-                <p className="text-xs mt-1 flex items-start gap-1" style={{ color: COULEURS.bleu }}>
-                  <span>👥</span>
+                <p className="text-xs mt-1 flex items-start gap-1.5 text-gray-500">
+                  <Icon name="users" className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                   <span>Visible par : {audienceQuiz(q.concours, q.modalite)}</span>
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
@@ -563,21 +563,19 @@ function VueProf() {
                 </p>
                 <div className="flex gap-2 mt-3">
                   <button onClick={() => voirResultats(q.id)} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-                    style={{ background: `${COULEURS.bleu}1A`, color: COULEURS.bleu, border: `1px solid ${COULEURS.bleu}4D` }}>
+                    style={{ color: COULEURS.navy, border: '1px solid #d1d5db' }}>
                     Résultats
                   </button>
                   <button onClick={() => renommer(q)} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-                    style={{ background: `${COULEURS.or}1A`, color: '#b8891e', border: `1px solid ${COULEURS.or}66` }}>
+                    style={{ color: COULEURS.navy, border: '1px solid #d1d5db' }}>
                     Renommer
                   </button>
                   <button onClick={() => basculerVisibilite(q)} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-                    style={q.publie === false
-                      ? { background: `${COULEURS.vert}1A`, color: COULEURS.vert, border: `1px solid ${COULEURS.vert}4D` }
-                      : { background: 'rgba(230,150,40,0.12)', color: '#C97B1A', border: '1px solid rgba(230,150,40,0.3)' }}>
+                    style={{ color: COULEURS.navy, border: '1px solid #d1d5db' }}>
                     {q.publie === false ? 'Démasquer' : 'Masquer'}
                   </button>
                   <button onClick={() => supprimer(q.id)} className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-                    style={{ background: `${COULEURS.rose}1A`, color: COULEURS.rose, border: `1px solid ${COULEURS.rose}4D` }}>
+                    style={{ color: COULEURS.rose, border: `1px solid ${COULEURS.rose}66` }}>
                     Supprimer
                   </button>
                 </div>
@@ -595,7 +593,7 @@ function VueProf() {
             </div>
           )}
 
-          <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
+          <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
             <p className="font-bold text-sm mb-3" style={{ color: COULEURS.navy }}>Informations générales</p>
             <div className="flex flex-col gap-3">
 
@@ -604,17 +602,17 @@ function VueProf() {
                 <p className="text-xs font-semibold text-gray-500 mb-2">1. Concours concerné</p>
                 <div className="flex gap-2">
                   {[
-                    { val: 'inphb', label: 'INP-HB', couleur: '#C9A84C' },
-                    { val: 'esatic', label: 'ESATIC', couleur: '#4C7BC9' },
-                    { val: 'all', label: 'INP-HB + ESATIC + CME', couleur: '#7B4CC9' },
+                    { val: 'inphb', label: 'INP-HB' },
+                    { val: 'esatic', label: 'ESATIC' },
+                    { val: 'all', label: 'INP-HB + ESATIC + CME' },
                   ].map(c => (
                     <button key={c.val} type="button"
                       onClick={() => setForm(p => ({ ...p, concours: c.val, matiere: '' }))}
                       className="text-xs font-bold px-4 py-2 rounded-xl transition"
                       style={{
-                        background: form.concours === c.val ? c.couleur : `${c.couleur}15`,
-                        color: form.concours === c.val ? 'white' : c.couleur,
-                        border: `1px solid ${c.couleur}40`
+                        background: form.concours === c.val ? COULEURS.navy : '#fff',
+                        color: form.concours === c.val ? COULEURS.or : '#4b5563',
+                        border: `1px solid ${form.concours === c.val ? COULEURS.navy : '#d1d5db'}`
                       }}>
                       {c.label}
                     </button>
@@ -627,17 +625,17 @@ function VueProf() {
                 <p className="text-xs font-semibold text-gray-500 mb-2">2. Visible par</p>
                 <div className="flex gap-2">
                   {[
-                    { val: 'les_deux', label: '🔀 Tous les élèves', couleur: '#4CC9A8' },
-                    { val: 'en_ligne', label: '💻 En ligne uniquement', couleur: '#4C7BC9' },
-                    { val: 'presentiel', label: '🏫 Présentiel uniquement', couleur: '#C9A84C' },
+                    { val: 'les_deux', label: 'Tous les élèves' },
+                    { val: 'en_ligne', label: 'En ligne uniquement' },
+                    { val: 'presentiel', label: 'Présentiel uniquement' },
                   ].map(m => (
                     <button key={m.val} type="button"
                       onClick={() => setForm(p => ({ ...p, modalite: m.val }))}
                       className="text-xs font-bold px-3 py-2 rounded-xl transition"
                       style={{
-                        background: form.modalite === m.val ? m.couleur : `${m.couleur}15`,
-                        color: form.modalite === m.val ? 'white' : m.couleur,
-                        border: `1px solid ${m.couleur}40`
+                        background: form.modalite === m.val ? COULEURS.navy : '#fff',
+                        color: form.modalite === m.val ? COULEURS.or : '#4b5563',
+                        border: `1px solid ${form.modalite === m.val ? COULEURS.navy : '#d1d5db'}`
                       }}>
                       {m.label}
                     </button>
@@ -682,34 +680,34 @@ function VueProf() {
 
           {generationPossible ? (
             <>
-          <div className="rounded-2xl p-5" style={{ background: `linear-gradient(135deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${COULEURS.bleu}4D` }}>
-            <p className="font-bold text-sm text-white mb-1">🤖 Génération assistée par IA</p>
-            <p className="text-xs text-gray-400 mb-3">Remplit automatiquement les questions ci-dessous — modifiable ensuite.</p>
+          <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
+            <p className="font-bold text-sm mb-1" style={{ color: COULEURS.navy }}>Génération assistée par IA</p>
+            <p className="text-xs text-gray-500 mb-3">Remplit automatiquement les questions ci-dessous — modifiable ensuite.</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
               <input value={iaForm.theme} onChange={e => setIaForm(p => ({ ...p, theme: e.target.value }))}
                 placeholder="Thème précis (optionnel)" className="text-xs rounded-xl px-3 py-2 outline-none md:col-span-2"
-                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'white' }} aria-label="Thème précis (optionnel)" />
+                style={{ background: '#f9fafb', border: '1px solid #d1d5db', color: COULEURS.navy }} aria-label="Thème précis (optionnel)" />
               <input aria-label="Nombre de questions" type="number" min="1" max="20" value={iaForm.nombre_questions}
                 onChange={e => setIaForm(p => ({ ...p, nombre_questions: e.target.value }))}
                 className="text-xs rounded-xl px-3 py-2 outline-none"
-                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'white' }} />
+                style={{ background: '#f9fafb', border: '1px solid #d1d5db', color: COULEURS.navy }} />
             </div>
             <button onClick={genererIA} disabled={generating}
               className="text-xs font-bold px-4 py-2 rounded-xl"
-              style={{ background: generating ? 'rgba(76,123,201,0.3)' : COULEURS.bleu, color: 'white', cursor: generating ? 'wait' : 'pointer' }}>
+              style={{ background: generating ? '#9ca3af' : COULEURS.navy, color: 'white', cursor: generating ? 'wait' : 'pointer' }}>
               {generating ? 'Génération en cours...' : 'Générer avec l\'IA'}
             </button>
           </div>
 
-          <div className="rounded-2xl p-5" style={{ background: `linear-gradient(135deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${COULEURS.vert}4D` }}>
-            <p className="font-bold text-sm text-white mb-1">📄 Importer depuis un PDF</p>
-            <p className="text-xs text-gray-400 mb-3">
+          <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
+            <p className="font-bold text-sm mb-1" style={{ color: COULEURS.navy }}>Importer depuis un PDF</p>
+            <p className="text-xs text-gray-500 mb-3">
               Glissez un PDF contenant un QCM existant — l'IA détecte les questions, les options et reconstitue le quiz automatiquement. Modifiable ensuite ci-dessous.
             </p>
             <label
               className="inline-flex items-center text-xs font-bold px-4 py-2 rounded-xl"
               style={{
-                background: importingPdf ? 'rgba(76,201,168,0.3)' : COULEURS.vert,
+                background: importingPdf ? '#9ca3af' : COULEURS.navy,
                 color: 'white',
                 cursor: importingPdf ? 'wait' : 'pointer'
               }}>
@@ -731,7 +729,7 @@ function VueProf() {
 
           <div className="flex flex-col gap-3">
             {questions.map((q, i) => (
-              <div key={i} className="rounded-2xl p-4" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
+              <div key={i} className="rounded-2xl p-4" style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold" style={{ color: COULEURS.or }}>Question {i + 1}</span>
                   {questions.length > 1 && (
@@ -755,14 +753,14 @@ function VueProf() {
               </div>
             ))}
             <button onClick={ajouterQuestion} className="text-xs font-semibold py-2 rounded-xl"
-              style={{ background: `${COULEURS.or}1A`, color: COULEURS.or, border: `1px dashed ${COULEURS.or}` }}>
+              style={{ background: '#fff', color: '#8A6D1A', border: '1px dashed #C9A84C' }}>
               + Ajouter une question manuellement
             </button>
           </div>
 
           <button onClick={enregistrer} disabled={saving}
             className="py-3 rounded-xl text-sm font-bold"
-            style={{ background: saving ? '#e5e1d5' : `linear-gradient(135deg, #b8891e, ${COULEURS.or})`, color: COULEURS.navy }}>
+            style={{ background: saving ? '#e5e7eb' : COULEURS.navy, color: saving ? '#9ca3af' : COULEURS.or }}>
             {saving ? 'Enregistrement...' : 'Publier le quiz'}
           </button>
         </div>
@@ -771,17 +769,18 @@ function VueProf() {
       {vue === 'resultats' && resultats && (
         <div>
           <button onClick={() => setVue('liste')} className="text-xs font-semibold mb-4" style={{ color: COULEURS.or }}>← Retour aux quiz</button>
-          <div className="rounded-2xl p-5 mb-4" style={{ background: `linear-gradient(135deg, ${COULEURS.navy}, #0d1f3c)`, border: `1px solid ${COULEURS.or}4D` }}>
-            <p className="text-xs tracking-widest uppercase" style={{ color: '#C9A84C' }}>{resultats.quiz.matiere}</p>
-            <p className="font-bold text-white text-lg">{resultats.quiz.titre}</p>
-            <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
-              👥 Visible par : {audienceQuiz(resultats.quiz.concours, resultats.quiz.modalite)}
+          <div className="rounded-2xl p-5 mb-4" style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
+            <p className="text-xs tracking-widest uppercase" style={{ color: '#8A6D1A' }}>{resultats.quiz.matiere}</p>
+            <p className="font-bold text-lg" style={{ color: COULEURS.navy }}>{resultats.quiz.titre}</p>
+            <p className="text-xs mt-2 flex items-center gap-1.5 text-gray-500">
+              <Icon name="users" className="w-3.5 h-3.5 flex-shrink-0" />
+              Visible par : {audienceQuiz(resultats.quiz.concours, resultats.quiz.modalite)}
             </p>
           </div>
-          <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
+          <div className="rounded-2xl p-5" style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
             <p className="font-bold text-sm mb-4" style={{ color: COULEURS.navy }}>Résultats des étudiants ({resultats.resultats.length})</p>
             {resultats.resultats.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-6">Aucune tentative pour le moment</p>
+              <p className="text-xs text-gray-500 text-center py-6">Aucune tentative pour le moment</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {resultats.resultats.map((r, i) => {
@@ -800,7 +799,7 @@ function VueProf() {
                           <p className="text-xs text-gray-500">{r.matricule} — {r.tentatives.length} tentative(s)</p>
                         </div>
                         <span className="text-sm font-bold" style={{ color: couleur }}>Meilleur : {r.meilleur_score}/{r.meilleur_total}</span>
-                        <span className="text-xs text-gray-500">{estOuvert ? '▲' : '▼'}</span>
+                        <Icon name={estOuvert ? 'chevronUp' : 'chevronDown'} className="w-3.5 h-3.5 text-gray-500" />
                       </div>
                       {estOuvert && (
                         <div className="px-3 pb-3 flex flex-col gap-1.5">
@@ -808,7 +807,7 @@ function VueProf() {
                             const tpct = (t.score / t.total) * 100
                             const tcouleur = tpct >= 70 ? COULEURS.vert : tpct >= 50 ? COULEURS.or : COULEURS.rose
                             return (
-                              <div key={ti} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#fff', border: '1px solid #f0ece0' }}>
+                              <div key={ti} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ background: '#fff', border: '1px solid #e5e7eb' }}>
                                 <div>
                                   <span className="text-xs font-semibold" style={{ color: COULEURS.navy }}>Tentative #{t.tentative_numero}</span>
                                   <span className="text-xs text-gray-500 ml-2">{new Date(t.created_at).toLocaleString('fr-FR')}</span>

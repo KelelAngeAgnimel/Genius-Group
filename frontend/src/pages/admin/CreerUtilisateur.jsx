@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import api from '../../api'
-import SelecteurConcours from '../../components/SelecteurConcours'
+import SelecteurConcoursCases from '../../components/SelecteurConcoursCases'
 
 const rolesDisponibles = [
   { value: 'etudiant', label: 'Étudiant', couleur: '#C9A84C', description: 'Prépare un ou plusieurs concours (à cocher ci-dessous)' },
@@ -174,7 +174,6 @@ export default function CreerUtilisateur() {
               <div className="p-4 rounded-xl"
                 style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
                 <div className="flex items-center gap-3">
-                  <span style={{ fontSize: 24 }}>🎫</span>
                   <div>
                     <p className="text-xs font-bold" style={{ color: '#C9A84C' }}>
                       Matricule généré automatiquement
@@ -241,7 +240,7 @@ export default function CreerUtilisateur() {
                 </p>
                 <div id="champ-concours" tabIndex={-1} aria-invalid={erreurs.concours ? true : undefined}
                   className="rounded-xl" style={erreurs.concours ? { outline: '2px solid #C94C7B', outlineOffset: 4 } : undefined}>
-                  <SelecteurConcours value={form.concours} onChange={concours => changer('concours', concours)} />
+                  <SelecteurConcoursCases value={form.concours} onChange={concours => changer('concours', concours)} />
                 </div>
                 <MessageChamp champ="concours" erreurs={erreurs} />
               </div>
@@ -267,8 +266,7 @@ export default function CreerUtilisateur() {
                       background: form.modalite === 'en_ligne' ? 'rgba(76,123,201,0.06)' : 'white'
                     }}>
                     <div className="flex items-center gap-3 mb-2">
-                      <span style={{ fontSize: 24 }}>💻</span>
-                      <p className="text-sm font-bold" style={{ color: form.modalite === 'en_ligne' ? '#4C7BC9' : '#071020' }}>
+                      <p className="text-sm font-bold" style={{ color: form.modalite === 'en_ligne' ? '#071020' : '#071020' }}>
                         En ligne
                       </p>
                     </div>
@@ -285,7 +283,6 @@ export default function CreerUtilisateur() {
                       background: form.modalite === 'presentiel' ? 'rgba(201,168,76,0.06)' : 'white'
                     }}>
                     <div className="flex items-center gap-3 mb-2">
-                      <span style={{ fontSize: 24 }}>🏫</span>
                       <p className="text-sm font-bold" style={{ color: form.modalite === 'presentiel' ? '#C9A84C' : '#071020' }}>
                         Présentiel
                       </p>
@@ -303,7 +300,7 @@ export default function CreerUtilisateur() {
             <button type="submit" disabled={loading}
               className="py-3 rounded-xl text-sm font-bold tracking-widest transition disabled:opacity-50"
               style={{
-                background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+                background: '#071020',
                 color: '#C9A84C',
                 border: '1px solid rgba(201,168,76,0.4)'
               }}>
@@ -345,7 +342,7 @@ export default function CreerUtilisateur() {
             <div className="bg-white rounded-2xl p-5"
               style={{ border: '1px solid rgba(76,201,168,0.3)', background: 'rgba(76,201,168,0.03)' }}>
               <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#4CC9A8' }}>
-                ✓ Compte créé
+                Compte créé
               </p>
               <div className="flex flex-col gap-2.5">
                 {/* Un seul numéro : le matricule (élève) ou l'identifiant (prof / admin, sans matricule) */}
@@ -359,8 +356,8 @@ export default function CreerUtilisateur() {
                 {utilisateurCree.modalite && (
                   <div className="flex justify-between">
                     <span className="text-xs text-gray-500">Modalité</span>
-                    <span className="text-xs font-bold" style={{ color: utilisateurCree.modalite === 'en_ligne' ? '#4C7BC9' : '#C9A84C' }}>
-                      {utilisateurCree.modalite === 'en_ligne' ? '💻 En ligne' : '🏫 Présentiel'}
+                    <span className="text-xs font-bold" style={{ color: utilisateurCree.modalite === 'en_ligne' ? '#071020' : '#C9A84C' }}>
+                      {utilisateurCree.modalite === 'en_ligne' ? 'En ligne' : 'Présentiel'}
                     </span>
                   </div>
                 )}

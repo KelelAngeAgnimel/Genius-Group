@@ -78,7 +78,7 @@ function NiveauConcours({ codes, ressources, chargement }) {
     <Page crumbs={[{ label: 'Accueil', path: '/accueil' }, { label: 'Ressources' }]} retourPath="/accueil" retourLabel="Accueil"
       surtitre="Bibliothèque" titre="Tous mes documents" soustitre="Choisissez votre concours">
       {codes.length === 0 ? (
-        <EmptyState icone="🎓" titre="Aucun concours associé à votre compte" texte="Contactez l’administration pour être inscrit à un concours." />
+        <EmptyState titre="Aucun concours associé à votre compte" texte="Contactez l’administration pour être inscrit à un concours." />
       ) : chargement ? <Loader texte="Chargement…" /> : (
         <Grille>
           {codes.map(code => {
@@ -186,13 +186,13 @@ function NiveauDocuments({ codes, ressources, chargement, erreur }) {
       {chargement ? <Loader texte="Chargement…" /> : erreur ? (
         <p className="text-sm text-center py-8" style={{ color: '#C94C7B' }}>{erreur}</p>
       ) : documents.length === 0 ? (
-        <EmptyState icone="📭" titre="Aucun document pour l’instant" texte="Votre professeur n’a encore rien publié dans cette matière." />
+        <EmptyState titre="Aucun document pour l’instant" texte="Votre professeur n’a encore rien publié dans cette matière." />
       ) : (
         <>
           <BarreOutils recherche={recherche} onRecherche={setRecherche} filtre={type} onFiltre={setType} filtres={filtres}
             tri={tri} onTri={setTri} tris={TRIS} vue={vue} onVue={setVue} />
           {liste.length === 0 ? (
-            <EmptyState icone="🔍" titre="Aucun résultat" texte="Essayez un autre mot ou retirez le filtre." />
+            <EmptyState titre="Aucun résultat" texte="Essayez un autre mot ou retirez le filtre." />
           ) : vue === 'cartes' ? (
             <Grille>
               {liste.map(d => (
@@ -211,7 +211,7 @@ function NiveauDocuments({ codes, ressources, chargement, erreur }) {
                 return (
                   <li key={d.id}>
                     <button type="button" onClick={() => setOuverte(d)}
-                      className="w-full text-left bg-white rounded-2xl p-4 flex items-center gap-4 transition hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C]"
+                      className="w-full text-left bg-white rounded-2xl p-4 flex items-center gap-4 transition hover:border-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C]"
                       style={{ border: '1px solid #f0ece0' }}>
                       <span aria-hidden="true" className="w-11 h-11 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0"
                         style={{ background: `${t.couleur}20`, color: t.couleur }}>{t.label.slice(0, 3).toUpperCase()}</span>

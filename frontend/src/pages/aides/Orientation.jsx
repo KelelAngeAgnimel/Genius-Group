@@ -384,7 +384,7 @@ export default function Orientation() {
               onClick={() => setEcoleSelectionnee(ecole.sigle)}
               className="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-2xl"
               style={{
-                background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+                background: '#071020',
                 border: `2px solid ${ecole.couleur}40`,
               }}
               onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
@@ -400,7 +400,7 @@ export default function Orientation() {
                   }} />
               </div>
 
-              <div className="h-0.5" style={{ background: `linear-gradient(90deg, transparent, ${ecole.couleur}, transparent)` }} />
+              <div className="h-0.5" style={{ background: `#C9A84C` }} />
 
               <div className="px-6 py-4 flex items-center justify-between">
                 <div>
@@ -436,7 +436,7 @@ export default function Orientation() {
           <div className="rounded-2xl overflow-hidden mb-6" style={{ border: '1px solid #f0ece0' }}>
             <div className="flex flex-col sm:flex-row items-center gap-4 p-5"
               style={{
-                background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+                background: '#071020',
                 borderBottom: `2px solid ${ecoleActive.couleur}`
               }}>
               <div className="w-20 h-20 rounded-xl bg-white flex items-center justify-center p-2 flex-shrink-0">
@@ -685,7 +685,7 @@ export default function Orientation() {
               <a href={`https://${ecoleActive.contact.site}`} target="_blank" rel="noopener noreferrer"
                 className="block mt-5 text-center py-3 rounded-xl text-xs font-bold tracking-widest transition"
                 style={{
-                  background: 'linear-gradient(135deg, #071020, #0d1f3c)',
+                  background: '#071020',
                   color: ecoleActive.couleur,
                   border: `1px solid ${ecoleActive.couleur}40`
                 }}>
