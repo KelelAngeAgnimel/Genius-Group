@@ -1,12 +1,14 @@
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
 import { useConcours } from '../../hooks/useConcours'
+import { CONCOURS } from '../../lib/concours'
+import CarteConcoursBanniere from '../../components/CarteConcoursBanniere'
+import GrilleConcours from '../../components/GrilleConcours'
 
 const ecoles = [
   {
     sigle: 'INP-HB',
     code: 'inphb',
     nom: 'Institut National Polytechnique Félix Houphouët-Boigny',
-    logo: 'https://inphb.edu.ci/wp-content/uploads/2020/03/INPHB.png',
     couleur: '#C9A84C',
     site: 'https://inphb.ci',
     contact: {
@@ -106,7 +108,6 @@ const ecoles = [
     sigle: 'ESATIC',
     code: 'esatic',
     nom: 'Ecole Supérieure Africaine des TIC',
-    logo: 'https://esatic.ci/wp-content/uploads/2024/07/esatic_logo.jpg',
     couleur: '#4C7BC9',
     site: 'https://esatic.ci',
     contact: {
@@ -220,7 +221,6 @@ const ecoles = [
     sigle: "CME",
     code: 'cme',
     nom: "Concours des Meilleurs Etudiants",
-    logo: "/cme-logo.png",
     couleur: "#4CC9A8",
     site: "#",
     contact: {
@@ -272,7 +272,6 @@ const ecoles = [
     sigle: 'ENSEA',
     code: 'ensea',
     nom: 'École Nationale Supérieure de Statistique et d\'Économie Appliquée d\'Abidjan',
-    logo: '/ensea-logo.png', // à déposer dans frontend/public ; à défaut, le sigle est affiché
     couleur: '#7B4CC9',
     site: 'https://ensea.ed.ci',
     contact: {
@@ -335,7 +334,13 @@ export default function Orientation() {
   const ecoleActive = ecoles.find(e => e.sigle === ecoleSelectionnee)
   // Un élève voit d'abord les écoles de ses concours ; les autres restent consultables
   const miennes = estEtudiant ? ecoles.filter(e => aConcours(e.code)) : []
-  const ecolesOrdonnees = [...miennes, ...ecoles.filter(e => !miennes.includes(e))]
+  const autres = ecoles.filter(e => !miennes.includes(e))
+  const sections = miennes.length > 0
+    ? [
+        { titre: miennes.length > 1 ? 'Vos concours' : 'Votre concours', ecoles: miennes, miennes: true },
+        ...(autres.length > 0 ? [{ titre: 'Autres concours', ecoles: autres }] : [])
+      ]
+    : [{ titre: null, ecoles }]
 
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: '#f8f7f4' }}>
@@ -365,60 +370,25 @@ export default function Orientation() {
         )}
       </div>
 
-      {/* NIVEAU 1 — Choix de l'école */}
+      {/* NIVEAU 1 — Choix de l'école : une section « Vos concours » puis « Autres concours », chacune avec sa grille */}
       {!ecoleSelectionnee && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {ecolesOrdonnees.map((ecole, i) => (
-            <Fragment key={ecole.sigle}>
-            {miennes.length > 0 && i === 0 && (
-              <p className="col-span-full text-xs tracking-widest uppercase font-bold" style={{ color: '#8A6D1A' }}>
-                {miennes.length > 1 ? 'Vos concours' : 'Votre concours'}
-              </p>
-            )}
-            {miennes.length > 0 && i === miennes.length && miennes.length < ecoles.length && (
-              <p className="col-span-full text-xs tracking-widest uppercase font-bold mt-2" style={{ color: '#6b7280' }}>
-                Autres concours
-              </p>
-            )}
-            <div
-              onClick={() => setEcoleSelectionnee(ecole.sigle)}
-              className="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-2xl"
-              style={{
-                background: '#071020',
-                border: `2px solid ${ecole.couleur}40`,
-              }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-
-              <div className="flex items-center justify-center py-14 px-8">
-                <img src={ecole.logo} alt={ecole.sigle}
-                  className="object-contain"
-                  style={{ maxHeight: '130px', maxWidth: '240px' }}
-                  onError={(e) => {
-                    e.target.style.display = 'none'
-                    e.target.parentNode.innerHTML = `<span style="font-size:48px;font-weight:bold;color:#C9A84C">${ecole.sigle}</span>`
-                  }} />
-              </div>
-
-              <div className="h-0.5" style={{ background: `#C9A84C` }} />
-
-              <div className="px-6 py-4 flex items-center justify-between">
-                <div>
-                  <p className="text-white font-bold text-sm">
-                    {ecole.sigle}
-                    {miennes.includes(ecole) && (
-                      <span className="ml-2 text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: '#C9A84C', color: '#071020' }}>Votre concours</span>
-                    )}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">{ecole.nom}</p>
-                </div>
-                <span className="text-xs font-semibold px-3 py-1 rounded-lg"
-                  style={{ background: `${ecole.couleur}20`, color: ecole.couleur }}>
-                  Voir les infos
-                </span>
-              </div>
-            </div>
-            </Fragment>
+        <div className="flex flex-col gap-8">
+          {sections.map(section => (
+            <section key={section.titre ?? 'toutes'}>
+              {section.titre && (
+                <h2 className="text-xs tracking-widest uppercase font-bold mb-3" style={{ color: section.miennes ? '#8A6D1A' : '#6b7280' }}>
+                  {section.titre}
+                </h2>
+              )}
+              <GrilleConcours>
+                {section.ecoles.map(ecole => (
+                  <CarteConcoursBanniere key={ecole.code} code={ecole.code} sousTitre={ecole.nom}
+                    badge={miennes.includes(ecole) ? 'Votre concours' : undefined}
+                    action="Voir les infos"
+                    onClick={() => setEcoleSelectionnee(ecole.sigle)} />
+                ))}
+              </GrilleConcours>
+            </section>
           ))}
         </div>
       )}
@@ -440,7 +410,7 @@ export default function Orientation() {
                 borderBottom: `2px solid ${ecoleActive.couleur}`
               }}>
               <div className="w-20 h-20 rounded-xl bg-white flex items-center justify-center p-2 flex-shrink-0">
-                <img src={ecoleActive.logo} alt={ecoleActive.sigle}
+                <img src={CONCOURS[ecoleActive.code]?.logo} alt={ecoleActive.sigle}
                   className="w-full h-full object-contain"
                   onError={(e) => {
                     e.target.style.display = 'none'

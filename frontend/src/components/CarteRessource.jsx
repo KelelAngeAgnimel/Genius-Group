@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 
-// Carte de la Bibliothèque : bannière, titre dans la couleur du concours, sous-titre, badge optionnel et menu « ⋮ ».
-// Toute la carte ouvre `onClick` ; le menu `actions` ([{ label, onClick }]) est un bouton à part.
-export default function CarteRessource({ banniere, titre, sousTitre, couleur, badge, actions, onClick }) {
+// Carte à bannière : bannière, titre dans la couleur du concours, sous-titre, puis (tous facultatifs) :
+//  - `badge`   : pastille dorée posée sur la bannière (ex. « Votre concours »)
+//  - `children`: contenu libre sous le titre ; reste cliquable (liens, boutons) même quand la carte l'est
+//  - `badges`  : [{ texte, alerte? }] en bas à gauche ; `action` : texte en bas à droite (« Accéder »…)
+//  - `actions` : menu « ⋮ » ([{ label, onClick }]), bouton à part
+// Avec `onClick`, toute la carte est un bouton ; sans, c'est une carte d'information.
+export default function CarteRessource({ banniere, titre, sousTitre, couleur, badge, badges = [], action, actions, onClick, children }) {
   const [menuOuvert, setMenuOuvert] = useState(false)
   const racine = useRef(null)
 
@@ -15,10 +19,12 @@ export default function CarteRessource({ banniere, titre, sousTitre, couleur, ba
   }, [menuOuvert])
 
   return (
-    <div ref={racine} className="relative bg-white rounded-2xl overflow-hidden transition-colors hover:border-gray-400 flex flex-col"
+    <div ref={racine} className={`relative bg-white rounded-2xl overflow-hidden transition-colors flex flex-col ${onClick ? 'hover:border-gray-400' : ''}`}
       style={{ border: '1px solid #f0ece0' }}>
-      <button type="button" onClick={onClick} aria-label={`${titre}${sousTitre ? ` — ${sousTitre}` : ''}`}
-        className="absolute inset-0 w-full h-full z-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C] rounded-2xl" />
+      {onClick && (
+        <button type="button" onClick={onClick} aria-label={`${titre}${sousTitre ? ` — ${sousTitre}` : ''}${action ? ` (${action})` : ''}`}
+          className="absolute inset-0 w-full h-full z-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A84C] rounded-2xl" />
+      )}
       <div className="relative pointer-events-none">
         {banniere}
         {badge && (
@@ -27,9 +33,27 @@ export default function CarteRessource({ banniere, titre, sousTitre, couleur, ba
           </span>
         )}
       </div>
-      <div className="relative pointer-events-none px-4 pt-3 pb-4 flex-1 pr-12">
-        <p className="font-bold text-sm leading-snug" style={{ color: couleur }}>{titre}</p>
-        {sousTitre && <p className="text-sm text-gray-600 mt-0.5">{sousTitre}</p>}
+      <div className={`relative flex-1 flex flex-col px-4 pt-3 pb-4 ${actions?.length > 0 ? 'pr-12' : ''}`}>
+        <div className="pointer-events-none">
+          <p className="font-bold text-sm leading-snug" style={{ color: couleur }}>{titre}</p>
+          {sousTitre && <p className="text-sm text-gray-600 mt-0.5">{sousTitre}</p>}
+        </div>
+        {children && <div className="relative z-10 mt-3">{children}</div>}
+        {(badges.length > 0 || action) && (
+          <div className="pointer-events-none mt-auto pt-3 flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              {badges.map((b, i) => (
+                <span key={i} className="text-xs font-bold px-2 py-0.5 rounded-full"
+                  style={b.alerte
+                    ? { background: 'rgba(201,76,123,0.08)', color: '#C94C7B', border: '1px solid rgba(201,76,123,0.3)' }
+                    : { background: '#f3f4f6', color: '#4b5563' }}>
+                  {b.texte}
+                </span>
+              ))}
+            </div>
+            {action && <span className="text-xs font-semibold underline underline-offset-4" style={{ color: '#8A6D1A' }}>{action}</span>}
+          </div>
+        )}
       </div>
       {actions?.length > 0 && (
         <div className="absolute bottom-2 right-2 z-10">
