@@ -98,6 +98,50 @@ describe('Création de comptes (admin)', () => {
     expect((await post({ ...base, nom: 'Dupont', prenom: 'Awa' })).status).toBe(201)
   })
 
+  // Le formulaire d'un professeur ou d'un admin envoyait modalite: '' → 400 « Modalité »
+  it("crée un professeur avec modalite: '' (chaîne vide = absente)", async () => {
+    const r = await request(app).post('/api/users/create').set(bearer(30)).send({ password: 'motdepasse', nom: 'Martin', prenom: 'Paul', role: 'professeur', username: 'prof.vide', modalite: '' })
+    expect(r.status).toBe(201)
+    expect(r.body.user.modalite).toBeNull()
+  })
+
+  it('crée un professeur sans champ modalite, avec ou sans concours', async () => {
+    const base = { password: 'motdepasse', nom: 'Martin', prenom: 'Paul', role: 'professeur' }
+    const sans = await request(app).post('/api/users/create').set(bearer(30)).send({ ...base, username: 'prof.sans' })
+    expect(sans.status).toBe(201)
+    const ensea = await request(app).post('/api/users/create').set(bearer(30)).send({ ...base, username: 'prof.ensea2', concours: ['ensea'] })
+    expect(ensea.status).toBe(201)
+    expect(ensea.body.user.concours).toEqual(['ensea'])
+  })
+
+  it("crée un administrateur avec modalite: '' ou une modalité en espaces", async () => {
+    for (const [i, modalite] of ['', '   '].entries()) {
+      const r = await request(app).post('/api/users/create').set(bearer(30)).send({ password: 'motdepasse', nom: 'Admin', prenom: 'Un', role: 'admin', username: `admin.${i}`, modalite })
+      expect(r.status).toBe(201)
+      expect(r.body.user.modalite).toBeNull()
+    }
+  })
+
+  it("refuse toujours un étudiant avec modalite: '' (modalité obligatoire)", async () => {
+    const r = await request(app).post('/api/users/create').set(bearer(30)).send({ password: 'motdepasse', nom: 'Dupont', prenom: 'Awa', role: 'etudiant', concours: ['ensea'], modalite: '' })
+    expect(r.status).toBe(400)
+    expect(r.body.message).toMatch(/modalité/i)
+  })
+
+  it('refuse toujours une modalité inconnue (création et modification)', async () => {
+    const c = await request(app).post('/api/users/create').set(bearer(30)).send({ password: 'motdepasse', nom: 'Dupont', prenom: 'Awa', role: 'etudiant', concours: ['ensea'], modalite: 'hybride' })
+    expect(c.status).toBe(400)
+    const m = await request(app).patch('/api/users/20').set(bearer(30)).send({ nom: 'Martin', modalite: 'hybride' })
+    expect(m.status).toBe(400)
+  })
+
+  it("modifie un professeur avec modalite: '' (200, la modalité n'est pas touchée)", async () => {
+    const r = await request(app).patch('/api/users/20').set(bearer(30)).send({ nom: 'Nouveau', prenom: 'Nom', modalite: '' })
+    expect(r.status).toBe(200)
+    expect(r.body.user.nom).toBe('Nouveau')
+    expect(r.body.user.modalite).toBeNull()
+  })
+
   it('seul un admin crée des comptes', async () => {
     const r = await request(app).post('/api/users/create').set(bearer(20)).send({ password: 'motdepasse', role: 'etudiant', concours: ['ensea'], modalite: 'en_ligne' })
     expect(r.status).toBe(403)
