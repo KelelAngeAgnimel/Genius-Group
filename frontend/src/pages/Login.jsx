@@ -50,7 +50,7 @@ const BrainLogo = ({ size = 56 }) => (
 )
 
 export default function Login() {
-  const [matricule, setMatricule] = useState('')
+  const [identifiant, setIdentifiant] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
@@ -95,18 +95,18 @@ export default function Login() {
     e.preventDefault()
     setError('')
     const nouvelles = {}
-    if (!matricule.trim()) nouvelles.matricule = 'Saisissez votre matricule.'
+    if (!identifiant.trim()) nouvelles.identifiant = 'Saisissez votre identifiant.'
     if (!password) nouvelles.password = 'Saisissez votre mot de passe.'
     setErreurs(nouvelles)
-    if (nouvelles.matricule || nouvelles.password) {
-      document.getElementById(nouvelles.matricule ? 'champ-matricule' : 'champ-password')?.focus()
+    if (nouvelles.identifiant || nouvelles.password) {
+      document.getElementById(nouvelles.identifiant ? 'champ-identifiant' : 'champ-password')?.focus()
       return
     }
     setLoading(true)
     try {
-      const res = await api.post('/api/auth/login', { matricule, password })
+      const res = await api.post('/api/auth/login', { identifiant, password })
       if (!res.ok) {
-        setError(res.data?.message || 'Matricule ou mot de passe incorrect')
+        setError(res.data?.message || 'Identifiant ou mot de passe incorrect')
         return
       }
       login(res.data.user, res.data.token)
@@ -240,26 +240,29 @@ export default function Login() {
           <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
             <div>
-              <label htmlFor="champ-matricule" style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
-                Matricule
+              <label htmlFor="champ-identifiant" style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
+                Identifiant
               </label>
               <input
-                id="champ-matricule"
+                id="champ-identifiant"
                 type="text"
-                value={matricule}
-                onChange={e => { setMatricule(e.target.value); setErreurs(x => ({ ...x, matricule: undefined })) }}
+                value={identifiant}
+                onChange={e => { setIdentifiant(e.target.value); setErreurs(x => ({ ...x, identifiant: undefined })) }}
                 placeholder="Ex: 26GEN0001"
-                aria-invalid={erreurs.matricule ? true : undefined}
-                aria-describedby={erreurs.matricule ? 'erreur-matricule' : undefined}
+                aria-invalid={erreurs.identifiant ? true : undefined}
+                aria-describedby={erreurs.identifiant ? 'erreur-identifiant aide-identifiant' : 'aide-identifiant'}
                 style={{
                   width: '100%', padding: '13px 16px', fontSize: 14,
-                  border: `2px solid ${erreurs.matricule ? '#dc2626' : '#e5e7eb'}`, borderRadius: 12, outline: 'none',
+                  border: `2px solid ${erreurs.identifiant ? '#dc2626' : '#e5e7eb'}`, borderRadius: 12, outline: 'none',
                   boxSizing: 'border-box', color: '#111827',
-                  transition: 'border-color 0.2s', background: erreurs.matricule ? '#fef2f2' : '#f9fafb'
+                  transition: 'border-color 0.2s', background: erreurs.identifiant ? '#fef2f2' : '#f9fafb'
                 }}
-                onFocus={e => e.target.style.borderColor = erreurs.matricule ? '#dc2626' : '#C9A84C'}
-                onBlur={e => e.target.style.borderColor = erreurs.matricule ? '#dc2626' : '#e5e7eb'} />
-              {erreurs.matricule && <p id="erreur-matricule" role="alert" style={{ color: '#dc2626', fontSize: 12, margin: '6px 0 0' }}>{erreurs.matricule}</p>}
+                onFocus={e => e.target.style.borderColor = erreurs.identifiant ? '#dc2626' : '#C9A84C'}
+                onBlur={e => e.target.style.borderColor = erreurs.identifiant ? '#dc2626' : '#e5e7eb'} />
+              {erreurs.identifiant && <p id="erreur-identifiant" role="alert" style={{ color: '#dc2626', fontSize: 12, margin: '6px 0 0' }}>{erreurs.identifiant}</p>}
+              <p id="aide-identifiant" style={{ color: '#6b7280', fontSize: 12, margin: '6px 0 0' }}>
+                Étudiants : votre numéro d’inscription (ex. 26GEN0001). Professeurs : votre nom d’utilisateur.
+              </p>
             </div>
 
             <div>
