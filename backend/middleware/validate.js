@@ -2,7 +2,7 @@
 // En cas d'échec : 400 avec la liste des champs fautifs (jamais de détail interne).
 // Libellés français affichés à l'utilisateur (la clé technique reste dans `champs` pour le frontend)
 const LIBELLES = {
-  matricule: 'Matricule', username: 'Identifiant', password: 'Mot de passe',
+  identifiant: 'Identifiant', matricule: 'Identifiant', username: 'Identifiant', password: 'Mot de passe',
   nom: 'Nom', prenom: 'Prénom', role: 'Rôle', concours: 'Concours', modalite: 'Modalité',
   message: 'Message', corps: 'Contenu de la requête'
 }
