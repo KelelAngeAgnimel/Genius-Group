@@ -3,6 +3,7 @@ import api from '../../api'
 import { useConcours } from '../../hooks/useConcours'
 import { ouvrirFichierProtege } from '../../lib/fichiers'
 import Loader from '../../components/Loader'
+import { identifiantDe } from '../../lib/identifiants'
 
 const VIOLET = '#7B4CC9'
 const CHAMP = 'text-sm rounded-xl px-3 py-2 outline-none'
@@ -65,7 +66,7 @@ function ListeDifficultes() {
             <div key={cle} className="bg-white rounded-2xl p-4" style={{ border: '1px solid #f0ece0' }}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-bold text-sm" style={{ color: '#071020' }}>{nomEleve(d.etudiant)} <span className="font-normal text-xs text-gray-500">{d.etudiant.matricule}</span></p>
+                  <p className="font-bold text-sm" style={{ color: '#071020' }}>{nomEleve(d.etudiant)} <span className="font-normal text-xs text-gray-500">{identifiantDe(d.etudiant)}</span></p>
                   <p className="text-xs text-gray-600 mt-0.5"><span className="font-semibold" style={{ color: VIOLET }}>{d.competence.code}</span> · {d.competence.libelle}</p>
                 </div>
                 <div className="flex items-center gap-4">

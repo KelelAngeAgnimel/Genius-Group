@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { identifiantDe } from '../../lib/identifiants'
 
 export default function Forum() {
   const { user } = useAuth()
@@ -13,7 +14,7 @@ export default function Forum() {
     if (!nouveau.trim()) return
     setPosts([{
       auteur: `${user?.prenom} ${user?.nom}`,
-      matricule: user?.matricule,
+      matricule: identifiantDe(user),
       texte: nouveau,
       date: 'Aujourd\'hui',
       likes: 0

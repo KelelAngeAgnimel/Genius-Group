@@ -4,12 +4,13 @@ import { useAuth } from '../context/AuthContext'
 import { CODES_CONCOURS } from '../lib/concours'
 import { useConcours } from '../hooks/useConcours'
 import Icon from './Icone'
+import { identifiantDe } from '../lib/identifiants'
 
-// Nom affiché dans le bandeau : « Prénom Nom », sinon le matricule seul
+// Nom affiché dans le bandeau : « Prénom Nom », sinon l'identifiant seul
 function identite(user) {
   const nom = [user?.prenom, user?.nom].filter(Boolean).join(' ').trim()
-  const matricule = user?.matricule || user?.username || ''
-  return nom ? { principal: nom, secondaire: matricule } : { principal: matricule, secondaire: '' }
+  const identifiant = identifiantDe(user)
+  return nom ? { principal: nom, secondaire: identifiant } : { principal: identifiant, secondaire: '' }
 }
 
 // Le concours de l'élève est visible ailleurs (Ressources, Tableau de bord) : le bandeau n'affiche que le rôle du personnel
