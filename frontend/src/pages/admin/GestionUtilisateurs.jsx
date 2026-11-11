@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../../api'
-import SelecteurConcours from '../../components/SelecteurConcours'
+import SelecteurConcoursCases from '../../components/SelecteurConcoursCases'
 import { CODES_CONCOURS, concoursDe, libelleConcours, libelleUtilisateur, couleurConcours, roleDeBase } from '../../lib/concours'
 import { useToast, useConfirm } from '../../hooks/useUi'
 
@@ -296,7 +296,7 @@ export default function GestionUtilisateurs() {
                                   aria-label="Nom" />
                               </div>
                               {(estEtudiant || roleDeBase(u.role) === 'professeur') && (
-                                <SelecteurConcours compact value={editForm.concours}
+                                <SelecteurConcoursCases compact value={editForm.concours}
                                   onChange={concours => setEditForm({ ...editForm, concours })} />
                               )}
                               {estEtudiant && (

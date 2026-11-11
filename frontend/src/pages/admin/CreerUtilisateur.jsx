@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import api from '../../api'
-import SelecteurConcours from '../../components/SelecteurConcours'
+import SelecteurConcoursCases from '../../components/SelecteurConcoursCases'
 
 const rolesDisponibles = [
   { value: 'etudiant', label: 'Étudiant', couleur: '#C9A84C', description: 'Prépare un ou plusieurs concours (à cocher ci-dessous)' },
@@ -240,7 +240,7 @@ export default function CreerUtilisateur() {
                 </p>
                 <div id="champ-concours" tabIndex={-1} aria-invalid={erreurs.concours ? true : undefined}
                   className="rounded-xl" style={erreurs.concours ? { outline: '2px solid #C94C7B', outlineOffset: 4 } : undefined}>
-                  <SelecteurConcours value={form.concours} onChange={concours => changer('concours', concours)} />
+                  <SelecteurConcoursCases value={form.concours} onChange={concours => changer('concours', concours)} />
                 </div>
                 <MessageChamp champ="concours" erreurs={erreurs} />
               </div>
