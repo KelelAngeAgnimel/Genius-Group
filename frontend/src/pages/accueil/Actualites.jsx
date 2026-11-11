@@ -1,5 +1,6 @@
 import { useConcours } from '../../hooks/useConcours'
-import { CONCOURS } from '../../lib/concours'
+import CarteConcoursBanniere from '../../components/CarteConcoursBanniere'
+import GrilleConcours from '../../components/GrilleConcours'
 
 const cartes = [
   {
@@ -48,36 +49,16 @@ export default function Actualites() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {cartesVisibles.map((carte, i) => (
-          <a key={i} href={carte.site} target="_blank" rel="noopener noreferrer"
-            className="rounded-2xl overflow-hidden block bg-white transition-colors hover:border-gray-400"
-            style={{ border: '1px solid #e5e7eb', textDecoration: 'none' }}>
-
-            <div className="flex items-center justify-center py-8 px-8" style={{ borderBottom: '1px solid #e5e7eb' }}>
-              <img src={CONCOURS[carte.code]?.logo} alt={carte.sigle}
-                style={{ maxHeight: '90px', maxWidth: '200px', objectFit: 'contain' }}
-                onError={e => {
-                  const parent = e.target.parentNode
-                  e.target.style.display = 'none'
-                  const span = document.createElement('span')
-                  span.textContent = carte.sigle
-                  span.style.cssText = 'font-size:28px;font-weight:700;color:#071020'
-                  parent.appendChild(span)
-                }}
-              />
-            </div>
-
-            <div className="p-5">
-              <p className="font-bold text-sm" style={{ color: '#071020' }}>{carte.sigle}</p>
-              <p className="text-xs text-gray-500 mt-1 leading-relaxed">{carte.nom}</p>
-              <p className="text-xs mt-3 font-semibold underline underline-offset-4" style={{ color: '#8A6D1A' }}>
-                Visiter le site
-              </p>
-            </div>
-          </a>
-        ))}
-      </div>
+      <GrilleConcours>
+        {cartesVisibles.map(carte => {
+          const aUnSite = carte.site && carte.site !== '#' // CME : pas de site officiel renseigné
+          return (
+            <CarteConcoursBanniere key={carte.code} code={carte.code} sousTitre={carte.nom}
+              action={aUnSite ? 'Visiter le site' : undefined}
+              onClick={aUnSite ? () => window.open(carte.site, '_blank', 'noopener,noreferrer') : undefined} />
+          )
+        })}
+      </GrilleConcours>
     </div>
   )
 }
