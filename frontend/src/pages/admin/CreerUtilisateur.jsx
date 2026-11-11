@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import api from '../../api'
 import SelecteurConcoursCases from '../../components/SelecteurConcoursCases'
+import { identifiantDe } from '../../lib/identifiants'
 
 const rolesDisponibles = [
   { value: 'etudiant', label: 'Étudiant', couleur: '#C9A84C', description: 'Prépare un ou plusieurs concours (à cocher ci-dessous)' },
@@ -104,7 +105,7 @@ export default function CreerUtilisateur() {
       <div className="mb-6 md:mb-8">
         <p className="text-xs tracking-widest uppercase mb-1" style={{ color: '#8A6D1A' }}>Administration</p>
         <h1 className="text-2xl md:text-3xl font-bold" style={{ color: '#071020' }}>Créer un compte</h1>
-        <p className="text-gray-500 text-sm mt-1">Le matricule est généré automatiquement dans l'ordre d'inscription</p>
+        <p className="text-gray-500 text-sm mt-1">L'identifiant est généré automatiquement dans l'ordre d'inscription</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -169,17 +170,17 @@ export default function CreerUtilisateur() {
               </div>
             )}
 
-            {/* Info matricule pour les étudiants */}
+            {/* Info identifiant pour les étudiants */}
             {estEtudiant && (
               <div className="p-4 rounded-xl"
                 style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
                 <div className="flex items-center gap-3">
                   <div>
                     <p className="text-xs font-bold" style={{ color: '#C9A84C' }}>
-                      Matricule généré automatiquement
+                      Identifiant généré automatiquement
                     </p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      Le matricule (ex: <strong>26GEN0001</strong>) sera attribué automatiquement et servira d'identifiant de connexion à l'étudiant.
+                      L'identifiant (ex : <strong>26GEN0001</strong>) sera attribué automatiquement et servira à l'étudiant pour se connecter.
                     </p>
                   </div>
                 </div>
@@ -312,15 +313,15 @@ export default function CreerUtilisateur() {
         {/* PANEL DROITE */}
         <div className="flex flex-col gap-4">
 
-          {/* Info matricule automatique */}
+          {/* Info identifiant automatique */}
           <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid #f0ece0' }}>
-            <p className="text-xs font-bold uppercase tracking-widest mb-3 text-gray-400">Matricule automatique</p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-3 text-gray-400">Identifiant automatique</p>
             <div className="text-center py-3">
               <p className="text-2xl font-black" style={{ color: '#C9A84C', letterSpacing: '0.1em' }}>
                 26GEN####
               </p>
               <p className="text-xs text-gray-500 mt-2">
-                Le matricule est généré automatiquement dans l'ordre d'inscription. Le premier étudiant obtient <strong>26GEN0001</strong>, le suivant <strong>26GEN0002</strong>, etc.
+                L'identifiant est généré automatiquement dans l'ordre d'inscription. Le premier étudiant obtient <strong>26GEN0001</strong>, le suivant <strong>26GEN0002</strong>, etc.
               </p>
             </div>
           </div>
@@ -345,12 +346,12 @@ export default function CreerUtilisateur() {
                 Compte créé
               </p>
               <div className="flex flex-col gap-2.5">
-                {/* Un seul numéro : le matricule (élève) ou l'identifiant (prof / admin, sans matricule) */}
+                {/* Un seul identifiant : numéro d'inscription (élève) ou nom d'utilisateur (prof / admin) */}
                 <div className="flex justify-between items-center p-2 rounded-lg"
                   style={{ background: 'rgba(201,168,76,0.08)' }}>
-                  <span className="text-xs text-gray-500">{utilisateurCree.matricule ? 'Matricule (identifiant de connexion)' : 'Identifiant de connexion'}</span>
+                  <span className="text-xs text-gray-500">Identifiant de connexion</span>
                   <span className="text-sm font-black" style={{ color: '#C9A84C', letterSpacing: '0.1em' }}>
-                    {utilisateurCree.matricule || utilisateurCree.username}
+                    {identifiantDe(utilisateurCree)}
                   </span>
                 </div>
                 {utilisateurCree.modalite && (
@@ -364,7 +365,7 @@ export default function CreerUtilisateur() {
               </div>
               <div className="mt-3 p-2 rounded-lg text-xs text-center"
                 style={{ background: 'rgba(201,168,76,0.08)', color: '#C9A84C' }}>
-                Communiquez ce numéro et le mot de passe {utilisateurCree.matricule ? 'à l’étudiant' : 'à l’utilisateur'}
+                Communiquez cet identifiant et le mot de passe {utilisateurCree.matricule ? 'à l’étudiant' : 'à l’utilisateur'}
               </div>
             </div>
           )}

@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import api from '../../api'
 import { concoursDe, libelleConcours, libelleUtilisateur } from '../../lib/concours'
 import { useConfirm } from '../../hooks/useUi'
+import { identifiantDe } from '../../lib/identifiants'
 
 const matieresConcours = {
   'INP-HB': ['Culture Générale', 'Culture Scientifique', 'Culture Littéraire'],
@@ -26,16 +27,14 @@ const typeColor = {
 const suitLeConcours = (etudiant, concours) =>
   !concours || concours === 'tous' || concoursDe(etudiant).map(libelleConcours).includes(concours)
 
-// Identifiant affichable : matricule en priorite, sinon username
-const identifiant = (e) => e.matricule || e.username || ''
 
 // Nom lisible, avec repli sur l'identifiant si le nom n'est pas renseigne
 const nomComplet = (e) =>
-  [e.prenom, e.nom].filter(Boolean).join(' ').trim() || identifiant(e) || 'Etudiant sans nom'
+  [e.prenom, e.nom].filter(Boolean).join(' ').trim() || identifiantDe(e) || 'Etudiant sans nom'
 
 // Libelle unique dans les listes deroulantes : identifiant + nom
 const libelleEtudiant = (e) =>
-  `${identifiant(e)} — ${nomComplet(e)}`
+  `${identifiantDe(e)} — ${nomComplet(e)}`
 
 export default function EspaceProfesseur() {
   const confirmer = useConfirm()
@@ -68,7 +67,7 @@ export default function EspaceProfesseur() {
   const [noteForm, setNoteForm] = useState({
     etudiant_id: '', matiere: '', concours: 'INP-HB', note: '', periode: 'Mar 2026'
   })
-  const [rechercheEtu, setRechercheEtu] = useState('')   // recherche nom / matricule
+  const [rechercheEtu, setRechercheEtu] = useState('')   // recherche nom / identifiant
   const [notesClasse, setNotesClasse] = useState([])
   const [filtreNotesConcours, setFiltreNotesConcours] = useState('INP-HB')
   const [filtreNotesPeriode, setFiltreNotesPeriode] = useState('Mar 2026')
@@ -102,7 +101,7 @@ export default function EspaceProfesseur() {
       // et donc vider toute la liste des etudiants.
       const liste = data.users
         .filter(u => (u.role || '').startsWith('etudiant'))
-        .sort((a, b) => identifiant(a).localeCompare(identifiant(b), 'fr', { numeric: true }))
+        .sort((a, b) => identifiantDe(a).localeCompare(identifiantDe(b), 'fr', { numeric: true }))
       setEtudiants(liste)
     } catch {
       setErreur('Impossible de charger la liste des etudiants')
@@ -249,13 +248,13 @@ export default function EspaceProfesseur() {
   // Etudiants proposes pour la saisie d'une note.
   // On garde TOUS ceux qui preparent le concours choisi, profils
   // multi-concours compris, puis on applique la recherche libre
-  // (nom, prenom ou matricule : ex "26GEN0007" ou "kouakou").
+  // (nom, prénom ou identifiant : ex "26GEN0007" ou "kouakou").
   // ══════════════════════════════════════════════════════════════
   const rechercheNormalisee = rechercheEtu.trim().toLowerCase()
   const etudiantsPourNotes = etudiants
     .filter(e => suitLeConcours(e, noteForm.concours))
     .filter(e => !rechercheNormalisee ||
-      `${nomComplet(e)} ${identifiant(e)} ${e.username || ''}`
+      `${nomComplet(e)} ${identifiantDe(e)} ${e.username || ''}`
         .toLowerCase()
         .includes(rechercheNormalisee)
     )
@@ -642,12 +641,12 @@ export default function EspaceProfesseur() {
                 <input type="text"
                   value={rechercheEtu}
                   onChange={e => setRechercheEtu(e.target.value)}
-                  placeholder="Rechercher par nom ou matricule (ex : 26GEN0007)"
+                  placeholder="Rechercher par nom ou identifiant (ex : 26GEN0007)"
                   className="w-full border rounded-xl px-4 py-2 text-sm text-gray-800 mb-2 focus:outline-none"
                   style={{ borderColor: '#f0ece0' }}
                   onFocus={e => e.target.style.borderColor = '#C9A84C'}
                   onBlur={e => e.target.style.borderColor = '#f0ece0'}
-                  aria-label="Rechercher par nom ou matricule (ex : 26GEN0007)" />
+                  aria-label="Rechercher par nom ou identifiant (ex : 26GEN0007)" />
 
                 <select aria-label="Élève" required
                   value={noteForm.etudiant_id}
@@ -785,7 +784,7 @@ export default function EspaceProfesseur() {
                         <p className="text-xs font-bold text-gray-800">
                           {nomComplet(item.etudiant || {})}
                         </p>
-                        <p className="text-xs text-gray-400">{item.etudiant?.matricule}</p>
+                        <p className="text-xs text-gray-400">{identifiantDe(item.etudiant)}</p>
                       </div>
                       <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full"
                         style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
@@ -865,7 +864,7 @@ export default function EspaceProfesseur() {
                   </p>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     <span className="text-xs font-bold" style={{ color: '#C9A84C' }}>
-                      {etudiant.matricule || etudiant.username}
+                      {identifiantDe(etudiant)}
                     </span>
                     <span className="text-xs text-gray-400">·</span>
                     <span className="text-xs text-gray-400">

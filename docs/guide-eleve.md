@@ -5,10 +5,10 @@ Ce guide t'explique, pas à pas, comment utiliser la plateforme Genius Group. Tu
 ## 1. Se connecter
 
 1. Ouvre le site : la page **Connexion** s'affiche.
-2. Saisis ton **matricule** (par exemple `26GEN0001`) et ton **mot de passe**.
+2. Saisis ton **identifiant** (ton numéro d'inscription, par exemple `26GEN0001`) et ton **mot de passe**.
 3. Clique sur **SE CONNECTER**. Tu arrives sur « Mon Espace ».
 
-[CAPTURE: page de connexion avec les champs Matricule et Mot de passe]
+[CAPTURE: page de connexion avec les champs Identifiant et Mot de passe]
 
 > Mot de passe oublié ou compte bloqué ? Écris à l'administration : elle peut te donner un nouveau mot de passe.
 
@@ -95,4 +95,4 @@ Tu peux cliquer sur **Plus tard**, mais pense à la remplir : au bout de **24 h*
 
 **J'ai dépassé la date limite.** Tu peux encore déposer si le professeur l'autorise ; ta copie sera marquée en retard.
 
-**Je n'arrive pas à me connecter.** Vérifie ton matricule (sans espace). Après plusieurs essais ratés, attends 15 minutes ou contacte l'administration.
+**Je n'arrive pas à me connecter.** Vérifie ton identifiant (sans espace). Après plusieurs essais ratés, attends 15 minutes ou contacte l'administration.

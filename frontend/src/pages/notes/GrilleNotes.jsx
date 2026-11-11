@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import api from '../../api'
 import { CODES_CONCOURS, libelleConcours } from '../../lib/concours'
 import { telechargerCsv } from '../../lib/csv'
+import { identifiantDe } from '../../lib/identifiants'
 import EmptyState from '../../components/EmptyState'
 
 const VIOLET = '#7B4CC9'
@@ -118,9 +119,9 @@ export default function GrilleNotes() {
   const moyenneColonne = (col) => moyenne(lignes.map(l => valeurs[cle(l.etudiant, col)]))
 
   const exporter = () => {
-    const entetes = ['Matricule', 'Nom', 'Prénom', ...colonnes.map(c => `${c.matiere} — ${c.periode}`), 'Moyenne']
+    const entetes = ['Identifiant', 'Nom', 'Prénom', ...colonnes.map(c => `${c.matiere} — ${c.periode}`), 'Moyenne']
     const corps = lignes.map(l => [
-      l.etudiant.matricule ?? l.etudiant.username, l.etudiant.nom ?? '', l.etudiant.prenom ?? '',
+      identifiantDe(l.etudiant), l.etudiant.nom ?? '', l.etudiant.prenom ?? '',
       ...colonnes.map(c => valeurs[cle(l.etudiant, c)] ?? ''), moyenneEleve(l.etudiant) ?? ''
     ])
     corps.push(['', '', 'Moyenne', ...colonnes.map(c => moyenneColonne(c) ?? ''), moyenne(lignes.map(l => moyenneEleve(l.etudiant))) ?? ''])
@@ -186,7 +187,7 @@ export default function GrilleNotes() {
                 <tr key={l.etudiant.id} style={{ borderTop: '1px solid #f8f7f4' }}>
                   <td className="p-3 sticky left-0 bg-white whitespace-nowrap">
                     <span className="font-semibold" style={{ color: '#071020' }}>{nomEleve(l.etudiant)}</span>
-                    <span className="block text-xs text-gray-500">{l.etudiant.matricule}</span>
+                    <span className="block text-xs text-gray-500">{identifiantDe(l.etudiant)}</span>
                   </td>
                   {colonnes.map((c, j) => {
                     const k = cle(l.etudiant, c)

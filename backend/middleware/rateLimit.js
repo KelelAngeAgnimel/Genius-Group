@@ -10,7 +10,7 @@ export const loginLimiter = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   keyGenerator: (req) => {
-    const ident = String(req.body?.matricule ?? '').trim().toLowerCase().slice(0, 64)
+    const ident = String(req.body?.identifiant ?? req.body?.matricule ?? '').trim().toLowerCase().slice(0, 64)
     return `${ipKeyGenerator(req.ip)}|${ident}`
   },
   message: reponse('Trop de tentatives. Réessayez dans 15 minutes.')

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import api from '../../api'
 import { useConcours } from '../../hooks/useConcours'
 import Loader from '../../components/Loader'
+import { identifiantDe } from '../../lib/identifiants'
 import EmptyState from '../../components/EmptyState'
 
 const VIOLET = '#7B4CC9'
@@ -146,7 +147,7 @@ function SuiviSeance({ seance, onRetour }) {
             <div key={e.id} className="bg-white rounded-xl p-3 flex items-center justify-between gap-2" style={{ border: '1px solid #f0ece0' }}>
               <div>
                 <p className="text-sm font-semibold" style={{ color: '#071020' }}>{nom(e)}</p>
-                <p className="text-xs text-gray-500">{e.matricule}</p>
+                <p className="text-xs text-gray-500">{identifiantDe(e)}</p>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs font-bold" style={{ color: t.couleur }}>{t.texte}</span>
