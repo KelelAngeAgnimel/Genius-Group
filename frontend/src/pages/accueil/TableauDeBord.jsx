@@ -2,7 +2,9 @@ import { useAuth } from '../../context/AuthContext'
 import { useNavigate, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import api from '../../api'
-import { concoursDe, CONCOURS } from '../../lib/concours'
+import { concoursDe } from '../../lib/concours'
+import CarteConcoursBanniere from '../../components/CarteConcoursBanniere'
+import GrilleConcours from '../../components/GrilleConcours'
 
 // =====================
 // DASHBOARD ADMIN
@@ -254,23 +256,11 @@ function CarteCompetences({ config, notes }) {
   const couleurCarte = noteGlobale === null ? '#9ca3af' : '#C9A84C'
 
   return (
-    <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-      <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 8, border: '1px solid #e5e7eb', background: 'white', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-            <img src={CONCOURS[config.codeConcours]?.logo} alt={config.sigle}
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              onError={e => { const parent = e.target.parentNode; e.target.style.display = 'none'; parent.textContent = config.sigle; parent.style.fontSize = '10px'; parent.style.fontWeight = '700' }}
-            />
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ color: '#071020', fontWeight: 700, fontSize: 15, margin: 0 }}>{config.sigle}</p>
-            <p style={{ color: '#6b7280', fontSize: 11, margin: '2px 0 0 0' }}>{config.nom}</p>
-            <p style={{ color: '#9ca3af', fontSize: 11, margin: '1px 0 0 0' }}>
-              {notees.length}/{config.matieres.length} matière(s) notée(s)
-            </p>
-          </div>
-        </div>
+    <CarteConcoursBanniere code={config.codeConcours} sousTitre={config.nom}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, paddingBottom: 8, borderBottom: '1px solid #e5e7eb' }}>
+        <p style={{ color: '#6b7280', fontSize: 12, margin: 0 }}>
+          {notees.length}/{config.matieres.length} matière(s) notée(s)
+        </p>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <span style={{ color: '#071020', fontSize: 24, fontWeight: 700, lineHeight: 1, display: 'block' }}>
             {noteGlobale !== null ? noteGlobale : '—'}
@@ -278,7 +268,7 @@ function CarteCompetences({ config, notes }) {
           <span style={{ color: '#9ca3af', fontSize: 10 }}>Global</span>
         </div>
       </div>
-      <div style={{ padding: '12px 8px 16px', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ padding: '12px 0 12px', display: 'flex', justifyContent: 'center' }}>
         {notees.length === 0 ? (
           <div style={{ padding: '28px 20px', textAlign: 'center' }}>
             <p style={{ color: '#6b7280', fontSize: 13, margin: 0 }}>Aucune note enregistrée</p>
@@ -288,7 +278,7 @@ function CarteCompetences({ config, notes }) {
           <RadarCompetences matieres={matiereAvecNotes} couleur={couleurCarte} />
         )}
       </div>
-      <div style={{ padding: '0 20px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <p style={{ color: '#9ca3af', fontSize: 10, margin: 0 }}>Données issues de vos évaluations</p>
         {config.site && config.site !== '#' && (
           <a href={config.site} target="_blank" rel="noopener noreferrer"
@@ -297,7 +287,7 @@ function CarteCompetences({ config, notes }) {
           </a>
         )}
       </div>
-    </div>
+    </CarteConcoursBanniere>
   )
 }
 
@@ -397,6 +387,14 @@ const CONCOURS_CONFIG = [
   },
 ]
 
+// Colonnes de la ligne « Épreuves écrites » selon le nombre d'échéances (classes écrites en entier pour Tailwind)
+const COLONNES_ECHEANCES = {
+  1: 'md:grid-cols-1 md:max-w-xs',
+  2: 'md:grid-cols-2',
+  3: 'md:grid-cols-3',
+  4: 'md:grid-cols-2 lg:grid-cols-4'
+}
+
 // Couleur par type d'événement
 const COULEUR_TYPE = {
   cours: '#9ca3af',
@@ -463,6 +461,7 @@ function DashboardEtudiant({ user, navigate }) {
 
   // Concours visibles : ceux auxquels l'élève est inscrit
   const concoursVisibles = CONCOURS_CONFIG.filter(c => concoursDe(user).includes(c.codeConcours))
+  const echeances = concoursVisibles.filter(c => c.dateConcours) // ENSEA : pas de date, pas de décompte
   const messagesNonLus = messages.filter(m => !m.lu).length
 
   // Planning de la semaine courante (lun → dim)
@@ -494,13 +493,7 @@ function DashboardEtudiant({ user, navigate }) {
       </div>
 
       {/* CARTES STATS DU HAUT */}
-      <div className={`grid gap-3 md:gap-4 mb-6 ${
-        concoursVisibles.length <= 1
-          ? 'grid-cols-2 md:grid-cols-3'
-          : concoursVisibles.length === 2
-          ? 'grid-cols-2 md:grid-cols-4'
-          : 'grid-cols-2 md:grid-cols-5'
-      }`}>
+      <div className={`grid grid-cols-2 gap-3 md:gap-4 ${echeances.length > 0 ? 'mb-3 md:mb-4' : 'mb-6'} ${concoursVisibles.length === 0 ? 'md:grid-cols-3' : ''}`}>
 
         {/* Messages */}
         <div className="rounded-2xl p-4 md:p-5"
@@ -528,22 +521,22 @@ function DashboardEtudiant({ user, navigate }) {
           )}
         </div>
 
-        {/* Décomptes — un par concours visible, un par concours */}
-        {concoursVisibles.length > 0 ? (
-          concoursVisibles.map((config, i) => (
-            <DecompteConcours
-              key={i}
-              dateConcours={config.dateConcours}
-              nomConcours={config.nomConcours}
-            />
-          ))
-        ) : (
+        {concoursVisibles.length === 0 && (
           <div className="rounded-2xl p-4 md:p-5 bg-white col-span-2 md:col-span-1" style={{ border: '1px solid #e5e7eb' }}>
             <p className="text-xs text-gray-500 uppercase tracking-widest mb-2">Concours</p>
             <p className="text-sm text-gray-500">Aucun concours assigné</p>
           </div>
         )}
       </div>
+
+      {/* ÉPREUVES ÉCRITES — une carte par concours daté, sur une seule ligne (jamais de carte orpheline) */}
+      {echeances.length > 0 && (
+        <div className={`grid grid-cols-1 gap-3 md:gap-4 mb-6 ${COLONNES_ECHEANCES[echeances.length] ?? COLONNES_ECHEANCES[4]}`}>
+          {echeances.map(config => (
+            <DecompteConcours key={config.codeConcours} dateConcours={config.dateConcours} nomConcours={config.nomConcours} />
+          ))}
+        </div>
+      )}
 
       {/* RADARS — un par concours */}
       {concoursVisibles.length > 0 && (
@@ -569,11 +562,11 @@ function DashboardEtudiant({ user, navigate }) {
                 style={{ borderColor: '#C9A84C', borderTopColor: 'transparent' }} />
             </div>
           ) : (
-            <div className={`grid gap-4 md:gap-6 ${concoursVisibles.length === 1 ? 'grid-cols-1 max-w-md' : concoursVisibles.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'}`}>
-              {concoursVisibles.map((config, i) => (
-                <CarteCompetences key={i} config={config} notes={notes} />
+            <GrilleConcours>
+              {concoursVisibles.map(config => (
+                <CarteCompetences key={config.codeConcours} config={config} notes={notes} />
               ))}
-            </div>
+            </GrilleConcours>
           )}
         </div>
       )}
