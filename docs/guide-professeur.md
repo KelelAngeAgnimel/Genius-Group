@@ -2,6 +2,10 @@
 
 Ce guide t'explique comment préparer tes cours, publier des évaluations, corriger et suivre tes élèves.
 
+## Se connecter
+
+Sur la page **Connexion**, saisis ton **identifiant** (ton nom d'utilisateur, donné par l'administration) et ton **mot de passe**. Les élèves, eux, se connectent avec leur numéro d'inscription (par exemple `26GEN0001`), qui est aussi leur identifiant.
+
 ## 1. Créer un cours avec le lien Teams
 
 1. Crée la réunion dans Microsoft Teams et copie son lien. (Les liens sont saisis à la main : la plateforme ne crée pas la réunion.)
