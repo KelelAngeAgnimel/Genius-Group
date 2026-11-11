@@ -4,7 +4,8 @@ import api from '../../api'
 import { useConcours } from '../../hooks/useConcours'
 import { concoursVisibles } from '../../lib/evaluations'
 import Breadcrumb from '../../components/Breadcrumb'
-import CarteConcours from '../../components/CarteConcours'
+import CarteConcoursBanniere from '../../components/CarteConcoursBanniere'
+import GrilleConcours from '../../components/GrilleConcours'
 import Loader from '../../components/Loader'
 import EmptyState from '../../components/EmptyState'
 
@@ -59,13 +60,13 @@ export default function EvaluationsHub() {
       ) : !resume && !erreur ? (
         <Loader texte="Chargement…" />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <GrilleConcours>
           {codes.map(code => (
-            <CarteConcours key={code} code={code} badges={badges(code)}
-              description={generationAutoTests(code) ? 'Évaluations publiées par vos enseignants' : 'Sujet, copie scannée et correction'}
+            <CarteConcoursBanniere key={code} code={code} badges={badges(code)} action="Accéder"
+              sousTitre={generationAutoTests(code) ? 'Évaluations publiées par vos enseignants' : 'Sujet, copie scannée et correction'}
               onClick={() => navigate(`/outils/evaluations/${code}`)} />
           ))}
-        </div>
+        </GrilleConcours>
       )}
     </div>
   )
